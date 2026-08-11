@@ -31,22 +31,6 @@
 
 ---
 
-## 核心能力
-
-- Server sizing
-- Hyper-Converged Infrastructure sizing
-- Storage planning
-- Network architecture design
-- Firewall sizing
-- UPS calculation
-- Industrial IT/OT infrastructure planning
-- 国产化平台适配
-- BOM generation
-- Compliance checking
-- Procurement risk analysis
-
----
-
 ## 工作流程
 
 ```
@@ -64,8 +48,48 @@
     ↓
 BOM输出
     ↓
-风险分析
+采购决策
 ```
+
+---
+
+## 示例场景
+
+### 工业 SCADA 项目
+
+输入：
+
+- SCADA 点数：3000
+- PLC数量：50
+- 三节点超融合架构
+- 国产化要求
+- 预算约束
+
+输出：
+
+- VM资源规划
+- CPU/内存建议
+- 存储容量设计
+- 网络架构建议
+- 防火墙规格
+- BOM清单
+- 风险分析
+
+---
+
+## 核心能力
+
+- Server sizing
+- Hyper-Converged Infrastructure sizing
+- Storage planning
+- Network architecture design
+- Firewall sizing
+- UPS calculation
+- Industrial IT/OT infrastructure planning
+- 国产化平台适配
+- BOM generation
+- Compliance checking
+- Procurement risk analysis
 
 ---
 
@@ -91,7 +115,7 @@ BOM输出
 ~/.agents/skills/it-infrastructure-equipment-selection-skill
 ```
 
-然后调用：
+调用：
 
 ```
 $it-infrastructure-equipment-selection
@@ -134,6 +158,8 @@ Product validation
 Pricing research
     ↓
 BOM generation
+    ↓
+Procurement decision
 ```
 
 ## License
