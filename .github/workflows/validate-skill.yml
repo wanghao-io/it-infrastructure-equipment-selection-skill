@@ -1,0 +1,25 @@
+name: Validate Skill
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required files
+        run: |
+          test -f SKILL.md
+          test -f README.md
+          test -d references
+          test -d scripts
+
+      - name: Python syntax check
+        run: |
+          python -m compileall scripts
