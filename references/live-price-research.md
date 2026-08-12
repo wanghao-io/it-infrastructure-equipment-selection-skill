@@ -6,13 +6,49 @@ The goal is not to find the largest number of prices. The goal is to obtain the 
 
 ## Core Rule
 
-**Current price research must be live when live research tools are available.**
+**Current price research must be live when live research tools are available, but existing current project quotations must be recovered before weaker public context is searched.**
 
 Do not answer a current-price request from model memory, an old project budget, or a historical procurement transaction when current market research is available.
+
+Do not discard a current exact quotation supplied by the user or preserved in project files merely because it is not publicly indexed. For configurable enterprise equipment, a traceable human quotation can be stronger price evidence than a public same-family listing.
 
 If live web/search access is unavailable, state that the current price cannot be verified and return only an engineering estimate or a structured quotation request. Do not present an old number as a current market price.
 
 For highly configurable equipment, also load `references/exact-configuration-pricing.md`.
+
+---
+
+## 0. Recover Existing Project Price Evidence
+
+Before external web research, inspect the current project/task scope for already available quotations.
+
+Check, when accessible:
+
+- explicit prices and quote details in the current user message;
+- the BOM/budget file being updated;
+- attached or directly referenced quotation/evidence files;
+- project-local files whose names clearly indicate quotation evidence, such as `quote`, `quotation`, `price-evidence`, `询价`, `报价` or similar.
+
+Do not scan unrelated personal directories. Search only the project/task workspace that the user has asked you to work on.
+
+For each recovered quotation, capture:
+
+```text
+seller/channel
+quote date
+exact configuration
+price
+VAT/tax status
+warranty/support
+mandatory accessories/licenses/services
+orderability/validity when known
+```
+
+A user-supplied manufacturer/customer-service/authorized-channel quotation does **not** need a public URL to qualify as strong current evidence if the source, date, configuration and commercial scope are recorded.
+
+If an exact quote was mentioned in another conversation/session but is not accessible now, say so and ask the user to provide it again or save it into the project. Do not recreate the quote from memory.
+
+When updating project files and the environment permits it, preserve important current quotations in structured form (for example an adjacent `price-evidence.json` or explicit BOM evidence columns) so a future session does not lose them.
 
 ---
 
@@ -219,13 +255,36 @@ Flag or exclude a price from the primary anchor when one or more apply:
 
 Do not delete these records silently. Keep them as context with an exclusion reason.
 
+### Step 8 — apply the existing-budget revision guardrail
+
+When the user is updating, optimizing or compressing an existing BOM, compare the proposed new price against the previous unit budget.
+
+For `configurable-enterprise` equipment, **do not lower the previous unit budget using only Tier 4–7 evidence**.
+
+A downward revision requires either:
+
+- at least one Tier 1/2 exact-current quote; or
+- at least two independent Tier 3 highly matched current quotes with explicit normalization of remaining differences.
+
+If the only evidence is public partial-config/model-family/context pricing, keep the old number only as a provisional carry-forward (or use `TBD`) and mark `Needs confirmation`.
+
+Never produce a compressed control price using logic such as:
+
+```text
+same-family public price
++ estimated memory/storage/RAID uplift
+= new lower server budget
+```
+
+That is an engineering estimate, not sufficient evidence for lowering an existing configured-enterprise budget.
+
 ---
 
 ## 4. Source Strategy by Product Class
 
 | Product class | Primary current-price evidence | Secondary context | Weak / contextual only |
 |---|---|---|---|
-| Configurable server/storage/HCI | exact manufacturer/official/authorized current quote | exact enterprise marketplace quote; highly matched current quote | generic listings; old transactions; component estimate |
+| Configurable server/storage/HCI | exact manufacturer/official/authorized current quote, including user/project-saved human quote | exact enterprise marketplace quote; highly matched current quote | generic listings; old transactions; component estimate |
 | Firewall/security appliance | exact appliance + required subscription/license quote | authorized/current market quote | appliance-only price when subscriptions are mandatory |
 | Fixed switch/AP | exact SKU current official/enterprise listings | multi-seller aggregator/current authorized channel | stale historical prices |
 | UPS | exact UPS + battery/runtime configuration quote | fixed-SKU market listings | main-unit-only price when battery cabinet is required |
@@ -258,6 +317,18 @@ Evidence date: YYYY-MM-DD
 ```
 
 Never fabricate brand/model prices in examples. Public examples should be synthetic or clearly labeled as historical/project-specific evidence.
+
+If a previous BOM amount is retained because strong current evidence is missing, label it clearly, for example:
+
+```text
+Previous budget: CNY 65,000
+Current public evidence: partial/generic only
+Revised budget: CNY 65,000 provisional carry-forward
+Evidence: Needs confirmation
+Reason: weak evidence cannot justify downward revision
+```
+
+Do not label that retained figure as a verified current market price.
 
 ---
 
@@ -298,13 +369,15 @@ Use evidence labels from `references/price-evidence.md` in addition to this conf
 
 When pricing a full project BOM:
 
-1. classify every line as configurable enterprise / fixed SKU / commodity;
-2. choose the search strategy per line;
-3. normalize tax, warranty, licenses and accessories;
-4. record price date and source for every material line;
-5. flag lines with only weak evidence;
-6. calculate budget only after the line-level evidence is visible;
-7. do not hide high-uncertainty items inside one project total.
+1. recover existing project quotation evidence before external search;
+2. classify every line as configurable enterprise / fixed SKU / commodity;
+3. choose the search strategy per line;
+4. normalize tax, warranty, licenses and accessories;
+5. record price date and source for every material line;
+6. flag lines with only weak evidence;
+7. apply the downward-revision guardrail to existing configurable-enterprise budgets;
+8. calculate budget only after the line-level evidence is visible;
+9. do not hide high-uncertainty items inside one project total.
 
 Recommended columns:
 
@@ -313,6 +386,7 @@ category
 brand/model
 exact configuration
 quantity
+previous budget unit price
 current quote low
 current quote high
 recommended budget unit price
@@ -321,8 +395,10 @@ source date
 configuration match
 price evidence tier
 confidence
-exclusion/notes
+revision decision/exclusion notes
 ```
+
+When practical, persist exact human quotations into a project-local structured evidence file so later BOM revisions can reuse them.
 
 ---
 
@@ -339,4 +415,6 @@ Do not:
 - use a fixed source ranking without considering product class and configuration match;
 - average misleading low-price signals into an exact current quote range;
 - output a current price without a price date;
-- claim high confidence when current availability or configuration scope is not verified.
+- claim high confidence when current availability or configuration scope is not verified;
+- lower an existing configured-enterprise budget using only partial public configurations plus an engineering adjustment;
+- ignore a stronger current user/project quotation because it lacks a public webpage.
