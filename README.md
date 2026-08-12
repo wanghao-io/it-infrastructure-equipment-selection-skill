@@ -4,20 +4,21 @@
 [![CI](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/actions/workflows/validate-skill.yml/badge.svg)](../../actions/workflows/validate-skill.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Cross-platform Agent Skill for IT infrastructure architecture, server sizing, storage sizing, network design, UPS sizing, SCADA / industrial IT/OT planning, hardware selection, current price research, BOM budgeting, vendor comparison, RFQ/tender specifications, compliance checks and network topology generation.**
+**Cross-platform Agent Skill for guided IT infrastructure requirements, architecture, server/storage/network/UPS sizing, SCADA / industrial IT/OT planning, hardware selection, current price research, TCO, BOM budgeting, vendor comparison, RFQ/tender specifications, compliance checks and network topology generation.**
 
-面向企业 IT 基础设施与工业 IT/OT 项目的**设备选型、容量规划、实时询价、采购预算和技术方案设计**，支持 OpenAI Codex、Claude Code、GitHub Copilot、Gemini CLI 及其他兼容 Agent Skills 的 Host。
+面向企业 IT 基础设施与工业 IT/OT 项目的**需求梳理、设备选型、容量规划、实时询价、TCO、采购预算和技术方案设计**，支持 OpenAI Codex、Claude Code、GitHub Copilot、Gemini CLI 及其他兼容 Agent Skills 的 Host。
 
 [中文说明](#中文说明) · [English](#english) · [完整输入示例](examples/full-feature-input.md) · [Release Notes](RELEASE_NOTES.md)
 
 > **Requirements first. Architecture second. Sizing third. Products last.**
 >
-> 需求 → 技术适配 → 证据质量 → 价格。便宜 SKU 不能反向定义项目需求。
+> 需求 → Mandatory 技术适配 → 推荐排序 → 证据质量 → 价格。便宜 SKU 不能反向定义项目需求。
 
 ## What this Skill covers
 
 | Area | Capabilities |
 |---|---|
+| **Decision Support** | scenario templates, guided requirement discovery, Mandatory PASS/CONDITIONAL/FAIL gates, preference ranking, 3/5-year TCO |
 | **Architecture** | standalone server, virtualization, HCI/HA, L2/L3/core switching, firewall/security boundary, industrial IT/OT |
 | **Server & Storage** | CPU/memory sizing, RAID, SSD/HDD tiers, historian retention, usable capacity, backup risk |
 | **Network** | port sizing, VLAN/L3 ownership, switching architecture, expansion headroom, topology generation |
@@ -85,15 +86,19 @@ python scripts/install_skill.py --target gemini --scope user
 这个 Skill 强制采用工程顺序：
 
 ```text
-已知条件 / TBD
+已知条件 / 假设 / TBD
         ↓
-强制要求 / SLA / 增长 / 预算
+场景化需求补全（必要时）
+        ↓
+Mandatory / SLA / RTO/RPO / 增长 / 预算
         ↓
 最简合理架构
         ↓
 CPU / 内存 / 存储 / Historian / 网络 / UPS sizing
         ↓
-技术规格与 Mandatory 条件
+Mandatory 技术/兼容性过滤
+        ↓
+PASS 方案的偏好排序 / TCO
         ↓
 厂商规格 / 生命周期 / 当前可采购性
         ↓
@@ -115,7 +120,47 @@ BOM / 预算 / RFQ / 拓扑 / 风险
 
 ## 核心能力
 
-### 1. IT 基础设施架构与容量规划
+### 1. 场景模板与交互式需求向导
+
+内置非强制性的场景模板：
+
+```text
+generic-infrastructure
+manufacturing-scada-small
+smb-erp
+virtualization-small
+vdi-small
+edge-computing
+backup-storage
+```
+
+查看模板：
+
+```bash
+python scripts/guide_requirements.py --list
+```
+
+根据已知项目条件生成下一轮关键问题：
+
+```bash
+python scripts/guide_requirements.py \
+  --scenario manufacturing-scada-small \
+  --input project-known-fields.json \
+  --max-questions 7 \
+  --pretty
+```
+
+原则：
+
+- 场景模板只帮助**补需求**，不直接决定架构；
+- 用户/项目事实优先于模板；
+- 推荐的增长率、规划周期等必须保持为显式 assumption；
+- 默认只追问 3–7 个最影响架构/选型的问题；
+- 不会因为选择了某个场景就自动加入 HCI、HA、双核心、防火墙或信创。
+
+详见 [`references/decision-support.md`](references/decision-support.md)。
+
+### 2. IT 基础设施架构与容量规划
 
 支持：
 
@@ -137,9 +182,10 @@ scripts/calculate_storage.py
 scripts/calculate_network_ports.py
 scripts/calculate_ups.py
 scripts/calculate_budget.py
+scripts/calculate_tco.py
 ```
 
-### 2. SCADA / Historian / Industrial IT/OT
+### 3. SCADA / Historian / Industrial IT/OT
 
 适用于制造业、工业自动化和集中监控项目，可分析：
 
@@ -156,7 +202,7 @@ scripts/calculate_budget.py
 
 涉及远程启停、设定值或其他物理控制时，要求 PLC/设备侧安全逻辑保持权威，并考虑权限、二次确认、操作审计、命令反馈和拒绝原因。
 
-### 3. 网络设计与拓扑
+### 4. 网络设计与拓扑
 
 支持：
 
@@ -170,7 +216,7 @@ scripts/calculate_budget.py
 
 不会仅因为“有多个 VLAN”就自动增加核心交换机。
 
-### 4. 实时价格研究与采购证据
+### 5. 实时价格研究与采购证据
 
 先区分采购对象：
 
@@ -195,7 +241,7 @@ Estimated
 Needs confirmation
 ```
 
-### 5. 已有预算 Revision Guard
+### 6. 已有预算 Revision Guard
 
 当用户要求更新已有 BOM / CSV / XLSX 价格时，旧单价会先作为 revision baseline。
 
@@ -227,7 +273,7 @@ budget_revision.decision = revise-to-current-anchor
 
 项目内保存的厂家客服、官方店或授权渠道**人工当前报价**也可以成为强证据，不要求必须有公开 URL，但需要记录渠道、日期、配置匹配和商业范围。
 
-### 6. Specification-first pricing
+### 7. Specification-first pricing
 
 任何低价候选都必须先满足技术要求，才有资格进入价格比较。
 
@@ -252,46 +298,74 @@ status = eligible-for-pricing
 
 大屏同理：如果项目要求浏览器/BI 能力，无系统、无网络的显示设备必须把 OPS 或等效播放设备纳入完整商业范围后再比较。
 
-### 7. Vendor Comparison / Tender / RFQ / Compliance
+### 8. Mandatory 约束 + 推荐排序
+
+厂商/型号比较现在可以使用结构化 Mandatory constraints：
+
+```text
+候选事实
+   ↓
+Mandatory gate
+   ↓
+PASS / CONDITIONAL / FAIL
+   ↓
+仅在技术合格基础上做 preference scoring
+```
+
+规则：
+
+- `PASS`：满足已知 Mandatory 条件，可以进入最终推荐排序；
+- `CONDITIONAL`：缺少关键 Mandatory 证据，不能因为评分高就排到 PASS 前面；
+- `FAIL`：不满足 Mandatory，直接淘汰；
+- weighted score 永远不能“救回” FAIL；
+- 评分维度可使用 TCO、生命周期、运维复杂度、扩展性、实施复杂度和证据质量。
+
+`compare_vendors.py` 支持 `eq / ne / min / max / in / contains / truthy / falsy` 等通用约束操作符，不内置永久厂商排名。
+
+### 9. 3 / 5 年 TCO
+
+当多个方案都满足 Mandatory，但采购价、电力、维保、License 或实施成本差异明显时，可以计算 3 年/5 年总拥有成本：
+
+```bash
+python scripts/calculate_tco.py assets/tco-example.json --format markdown
+```
+
+模型包括：
+
+- Purchase CAPEX；
+- 一次性实施；
+- 平均 IT 功耗 × PUE × 电价；
+- 年度维保；
+- 年度 License / subscription；
+- 显式的机架/设施/其他 OPEX。
+
+TCO 使用**平均 IT 功耗**，不是电源铭牌功率；使用 PUE 时不会重复计算同一份制冷电耗。
+
+TCO 只比较技术合格方案，不会覆盖 Mandatory、安全、合规和兼容性要求。详见 [`references/tco.md`](references/tco.md)。
+
+### 10. Tender / RFQ / Compliance
 
 可生成：
 
-- 厂商/型号比较矩阵；
-- Mandatory knockout gate；
-- weighted scoring；
 - 厂商中立的招标/RFQ 技术参数；
 - Mandatory / Recommended / Optional 分类；
 - 合规检查；
 - BOM 防漏项；
 - 风险、TBD、升级触发条件。
 
-Mandatory 条件不满足的候选不会靠评分“救回来”。
-
 ## 完整输入示例
 
-如果想一次性测试全部主要能力，直接使用：
+如果想一次性测试主要能力，直接使用：
 
 **[`examples/full-feature-input.md`](examples/full-feature-input.md)**
-
-该示例会同时触发：
-
-- architecture decision；
-- server/storage/historian/network/UPS sizing；
-- SCADA / IT/OT；
-- live price research；
-- budget revision guard；
-- vendor comparison；
-- tender/RFQ；
-- Mermaid / Graphviz topology；
-- compliance check；
-- BOM / contingency / total budget。
 
 实际项目不需要每次输出全部内容，可以组合使用，例如：
 
 ```text
+guided-requirements
 price-research + bom-budget
 internal-review + bom-budget
-vendor-compare
+vendor-compare + tco-analysis
 tender-spec
 detailed-design + topology-generation
 compliance-check
@@ -299,7 +373,7 @@ compliance-check
 
 ## v1.1.2 — Budget Revision Guardrails & Specification-First Pricing
 
-当前正式版重点：
+当前正式 Release 重点：
 
 - 修复弱价格证据错误压低已有服务器/企业设备预算；
 - 人工精确当前报价可作为强价格证据；
@@ -308,6 +382,8 @@ compliance-check
 - 固定 SKU 同样遵循“规格先于价格”；
 - 安装器支持 Git / copy / symlink 安全更新；
 - Codex / Claude Code / Copilot / Gemini CLI 跨平台兼容。
+
+`main` 当前还包含尚未打新 Release 的 decision-support 增强：场景模板、guided requirements、Mandatory constraint ranking 和 TCO。
 
 详见 [`RELEASE_NOTES.md`](RELEASE_NOTES.md)。
 
@@ -337,9 +413,9 @@ python scripts/install_skill.py --target codex --scope user --update
 
 ```text
 SKILL.md                         # portable core workflow
-references/                      # engineering and procurement references
+references/                      # engineering, decision-support and procurement references
 scripts/                         # deterministic calculators / generators / installer
-assets/                          # structured examples and templates
+assets/                          # scenario templates and structured examples
 examples/                        # reference designs and full-feature input example
 agents/openai.yaml               # optional OpenAI/Codex metadata
 .github/workflows/               # CI validation
@@ -353,6 +429,9 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 
 覆盖包括：
 
+- 场景模板不会自动定义 HCI/HA 等架构；
+- guided requirements 跳过已知字段并限制追问数量；
+- Mandatory PASS > CONDITIONAL > FAIL；
 - 小型项目不自动推荐 HCI；
 - VLAN 互通必须明确 L3 owner；
 - OT 控制权限/联锁/审计；
@@ -360,6 +439,7 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 - existing-budget revision guard；
 - human exact quote priority；
 - UPS technical-fit gate；
+- 3/5 年 TCO 计算；
 - Git/copy/symlink installer safety；
 - Codex / Claude Code / Copilot / Gemini CLI portability。
 
@@ -367,16 +447,19 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 
 # English
 
-A portable **Agent Skill for IT infrastructure solution architecture and physical infrastructure procurement**.
+A portable **Agent Skill for IT infrastructure solution architecture, decision support and physical infrastructure procurement**.
 
 It helps AI coding/engineering agents reason about and produce practical deliverables for:
 
+- guided requirement discovery and non-prescriptive scenario templates;
+- mandatory constraint filtering and preference-based recommendation ranking;
 - server sizing and storage sizing;
 - network architecture, VLAN/L3 ownership and topology;
 - UPS sizing, runtime and graceful shutdown;
 - SCADA, Historian and industrial IT/OT infrastructure;
 - hardware/equipment selection and current price research;
 - exact-configuration procurement evidence;
+- 3/5-year TCO analysis;
 - BOM and budget revision guardrails;
 - vendor/model comparison;
 - tender and RFQ specifications;
@@ -396,10 +479,18 @@ Host-specific metadata is optional. The shared engineering logic remains in `SKI
 ## Core Principle
 
 ```text
-Requirements → architecture → sizing → technical fit → evidence quality → price
+Known facts / TBD
+→ guided discovery when needed
+→ minimum justified architecture
+→ sizing
+→ Mandatory PASS / CONDITIONAL / FAIL
+→ preference ranking / TCO
+→ technical fit
+→ evidence quality
+→ current price
 ```
 
-A cheaper product cannot silently redefine the technical requirement, and weak/partial price evidence cannot silently lower an existing configurable-enterprise budget.
+Scenario templates guide discovery but never define the architecture. A cheaper product cannot silently redefine the technical requirement, and weak/partial price evidence cannot silently lower an existing configurable-enterprise budget.
 
 ## Full-Feature Example
 
