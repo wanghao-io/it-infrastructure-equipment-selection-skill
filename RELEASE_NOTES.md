@@ -1,333 +1,159 @@
-# IT Infrastructure Equipment Selection Skill v1.1.1
+# IT Infrastructure Equipment Selection Skill v1.1.2
 
-## 精准询价 + 跨平台 Agent Skills
+## 预算修订保护 + 规格先于价格
 
-v1.1.1 是一次以**价格准确性**和**平台兼容性**为重点的版本，主要面向服务器、存储、防火墙、HCI、企业级 UPS 等高度可配置设备的项目询价、BOM 预算和采购比价场景，同时把项目从偏 Codex 的 Skill 扩展为一套可复用的跨平台 Agent Skill。
+v1.1.2 是一次针对实际项目回归问题的修复版本，重点解决两个风险：
 
-这一版本重点解决两个实际问题：
+1. **已有预算被弱价格证据错误下调**；
+2. **为了匹配便宜商品，反过来降低项目技术规格**。
 
-> **同一个机箱型号或产品系列，不代表同一个采购配置，也不能直接拿公开起售价、裸机价或历史成交价去估算完整配置的当前采购价格。**
+核心原则现在明确为：
 
-以及：
+> **需求 → 技术适配 → 证据质量 → 价格。价格不能反向定义需求。**
 
-> **核心工程方法不应该绑定某一个 AI Agent 平台；只要 Host 支持 Agent Skills 结构，就应该尽量复用同一套 `SKILL.md + references + scripts`。**
+## 已有预算下调保护
 
-核心规则调整为：
+当用户要求更新现有 CSV / XLSX / BOM 价格时，Skill 会先保留原单价作为 revision baseline。
 
-> **技术参数以厂商权威资料为准；价格锚点以配置匹配度、当前可采购性和完整商业范围为准；平台能力以当前 Host 实际提供的工具为准。**
+对于服务器、存储、HCI、配置型防火墙等 `configurable-enterprise` 设备：
 
-## 本次价格修复
+- PConline/ZOL 等同系列部分配置价、起售价、泛型号报价、历史成交、组件估算和工程估算不能单独作为下调依据；
+- 一个 Tier-3 高度匹配报价不足以单独下调；
+- 至少需要一个 Tier-1/2 当前精确报价，或两个独立 Tier-3 高度匹配当前报价；
+- 弱证据不足时，保留原预算并标记 `Needs confirmation`；
+- 当前精确报价高于旧预算时，允许按强证据上调，不会因为“保护旧预算”而掩盖低估风险。
 
-- 当前完全同配置报价优先于低匹配的历史成交价、同系列公开价和泛型号报价。
-- 两个及以上当前同配置报价直接形成主市场价格区间，不再与旧政采价、裸机价或其他弱证据做简单平均。
-- 只有一个当前同配置报价时，将其作为主要价格锚点，同时明确建议取得第二份报价后再确定采购控制价。
-- 同机箱、同系列、同 CPU 并不自动视为同一采购配置。
-- 裸机价、起售价、基础配置价、不可下单报价、低匹配配置、商业范围不完整的报价会被排除出主预算锚点。
-- 对没有当前精确报价的高度可配置企业设备，默认输出价格区间，并标记 `Estimated` 或 `Needs confirmation`，避免给出看似精确但证据不足的单点价格。
-- 用户询问当前价、实时价、市场价、询价预算或当前 BOM 预算时，在具备联网能力的情况下必须先进行实时价格研究。
-
-## 实时询价工作流
-
-新增按采购对象分类的实时询价方法。Skill 会先判断设备属于哪一类，再决定适合的查价方式。
-
-### `configurable-enterprise`
-
-高度可配置企业设备，例如：
-
-- 机架式服务器
-- 存储阵列
-- HCI 节点
-- 带订阅/License 的防火墙
-- 模块化/核心交换机
-- 项目型 UPS
-- 高度定制工作站
-
-这类设备优先寻找**完整配置级的当前报价**，而不是商品页面起售价。
-
-### `fixed-sku`
-
-固定或半标准 SKU，例如：
-
-- 固定端口交换机
-- AP
-- 显示器/大屏
-- Mini PC
-- 固定型号 NAS
-- 固定容量 UPS
-
-这类设备可以更多使用当前官方店、企业采购平台和多个可比 SKU 报价。
-
-### `commodity-component`
-
-标准组件，例如：
-
-- CPU
-- 内存 DIMM
-- SSD / HDD
-- 光模块
-- 线缆
-- 标准附件
-
-这类产品更适合结合电商实时价格、企业采购平台和价格历史工具判断市场区间。
-
-## 中国市场价格渠道
-
-针对国内项目，新增了更明确的渠道角色划分，但**不硬编码一个永远固定的网站优先级**。
-
-- **厂商直销 / 官方客服 / 官方品牌店 / 授权合作伙伴**：适合确认完整配置、维保、税、交期以及最终企业级报价。
-- **京东 / 天猫官方或企业渠道**：适合固定 SKU、标准组件，以及经过客服确认的完整定制配置。
-- **ZOL / 市场聚合器**：用于观察市场价差、发现渠道和做合理性校验；如果配置、税、维保等范围不清楚，不直接作为最终预算锚点。
-- **价格历史工具**：更适合 SSD、内存、硬盘、CPU、显示器、Mini PC 等标准产品，用于观察价格趋势。
-- **政府采购 / 公共资源交易记录**：作为历史可比成交证据，而不是当前实时报价。
-
-因此，服务器等企业定制设备不会再按照“看到一个同型号低价 → 按经验加配置系数”的方式估算。
-
-## 配置匹配评分
-
-默认服务器配置匹配模型会检查：
-
-- CPU 型号和数量
-- 内存容量 / 类型 / 模块布局
-- SSD / NVMe 配置
-- HDD 配置
-- RAID / HBA / Cache / 掉电保护（PLP）
-- 网卡 / 网络端口
-- 电源数量 / 冗余
-- 维保 / 技术支持
-- 税务范围
-- 导轨、电源线等必要附件
-
-默认判断标准：
-
-```text
->= 0.95      精确 / 基本等同配置
-0.85–0.949   高度可比
-0.70–0.849   仅可辅助比较
-< 0.70       不可直接作为预算锚点
-```
-
-同型号机箱不会自动获得高匹配分。
-
-## 价格证据优先级
-
-1. 当前完全同配置正式报价
-2. 当前完全同配置可信市场报价
-3. 当前高度匹配报价
-4. 历史可比采购成交
-5. 拆分组件成本模型
-6. 同型号 / 同系列泛配置公开价
-7. 工程经验估算
-
-低优先级价格仍然可以作为市场背景和合理性校验，但**不会再机械地把更强的当前同配置报价区间向上或向下拉偏**。
-
-## 跨平台 Agent Skills 支持
-
-v1.1.1 的核心 Skill 现在按可移植 Agent Skills 结构维护，并面向：
-
-- **OpenAI Codex**
-- **Claude Code**
-- **GitHub Copilot**
-- **Gemini CLI**
-- 其他兼容 Agent Skills 格式的平台（以各 Host 当前实现为准）
-
-核心工程逻辑只维护一份：
-
-```text
-SKILL.md
-references/
-scripts/
-assets/
-examples/
-```
-
-`agents/openai.yaml` 保留为 OpenAI/Codex 的可选扩展元数据，但其他平台不需要依赖它才能读取和执行 Skill 的核心工程流程。
-
-### 平台路径
-
-默认兼容路径：
-
-```text
-Codex 用户级:        ~/.agents/skills/<skill-name>/
-Claude Code 用户级:  ~/.claude/skills/<skill-name>/
-Copilot 用户级:      ~/.agents/skills/<skill-name>/
-Gemini CLI 用户级:   ~/.agents/skills/<skill-name>/
-```
-
-项目级安装则分别使用 Host 支持的 `.agents/skills`、`.claude/skills` 或 `.github/skills` 目录。
-
-新增：
+确定性检查：
 
 ```bash
-python scripts/install_skill.py --target codex --scope user
-python scripts/install_skill.py --target claude-code --scope user
-python scripts/install_skill.py --target copilot --scope user
-python scripts/install_skill.py --target gemini --scope user
+python scripts/normalize_price_evidence.py <evidence.json> \
+  --summary \
+  --existing-budget <old-unit-price> \
+  --product-class configurable-enterprise
 ```
 
-详细说明见：
+只有：
 
-- `references/platform-compatibility.md`
+```text
+budget_revision.decision = revise-to-current-anchor
+```
 
-### 平台能力降级规则
+才允许执行相应下调。
 
-Skill 格式兼容不代表各个平台拥有完全相同的工具。
+项目内保存的人工询价、用户提供的当前报价，只要能记录渠道、日期、配置匹配和商业范围，即使没有公开 URL，也可以成为强价格证据。
 
-因此 v1.1.1 明确规定：
+## 规格先于价格
 
-- 当前 Host 有实时 Web/Search 能力时，当前价格请求必须实时查价；
-- 没有联网能力时，不得把旧数据冒充当前市场价，降级为 `Needs confirmation` 或工程估算；
-- 有 Python/Shell 时优先运行确定性计算脚本；
-- 没有脚本执行能力时，可以按引用文档中的公式和规则人工推导，但要明确说明计算器未实际运行；
-- 不假设某个 MCP、浏览器、采购插件或 Shell 权限天然存在。
+v1.1.2 新增通用 technical-fit gate：
 
-这样可以保证“跨平台”不会以牺牲证据质量为代价。
+> **便宜 SKU 必须先证明满足原需求，才有资格进入价格比较。**
 
-## 价格证据工具增强
+这条规则同样适用于固定 SKU。
 
-`normalize_price_evidence.py` 现在支持配置匹配评分和主预算锚点选择：
+例如：
+
+- 大屏需要浏览器/BI 能力时，无系统无网络的大屏必须把 OPS 或等效播放设备计入完整范围后才能比较；
+- UPS 不能只看 `VA` 标称值，必须同时检查真实输出 W、VA、目标续航、自动关机接口/软件兼容性。
+
+## UPS 候选门禁
+
+`scripts/calculate_ups.py` 现在可以对具体 UPS SKU 做技术适配检查：
 
 ```bash
-python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary
+python scripts/calculate_ups.py 800 \
+  --runtime-minutes 10 \
+  --candidate-w 1500 \
+  --candidate-va 2000 \
+  --runtime-curve-verified \
+  --shutdown-interface-verified
 ```
 
-新增/增强输出字段包括：
+只有返回：
 
-- `configuration_match_score`
-- `evidence_priority`
-- `anchor_eligible`
-- `anchor_exclusion_reasons`
-- `price_signal_role`
-- `confidence_level`
-- 推荐预算下限 / 上限
+```text
+status = eligible-for-pricing
+```
 
-这样可以保留低价、历史价、聚合器价格等信息，同时明确为什么它们没有进入最终预算区间。
+该 UPS 才能作为较低预算的有效价格候选。
+
+以下情况会返回 `not-eligible-for-pricing`：
+
+- 实际输出 W 不足；
+- VA 不足；
+- 目标负载下续航曲线未确认；
+- 项目需要自动关机但接口/软件兼容性未确认。
+
+因此类似 `1500VA/900W` 的产品不会再仅因为“1500VA 看起来够大”就被当成等价替代。
+
+## 安装/更新修复
+
+同时正式包含 v1.1.1 发布后的安装器热修：
+
+- Git Clone 安装支持安全更新；
+- `--update` 支持 Git / copy / symlink；
+- `--force` 不会删除 `.git`；
+- Git 工作区存在本地修改时拒绝自动覆盖；
+- copy 更新只同步 Skill 管理的运行文件，并保留额外本地文件。
+
+Git Clone 用户可直接：
+
+```bash
+git -C ~/.agents/skills/it-infrastructure-equipment-selection pull --ff-only
+```
+
+## 预算汇总措辞
+
+如果服务器、SCADA 或其他重要行仍存在税务、维保、实施、运输范围未确认，Skill 不再把项目总预算笼统写成“含税到货”或“完整范围已确认”。
+
+更推荐：
+
+```text
+按当前可获得证据估算；已标识项目的税务、维保、实施和/或交付范围仍需确认。
+```
 
 ## 回归测试
 
-价格准确性回归测试专门验证：
+v1.1.2 新增/强化测试覆盖：
 
-> 两个当前同配置服务器报价已经存在时，即使同时出现更便宜的历史成交价、ZOL/聚合器价格、裸机价或起售价，最终预算锚点仍必须保持在当前同配置报价区间。
-
-新增平台兼容回归测试，验证：
-
-- `SKILL.md` 的可移植 frontmatter；
-- `license: MIT`；
-- Codex / Claude Code / Copilot / Gemini CLI 的用户级与项目级安装路径；
-- portable runtime 文件复制；
-- OpenAI 专用 metadata 不成为其他平台的运行依赖。
-
-GitHub Actions 会同时验证：
-
-- Python 语法
-- 工程场景回归测试
-- 架构决策检查
-- 容量计算器
-- 实时价格归一化和预算锚点选择
-- Agent Skills 平台兼容性
-- 厂商/型号比较
-- 招标参数生成
-- Mermaid / Graphviz 网络拓扑生成
-
-## 从 v1.1.0 升级
-
-无需迁移。
-
-已有用户直接更新 Skill 目录即可使用新的：
-
-- 精确配置价格匹配
-- 实时询价流程
-- 价格证据分级
-- 异常 / 起售价排除规则
-- 主预算锚点选择逻辑
-- Claude Code / GitHub Copilot / Gemini CLI 兼容安装
+- 已有服务器预算不能被 Partial-config / ZOL / PConline / 工程估算错误下调；
+- 当前精确人工报价可以覆盖弱公开行情；
+- 一个 Tier-3 报价不足以单独压低服务器预算；
+- `1500VA/900W` UPS 在真实输出 W 不足时不得进入价格比较；
+- UPS 只有容量够但续航未验证时仍不得进入价格比较；
+- 满足 W / VA / 续航 / 关机接口的 UPS 才返回 `eligible-for-pricing`；
+- 安装器不会破坏 Git 元数据；
+- 跨平台 Agent Skills 回归测试继续保留。
 
 ---
 
 # English
 
-## Pricing Accuracy & Cross-Platform Agent Skills
+## Budget Revision Guardrails & Specification-First Pricing
 
-v1.1.1 improves both pricing accuracy and host portability for enterprise infrastructure selection, quotation-oriented BOMs and procurement comparison.
+v1.1.2 fixes two procurement risks found in real project regression testing:
 
-The guiding rules are:
+- weak or partial price signals incorrectly lowering an existing enterprise budget;
+- cheaper products silently redefining the technical requirement.
 
-> **Technical facts follow authoritative manufacturer documentation. Price anchors follow configuration match, current orderability and complete commercial scope.**
+The enforced order is now:
 
-> **Core engineering logic stays in the portable Agent Skills layer; host-specific metadata is optional.**
+> **Requirements → technical fit → evidence quality → price.**
 
-## Pricing Fixes
+For configurable enterprise equipment, weak context such as model-family listings, aggregators, historical transactions or engineering estimates cannot by themselves justify lowering an existing budget.
 
-- Current exact-configuration quotations outrank lower-match historical or generic model-family prices when setting budget anchors.
-- Two or more exact current quotes define the primary observed market range without being averaged together with weaker evidence tiers.
-- One exact current quote is used as the primary anchor while explicitly recommending a second quote before fixing a procurement control price.
-- Same-chassis listings are no longer treated as equivalent procurement configurations.
-- Bare-chassis prices, starting/base prices, unavailable offers, low-match configurations and incomplete commercial scope are excluded from the primary budget anchor.
-- Highly configurable enterprise equipment without exact current quotations returns a range with `Estimated` or `Needs confirmation` instead of false precision.
-- Current-price requests require live research when live research tools are available.
+UPS candidates now have a deterministic technical-fit gate. A candidate may influence a lower budget only after real-output W, VA, runtime and required graceful-shutdown integration are validated. The helper returns either `eligible-for-pricing` or `not-eligible-for-pricing`.
 
-## Cross-Platform Support
+This release also includes the safe installation/update fixes added after v1.1.1.
 
-The shared skill is designed for:
+## Upgrade
 
-- OpenAI Codex
-- Claude Code
-- GitHub Copilot
-- Gemini CLI
-- other Agent-Skills-compatible hosts
-
-Portable runtime:
-
-```text
-SKILL.md
-references/
-scripts/
-assets/
-examples/
-```
-
-`agents/openai.yaml` remains an optional OpenAI/Codex extension and is not required by the shared engineering workflow.
-
-Install helper:
+Git-based installations:
 
 ```bash
-python scripts/install_skill.py --target codex --scope user
-python scripts/install_skill.py --target claude-code --scope user
-python scripts/install_skill.py --target copilot --scope user
-python scripts/install_skill.py --target gemini --scope user
+git -C ~/.agents/skills/it-infrastructure-equipment-selection pull --ff-only
 ```
 
-See `references/platform-compatibility.md` for host-specific discovery paths and verification.
-
-## Configuration Match Scoring
-
-```text
->= 0.95      Exact / effectively exact
-0.85–0.949   Highly comparable
-0.70–0.849   Partial comparison only
-< 0.70       Not a direct budget anchor
-```
-
-## Price Evidence Priority
-
-1. Exact current formal quotation
-2. Exact current credible market quotation
-3. Highly matched current quotation
-4. Comparable historical transaction
-5. Component-cost model
-6. Generic model-family listing
-7. Engineering estimate
-
-Lower-priority evidence remains useful as context but does not mechanically pull a stronger exact-current quote range upward or downward.
-
-## Tooling
-
-```bash
-python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary
-```
-
-## Upgrade Notes
-
-No migration is required from v1.1.0. Existing users can update the skill directory and immediately use the new live price-research, evidence-ranking and cross-platform Agent Skills rules.
+No data migration is required.
 
 ## License
 
