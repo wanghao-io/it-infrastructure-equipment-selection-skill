@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.2.2 — 2026-08-12
+
+### Fixed
+
+- Budget ranges whose lower bound is below the existing amount now pass the universal downward-revision technical-fit gate even when the range overlaps the old budget.
+- Server quote identity fields must be non-empty strings; supplier independence remains normalized across case and whitespace variants.
+- Removed the obsolete permissive numeric helper so procurement costs have one strict validation path.
+
+### Tests
+
+- Added a real CLI end-to-end procurement regression that executes server inquiry comparison, reuses the validated quotations for an existing-budget revision, and verifies five-dimensional HCI N+1 output.
+- Strengthened regressions for unresolved commercial cost exclusion, overlapping downward ranges, normalized duplicate suppliers and invalid identity types.
+
 ## v1.2.1 — 2026-08-12
 
 ### Fixed

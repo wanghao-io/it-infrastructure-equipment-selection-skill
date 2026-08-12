@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from normalize_price_evidence import assess_budget_revision, select_budget_anchor  # noqa: E402
+from normalize_price_evidence import assess_budget_revision, normalize, select_budget_anchor  # noqa: E402
 
 
 SERVER_CONFIG = "2U; 1x4410Y; 128GB; 2x960GB SSD; 2x1.92TB SSD; 4x4TB HDD; RAID cache/PLP; dual PSU"
@@ -27,6 +27,21 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         self.assertEqual(result["decision"], "hold-existing-provisional")
         self.assertIn("technical fit", result["reason"])
 
+    def test_overlapping_lower_range_still_requires_technical_fit(self) -> None:
+        base = {
+            "product_class": "fixed-sku", "configuration": "exact SKU",
+            "source_type": "retail-exact-sku", "source_date": "2026-08-12",
+            "as_of_date": "2026-08-12", "quote_current": True,
+            "comparable": True, "exact_configuration_match": True,
+            "currency": "CNY",
+        }
+        result = assess_budget_revision(100, [
+            {**base, "candidate": "lower", "price": 90},
+            {**base, "candidate": "higher", "price": 110},
+        ])
+        self.assertEqual(result["decision"], "hold-existing-provisional")
+        self.assertEqual(result["recommended_budget_low"], 100.0)
+
     def test_tbd_commercial_cost_is_excluded_not_zero(self) -> None:
         item = {
             "candidate": "Incomplete quote", "product_class": "configurable-enterprise",
@@ -40,6 +55,9 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         }
         anchor = select_budget_anchor([item])
         self.assertEqual(anchor["status"], "needs-confirmation")
+        row = normalize([item])[0]
+        self.assertIsNone(row["normalized_comparable_cost"])
+        self.assertIn("invalid-commercial-field:mandatory_accessories", row["anchor_exclusion_reasons"])
 
     def test_stale_self_declared_current_quote_is_excluded(self) -> None:
         item = {

@@ -371,6 +371,12 @@ detailed-design + topology-generation
 compliance-check
 ```
 
+## v1.2.2 — Executable Procurement Workflow Hotfix
+
+- Overlapping budget ranges cannot bypass the downward-revision technical-fit gate
+- Strict textual identity validation and normalized supplier-independence checks
+- Real CLI end-to-end regression: server inquiry → budget revision → five-dimensional HCI N+1 output
+
 ## v1.2.1 — Pricing and Quote Integrity Hotfix
 
 - Universal technical-fit gate for every downward budget revision

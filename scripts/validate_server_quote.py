@@ -19,6 +19,7 @@ REQUIRED_CONFIGURATION_FIELDS = {
     "cpu_cores", "memory_gb", "usable_storage_tb", "raid_cache_with_plp",
     "network_ports_10gbe", "redundant_power", "warranty_years",
 }
+IDENTITY_FIELDS = ("quote_id", "supplier", "sales_channel")
 
 
 def _equivalent(actual: Any, expected: Any) -> bool:
@@ -34,6 +35,10 @@ def _equivalent(actual: Any, expected: Any) -> bool:
     return str(actual).strip().casefold() == str(expected).strip().casefold()
 
 
+def _valid_identity_text(value: Any) -> bool:
+    return isinstance(value, str) and not is_unresolved(value) and bool(value.strip())
+
+
 def validate_quote(requirement: dict[str, Any], quote: dict[str, Any]) -> dict[str, Any]:
     required = requirement.get("required_configuration", {})
     if not isinstance(required, dict) or not required:
@@ -45,6 +50,8 @@ def validate_quote(requirement: dict[str, Any], quote: dict[str, Any]) -> dict[s
         raise ValueError("requirement.as_of_date is required for deterministic quote freshness")
     as_of = require_iso_date(requirement["as_of_date"], "as_of_date")
     offered = quote.get("configuration", {})
+    if not isinstance(offered, dict):
+        offered = {}
     mismatches = []
     missing = []
     for field, expected in required.items():
@@ -61,8 +68,11 @@ def validate_quote(requirement: dict[str, Any], quote: dict[str, Any]) -> dict[s
             commercial_missing.append(field)
         else:
             costs[field] = require_decimal(quote[field], field, minimum=Decimal("0"))
-    for field in ("quote_id", "supplier", "sales_channel", "currency", "tax_included", "orderability_confirmed", "source_date", "quote_valid_until"):
+    for field in ("currency", "tax_included", "orderability_confirmed", "source_date", "quote_valid_until"):
         if field not in quote or is_unresolved(quote.get(field)):
+            commercial_missing.append(field)
+    for field in IDENTITY_FIELDS:
+        if not _valid_identity_text(quote.get(field)):
             commercial_missing.append(field)
 
     expired = False
