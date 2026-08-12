@@ -18,6 +18,7 @@ from evaluate_architecture import evaluate  # noqa: E402
 from normalize_price_evidence import (  # noqa: E402
     configuration_match_score,
     evidence_priority,
+    normalize,
     select_budget_anchor,
 )
 
@@ -120,7 +121,7 @@ class PricingRegressionTests(unittest.TestCase):
 
     def test_exact_current_quote_has_higher_priority_than_historical(self) -> None:
         exact = {
-            "source_type": "authorized-channel-quote",
+            "source_type": "authorized-reseller-quote",
             "quote_current": True,
             "configuration_match": self._exact_match(),
             "comparable": True,
@@ -133,33 +134,85 @@ class PricingRegressionTests(unittest.TestCase):
         }
         self.assertLess(evidence_priority(exact), evidence_priority(historical))
 
+    def test_market_aggregator_is_context_not_exact_quote(self) -> None:
+        aggregator = {
+            "source_type": "market-aggregator",
+            "quote_current": True,
+            "configuration_match_score": 0.98,
+            "comparable": True,
+        }
+        exact_quote = {
+            "source_type": "official-store-human-quote",
+            "quote_current": True,
+            "configuration_match_score": 0.98,
+            "comparable": True,
+        }
+        self.assertEqual(evidence_priority(aggregator), 6)
+        self.assertEqual(evidence_priority(exact_quote), 1)
+
+    def test_fixed_sku_exact_market_quote_can_be_priority_two(self) -> None:
+        item = {
+            "product_class": "fixed-sku",
+            "source_type": "enterprise-marketplace-exact-sku",
+            "quote_current": True,
+            "configuration_match_score": 1.0,
+            "comparable": True,
+        }
+        self.assertEqual(evidence_priority(item), 2)
+
+    def test_starting_price_is_excluded_for_configurable_enterprise(self) -> None:
+        item = {
+            "candidate": "Starting price",
+            "product_class": "configurable-enterprise",
+            "configuration": "same chassis family, base configuration",
+            "source_type": "market-aggregator",
+            "quote_mode": "starting-price",
+            "source_date": "2026-08-12",
+            "quote_current": True,
+            "price": 48000,
+            "configuration_match_score": 0.95,
+            "starting_price_or_base_config": True,
+            "comparable": True,
+        }
+        row = normalize([item])[0]
+        self.assertFalse(row["anchor_eligible"])
+        self.assertIn("starting-or-base-configuration-price", row["anchor_exclusion_reasons"])
+        self.assertIn("configurable-enterprise-requires-config-level-price", row["anchor_exclusion_reasons"])
+
     def test_exact_quotes_define_budget_anchor_not_old_lower_price(self) -> None:
         base = {
+            "product_class": "configurable-enterprise",
             "configuration": "full enterprise server configuration",
             "source_date": "2026-08-12",
             "quote_current": True,
             "tax_included": True,
+            "price_scope_complete": True,
+            "orderability_confirmed": True,
             "comparable": True,
         }
         items = [
             {
                 **base,
                 "candidate": "Quote A",
-                "source_type": "official-store-quote",
+                "source_type": "official-store-human-quote",
+                "quote_mode": "human-configured",
                 "hardware_price": 89000,
                 "configuration_match": self._exact_match(),
             },
             {
                 **base,
                 "candidate": "Quote B",
-                "source_type": "authorized-channel-quote",
+                "source_type": "authorized-reseller-quote",
+                "quote_mode": "exact-config",
                 "hardware_price": 91500,
                 "configuration_match": self._exact_match(),
             },
             {
                 "candidate": "Historical lower price",
+                "product_class": "configurable-enterprise",
                 "configuration": "similar but not exact server configuration",
                 "source_type": "government-award",
+                "quote_mode": "historical-transaction",
                 "source_date": "2025-04-01",
                 "quote_current": False,
                 "hardware_price": 65000,
@@ -169,12 +222,16 @@ class PricingRegressionTests(unittest.TestCase):
             },
             {
                 "candidate": "Bare chassis listing",
+                "product_class": "configurable-enterprise",
                 "configuration": "bare chassis",
                 "source_type": "generic-listing",
+                "quote_mode": "base-config-listing",
                 "source_date": "2026-08-12",
                 "quote_current": True,
                 "hardware_price": 48000,
+                "tax_included": False,
                 "configuration_match_score": 0.40,
+                "starting_price_or_base_config": True,
                 "comparable": False,
             },
         ]
@@ -185,15 +242,21 @@ class PricingRegressionTests(unittest.TestCase):
         self.assertEqual(result["recommended_budget_high"], 91500)
         self.assertEqual(result["historical_context_low"], 65000)
         self.assertGreaterEqual(result["lower_priority_evidence_excluded_from_anchor"], 1)
+        self.assertGreaterEqual(result["excluded_signal_count"], 1)
         self.assertEqual(result["confidence"], "Market-verified / Exact-config")
+        self.assertEqual(result["confidence_level"], "High")
 
     def test_single_exact_quote_requests_second_quote(self) -> None:
         item = {
             "candidate": "Single quote",
+            "product_class": "configurable-enterprise",
             "configuration": "full enterprise server configuration",
             "source_type": "manufacturer-direct-quote",
+            "quote_mode": "human-configured",
             "source_date": "2026-08-12",
             "quote_current": True,
+            "orderability_confirmed": True,
+            "price_scope_complete": True,
             "hardware_price": 90000,
             "tax_included": True,
             "configuration_match": self._exact_match(),
@@ -203,6 +266,7 @@ class PricingRegressionTests(unittest.TestCase):
         self.assertTrue(result["needs_second_quote"])
         self.assertEqual(result["recommended_budget_low"], 90000)
         self.assertEqual(result["recommended_budget_high"], 90000)
+        self.assertEqual(result["confidence_level"], "Medium")
 
 
 if __name__ == "__main__":
