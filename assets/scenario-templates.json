@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "principles": [
+    "Templates provide discovery defaults and questions, not mandatory architectures.",
+    "User/project facts override template suggestions.",
+    "Availability, RTO/RPO, compliance, budget and technical fit must be resolved before product selection."
+  ],
+  "templates": [
+    {
+      "id": "generic-infrastructure",
+      "name": "Generic IT infrastructure project",
+      "description": "General server/network/storage/UPS infrastructure when no narrower template applies.",
+      "suggested_assumptions": {"planning_horizon_years": 5, "growth_margin": 0.3},
+      "required_fields": [
+        {"key": "business_workload", "question": "What applications/services will run on the infrastructure?", "priority": 1},
+        {"key": "concurrent_users_or_load", "question": "What is the user, concurrency or workload scale?", "priority": 1},
+        {"key": "availability_rto_rpo", "question": "What availability, RTO and RPO are required?", "priority": 1},
+        {"key": "data_capacity_and_growth", "question": "What is the current data size and expected growth?", "priority": 2},
+        {"key": "budget_cap", "question": "Is there a budget ceiling or target range?", "priority": 2},
+        {"key": "domestic_xinchuang_required", "question": "Is domestic/Xinchuang compatibility mandatory?", "priority": 2},
+        {"key": "existing_environment", "question": "What existing servers, storage, network, backup and licenses must be reused or integrated?", "priority": 3}
+      ],
+      "guardrails": [
+        "Do not infer HCI, HA, dual-core switching or firewall requirements from the template.",
+        "Do not convert suggested assumptions into Mandatory requirements without project evidence."
+      ]
+    },
+    {
+      "id": "manufacturing-scada-small",
+      "name": "Small manufacturing SCADA / historian",
+      "description": "Small-to-medium factory centralized monitoring, historian, operator stations and OT integration.",
+      "suggested_assumptions": {"planning_horizon_years": 5, "growth_margin": 0.3, "historian_capacity_margin": 0.3},
+      "required_fields": [
+        {"key": "scada_io_points", "question": "How many licensed SCADA I/O points are required?", "priority": 1},
+        {"key": "historian_points", "question": "How many points are actually historized?", "priority": 1},
+        {"key": "effective_sample_interval_seconds", "question": "What is the effective historian sample interval or change rate?", "priority": 1},
+        {"key": "historian_retention_days", "question": "How long must historian data be retained?", "priority": 1},
+        {"key": "operator_client_count", "question": "How many operator/client stations and Web users are needed?", "priority": 2},
+        {"key": "availability_rto_rpo", "question": "What downtime, RTO and RPO are acceptable?", "priority": 2},
+        {"key": "ot_remote_control", "question": "Will SCADA issue remote start/stop, setpoints or other physical-control commands?", "priority": 2},
+        {"key": "network_scope", "question": "How many OT/IT ports, VLANs and cross-VLAN flows are expected?", "priority": 3},
+        {"key": "budget_cap", "question": "What is the project budget ceiling or target range?", "priority": 3},
+        {"key": "domestic_xinchuang_required", "question": "Is domestic/Xinchuang compatibility mandatory?", "priority": 3}
+      ],
+      "guardrails": [
+        "PLC/equipment safety logic remains authoritative for physical control.",
+        "Historian sizing uses historized points and effective sample rate, not total licensed tags.",
+        "Do not default to HCI or redundant core switching."
+      ]
+    },
+    {
+      "id": "smb-erp",
+      "name": "SMB ERP / database",
+      "description": "Small-to-medium enterprise ERP, database and application-server infrastructure.",
+      "suggested_assumptions": {"planning_horizon_years": 5, "growth_margin": 0.3},
+      "required_fields": [
+        {"key": "erp_product_and_database", "question": "Which ERP/application and database engine/version will be used?", "priority": 1},
+        {"key": "named_users", "question": "How many named users are expected?", "priority": 1},
+        {"key": "concurrent_users", "question": "How many concurrent users or transactions are expected at peak?", "priority": 1},
+        {"key": "database_size", "question": "What is the current database size and annual growth?", "priority": 1},
+        {"key": "availability_rto_rpo", "question": "What availability, RTO and RPO are required?", "priority": 2},
+        {"key": "backup_retention", "question": "What backup retention and restore requirements apply?", "priority": 2},
+        {"key": "budget_cap", "question": "What is the budget ceiling or target range?", "priority": 2},
+        {"key": "domestic_xinchuang_required", "question": "Is domestic/Xinchuang compatibility mandatory?", "priority": 3}
+      ],
+      "guardrails": [
+        "Verify ERP/database vendor support before choosing CPU architecture or OS.",
+        "Do not assume virtualization or HCI unless workload consolidation or availability justifies it."
+      ]
+    },
+    {
+      "id": "virtualization-small",
+      "name": "Small virtualization platform",
+      "description": "Consolidation of several business workloads onto a small virtualized cluster or host set.",
+      "suggested_assumptions": {"planning_horizon_years": 5, "growth_margin": 0.3},
+      "required_fields": [
+        {"key": "vm_or_workload_inventory", "question": "List workloads/VMs and their CPU, memory, storage and I/O demand.", "priority": 1},
+        {"key": "peak_cpu_memory", "question": "What are aggregate peak CPU and memory requirements?", "priority": 1},
+        {"key": "availability_rto_rpo", "question": "What failures must the platform tolerate and what are the RTO/RPO targets?", "priority": 1},
+        {"key": "storage_workload", "question": "What capacity, IOPS, latency and growth requirements apply to shared/local storage?", "priority": 2},
+        {"key": "network_bandwidth", "question": "What management, VM, storage and migration network bandwidth is required?", "priority": 2},
+        {"key": "hypervisor_constraint", "question": "Is there a required/supported hypervisor or virtualization platform?", "priority": 2},
+        {"key": "budget_cap", "question": "What is the budget ceiling or target range?", "priority": 3}
+      ],
+      "guardrails": [
+        "Virtualization does not automatically imply HCI.",
+        "N+1/HA capacity must be calculated only when the availability target requires it."
+      ]
+    },
+    {
+      "id": "vdi-small",
+      "name": "Small VDI / desktop cloud",
+      "description": "Small virtual-desktop deployment for office, design or controlled desktop workloads.",
+      "suggested_assumptions": {"planning_horizon_years": 5, "growth_margin": 0.25},
+      "required_fields": [
+        {"key": "desktop_count", "question": "How many total and concurrent virtual desktops are required?", "priority": 1},
+        {"key": "user_profiles", "question": "What user profiles exist (office, CAD/BIM, developer, GPU-assisted)?", "priority": 1},
+        {"key": "per_desktop_cpu_memory", "question": "What CPU and memory envelope is required per profile?", "priority": 1},
+        {"key": "gpu_requirement", "question": "Do any profiles require GPU/vGPU, and which applications must be certified?", "priority": 1},
+        {"key": "login_boot_storm", "question": "What login/boot-storm and storage IOPS requirements apply?", "priority": 2},
+        {"key": "availability_rto_rpo", "question": "What desktop/service availability, RTO and RPO are required?", "priority": 2},
+        {"key": "license_constraints", "question": "What VDI, OS, GPU/vGPU and application licensing constraints apply?", "priority": 2},
+        {"key": "budget_cap", "question": "What is the budget ceiling or target range?", "priority": 3}
+      ],
+      "guardrails": [
+        "Do not size VDI from desktop count alone; profile mix and concurrency matter.",
+        "GPU/vGPU selection requires application and platform compatibility evidence."
+      ]
+    },
+    {
+      "id": "edge-computing",
+      "name": "Edge computing node",
+      "description": "Industrial/branch edge compute where environment, remote operation and limited local footprint matter.",
+      "suggested_assumptions": {"planning_horizon_years": 5, "growth_margin": 0.25},
+      "required_fields": [
+        {"key": "edge_workloads", "question": "What workloads/services must run locally at the edge?", "priority": 1},
+        {"key": "environmental_conditions", "question": "What temperature, dust, humidity, vibration and installation constraints apply?", "priority": 1},
+        {"key": "connectivity_and_offline_operation", "question": "How long must the site operate during WAN/cloud loss?", "priority": 1},
+        {"key": "availability_rto_rpo", "question": "What local availability, RTO and RPO are required?", "priority": 2},
+        {"key": "remote_management", "question": "What out-of-band and remote-management capabilities are required?", "priority": 2},
+        {"key": "power_constraints", "question": "What power input, UPS/runtime and heat-dissipation limits apply?", "priority": 2},
+        {"key": "budget_cap", "question": "What is the budget ceiling or target range?", "priority": 3}
+      ],
+      "guardrails": [
+        "Environmental and remote-recovery requirements are Mandatory when the site cannot be serviced quickly.",
+        "Do not assume datacenter-grade environmental conditions."
+      ]
+    },
+    {
+      "id": "backup-storage",
+      "name": "Backup / archive storage",
+      "description": "Backup repository, archive or secondary storage selection.",
+      "suggested_assumptions": {"planning_horizon_years": 5, "growth_margin": 0.3},
+      "required_fields": [
+        {"key": "protected_data_size", "question": "How much source data is protected today?", "priority": 1},
+        {"key": "daily_change_rate", "question": "What is the daily change rate?", "priority": 1},
+        {"key": "retention_policy", "question": "What daily/weekly/monthly retention policy is required?", "priority": 1},
+        {"key": "backup_window", "question": "What backup and restore windows must be met?", "priority": 2},
+        {"key": "rpo_rto", "question": "What RPO/RTO applies to protected workloads?", "priority": 2},
+        {"key": "immutability_or_offline_copy", "question": "Is immutability, air-gap or offline copy required?", "priority": 2},
+        {"key": "existing_backup_software", "question": "Which backup software/protocols must the storage support?", "priority": 2},
+        {"key": "budget_cap", "question": "What is the budget ceiling or target range?", "priority": 3}
+      ],
+      "guardrails": [
+        "RAID is not an independent backup.",
+        "Capacity must include retention, change rate, compression/dedup assumptions and growth."
+      ]
+    }
+  ]
+}
