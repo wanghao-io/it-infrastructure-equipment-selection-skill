@@ -2,7 +2,7 @@
 
 Use this schema when equipment/budget research returns multiple prices. The goal is to decide whether two prices are commercially comparable before using them in a budget.
 
-For highly configurable equipment also load `references/exact-configuration-pricing.md`.
+For highly configurable equipment also load `references/exact-configuration-pricing.md`. For current/live price research also load `references/live-price-research.md`.
 
 ## Core Rule
 
@@ -17,11 +17,17 @@ Never average lower-quality evidence into an exact current quote range merely be
 ```json
 {
   "candidate": "model/configuration name",
+  "product_class": "configurable-enterprise | fixed-sku | commodity-component",
   "configuration": "human-readable full configuration",
-  "source_type": "manufacturer-direct-quote | official-store-quote | authorized-channel-quote | enterprise-marketplace-quote | government-award | component-estimate | generic-listing | engineering-estimate",
+  "source_type": "manufacturer-direct-quote | official-store-human-quote | authorized-reseller-quote | enterprise-marketplace-exact-sku | market-aggregator | price-history | government-award | component-estimate | generic-listing | engineering-estimate",
+  "quote_mode": "human-configured | exact-config | exact-sku | starting-price | base-config-listing | historical-transaction | estimate",
   "source": "source name or URL",
   "source_date": "YYYY-MM-DD",
   "quote_current": true,
+  "orderability_confirmed": true,
+  "price_scope_complete": true,
+  "starting_price_or_base_config": false,
+  "used_or_refurbished": false,
   "hardware_price": 0,
   "mandatory_accessories": 0,
   "required_licenses": 0,
@@ -51,6 +57,10 @@ Never average lower-quality evidence into an exact current quote range merely be
 ```
 
 `configuration_match` values range from `0.0` to `1.0`. Omit a field only when it truly does not apply; an unknown field should not be silently treated as a full match.
+
+`product_class` matters because a fully configured server should not use the same price-search strategy as a fixed switch SKU or an SSD.
+
+`quote_mode` helps distinguish a human-confirmed configured quote from an e-commerce starting/base price that merely shares the same chassis name.
 
 ## Default Server Configuration Match Weights
 
@@ -101,10 +111,12 @@ For budget anchoring, prefer:
 3. highly matched current quote;
 4. comparable historical government/public transaction;
 5. component-cost model;
-6. generic model-family listing;
+6. generic model-family listing / market aggregator / price-history context;
 7. engineering estimate.
 
 Lower-priority evidence can be shown as context, but must not override a higher-priority exact-current quote.
+
+A market aggregator or price-history service may be useful for a fixed SKU or component, but it is not automatically a configured-enterprise quote.
 
 ## Comparability Gate
 
@@ -117,9 +129,12 @@ Before treating a price as directly comparable, confirm:
 - same tax treatment;
 - mandatory accessories included;
 - implementation scope understood;
-- source date sufficiently current for the decision.
+- source date sufficiently current for the decision;
+- price is not only a starting/base-configuration teaser;
+- orderability is not explicitly known to be false;
+- used/refurbished status is acceptable if applicable.
 
-If one of these materially differs, keep the evidence but set `comparable: false` and explain why.
+If one of these materially differs, keep the evidence but set `comparable: false` or record an `anchor_exclusion_reasons` condition and explain why.
 
 ## Interpretation
 
@@ -134,6 +149,17 @@ Do not average:
 - UPS main unit and UPS plus battery cabinets;
 - exact current quotes and low-match historical transactions into one blended mean.
 
+## Live Price Signal Rules
+
+For current price research:
+
+- live research is required when live search tools are available;
+- classify each line as `configurable-enterprise`, `fixed-sku`, or `commodity-component` before selecting price sources;
+- configured enterprise equipment should seek configuration-level quotations first;
+- fixed SKUs/components may rely more heavily on multiple current marketplace listings;
+- starting prices, unavailable configurations, incomplete commercial scope, and used/refurbished offers must be explicitly flagged;
+- market aggregators, price-history tools, and deal communities are normally context sources unless the exact seller/SKU/quote has been independently verified.
+
 ## Budget Anchor Rules
 
 - Two or more exact current quotes: use the observed exact-quote range as the primary market range.
@@ -145,17 +171,18 @@ Do not average:
 
 For important equipment show:
 
-| Candidate | Exact configuration | Match score | Source type/date | Normalized cost | Priority | Comparable? | Evidence level |
-|---|---|---:|---|---:|---:|---|---|
+| Candidate | Product class | Exact configuration | Match score | Source type/date | Normalized cost | Priority | Anchor eligible? | Evidence level |
+|---|---|---|---:|---|---:|---:|---|---|
 
 Then report separately:
 
 ```text
 Exact current quote range: CNY X–Y (if available)
+Current market/context range: CNY P–Q
 Historical comparable range: CNY A–B (context only)
 Recommended project budget: CNY M–N
 Evidence date: YYYY-MM-DD
 Confidence: Market-verified / Estimated / Needs confirmation
 ```
 
-Do not let historical or generic evidence mechanically pull an exact current quote range downward.
+Do not let historical, generic, starting-price or unavailable evidence mechanically pull an exact current quote range downward.
