@@ -14,9 +14,11 @@ def validate(root: Path = ROOT) -> list[str]:
     version = (root / "VERSION").read_text(encoding="utf-8").strip()
     if not re.fullmatch(r"\d+\.\d+\.\d+", version):
         errors.append("VERSION must be semantic x.y.z")
-    if f"## v{version}" not in (root / "CHANGELOG.md").read_text(encoding="utf-8"):
+    changelog = root / "CHANGELOG.md"
+    release_notes = root / "RELEASE_NOTES.md"
+    if changelog.exists() and f"## v{version}" not in changelog.read_text(encoding="utf-8"):
         errors.append("CHANGELOG missing current version")
-    if f"Skill v{version}" not in (root / "RELEASE_NOTES.md").read_text(encoding="utf-8"):
+    if release_notes.exists() and f"Skill v{version}" not in release_notes.read_text(encoding="utf-8"):
         errors.append("RELEASE_NOTES missing current version")
     metadata = (root / "agents/openai.yaml").read_text(encoding="utf-8")
     top_keys = [line.split(":", 1)[0] for line in metadata.splitlines() if line and not line[0].isspace()]

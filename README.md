@@ -371,6 +371,14 @@ detailed-design + topology-generation
 compliance-check
 ```
 
+## v1.2.1 — Pricing and Quote Integrity Hotfix
+
+- Universal technical-fit gate for every downward budget revision
+- Strict rejection of TBD/invalid commercial costs and stale quotes
+- Supplier-level quote independence and complete server RFQ baseline checks
+- Validated risk reserve, Mandatory unknown handling and integer HCI nodes
+- Executable end-to-end workflow regressions for all three simulated projects
+
 ## v1.2.0 — Strict Quote, Capacity and Release Gates
 
 - Server RFQ validation and independent quote comparison
@@ -380,7 +388,7 @@ compliance-check
 
 ## v1.1.2 — Budget Revision Guardrails & Specification-First Pricing
 
-当前正式 Release 重点：
+v1.1.2 的历史发布重点：
 
 - 修复弱价格证据错误压低已有服务器/企业设备预算；
 - 人工精确当前报价可作为强价格证据；
@@ -390,7 +398,7 @@ compliance-check
 - 安装器支持 Git / copy / symlink 安全更新；
 - Codex / Claude Code / Copilot / Gemini CLI 跨平台兼容。
 
-`main` 当前还包含尚未打新 Release 的 decision-support 增强：场景模板、guided requirements、Mandatory constraint ranking 和 TCO。
+这些 decision-support、guided requirements、Mandatory constraint ranking 和 TCO 能力已包含在 v1.2.0 及后续版本中。
 
 详见 [`RELEASE_NOTES.md`](RELEASE_NOTES.md)。
 

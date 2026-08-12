@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.2.1 — 2026-08-12
+
+### Fixed
+
+- Downward budget revisions for fixed SKUs and commodity components now require explicit `PASS` technical fit and `eligible_for_pricing=true`, matching the documented universal gate.
+- Invalid or unresolved commercial costs such as `TBD`, negative values and non-numeric strings are excluded instead of silently becoming zero.
+- Server quote independence is based on normalized supplier identity, so multiple quote numbers from one supplier count as one source.
+- Server RFQs require a complete minimum configuration baseline, supplier/channel identity, deterministic as-of date and fresh, valid quotations.
+- Negative or excessive risk reserves are rejected; current price evidence receives a default 90-day freshness check.
+- Mandatory attribute markers such as `unknown` remain `CONDITIONAL`, and fractional HCI node counts are rejected.
+- The three simulated project regressions now execute the actual deterministic requirement, HCI, TCO and budget-revision commands.
+- README release-state wording now matches the published feature set.
+- GitHub Actions now use immutable Node 24-based `checkout` and `setup-python` releases, eliminating Node 20 deprecation warnings.
+
 ## v1.2.0 — 2026-08-12
 
 ### Added

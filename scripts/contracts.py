@@ -75,6 +75,13 @@ def require_float(
     return result
 
 
+def require_int(value: Any, field: str, *, minimum: int = 0, maximum: int | None = None) -> int:
+    result = require_float(value, field, minimum=float(minimum), maximum=float(maximum) if maximum is not None else None)
+    if not result.is_integer():
+        raise ValueError(f"{field} must be an integer")
+    return int(result)
+
+
 def require_enum(value: Any, field: str, allowed: Iterable[str]) -> str:
     allowed_set = {str(item) for item in allowed}
     result = str(value).strip()

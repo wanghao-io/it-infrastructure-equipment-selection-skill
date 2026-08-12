@@ -8,14 +8,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-from contracts import require_bool, require_float
+from contracts import require_bool, require_float, require_int
 
 DIMENSIONS = ("cpu_cores", "memory_gb", "usable_storage_tb", "storage_iops", "network_gbps")
 
 
 def calculate(data: dict[str, Any]) -> dict[str, Any]:
-    nodes = int(require_float(data.get("nodes"), "nodes", minimum=1))
-    failed_nodes = int(require_float(data.get("failed_nodes", 1), "failed_nodes", minimum=1))
+    nodes = require_int(data.get("nodes"), "nodes", minimum=1)
+    failed_nodes = require_int(data.get("failed_nodes", 1), "failed_nodes", minimum=1)
     if nodes < 3 or failed_nodes >= nodes:
         raise ValueError("HCI N+1 requires at least 3 nodes and fewer failed_nodes than nodes")
     per_node = data.get("per_node_capacity", {})

@@ -10,6 +10,7 @@ from statistics import median
 from typing import Any
 
 from validate_server_quote import validate_quote
+from contracts import require_float
 
 
 def compare(requirement: dict[str, Any], quotes: list[dict[str, Any]]) -> dict[str, Any]:
@@ -23,10 +24,10 @@ def compare(requirement: dict[str, Any], quotes: list[dict[str, Any]]) -> dict[s
 
     independent = {}
     for quote, result in eligible:
-        identity = quote.get("evidence_id") or quote.get("quote_id") or (
-            quote.get("supplier"), quote.get("sales_channel"), quote.get("source_date")
-        )
-        independent[str(identity)] = result
+        supplier_identity = " ".join(str(quote["supplier"]).strip().casefold().split())
+        previous = independent.get(supplier_identity)
+        if previous is None or float(result["normalized_comparable_cost"]) > float(previous["normalized_comparable_cost"]):
+            independent[supplier_identity] = result
     costs = sorted(float(row["normalized_comparable_cost"]) for row in independent.values())
     if len(costs) < 2:
         confidence = "Medium"
@@ -34,7 +35,7 @@ def compare(requirement: dict[str, Any], quotes: list[dict[str, Any]]) -> dict[s
     else:
         confidence = "High"
         action = "Use the range as the procurement control band; retain explicit contingency for delivery risk."
-    reserve_percent = float(requirement.get("risk_reserve_percent", 0))
+    reserve_percent = require_float(requirement.get("risk_reserve_percent", 0), "risk_reserve_percent", minimum=0, maximum=100)
     control_high = max(costs) * (1 + reserve_percent / 100)
     return {
         "status": "ready",
