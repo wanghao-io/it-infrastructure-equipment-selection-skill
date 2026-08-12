@@ -4,6 +4,8 @@ Use this reference when selecting real equipment, estimating budgets, validating
 
 For highly configurable enterprise equipment also load `references/exact-configuration-pricing.md` and `references/price-evidence.md`.
 
+For current/live prices, quotation-oriented BOMs, or "how much can I buy it for now?" requests, also load `references/live-price-research.md`.
+
 ## 1. Separate Evidence Types
 
 Do not use one source hierarchy for everything. Treat these as different evidence classes:
@@ -84,6 +86,7 @@ Capture exact configuration, tax, warranty/support, accessories, licenses, quote
 Examples:
 
 - enterprise procurement marketplace quotation;
+- exact fixed-SKU official/brand-store quotation;
 - current enterprise sales-channel quote with exact configuration.
 
 ### Tier 3 — Highly matched current quotation
@@ -106,11 +109,15 @@ Historical evidence is valuable, but if current exact-configuration quotations e
 
 Use current enterprise option/component costs to estimate a configured system when no exact quote exists. Clearly identify components that are estimated rather than quoted.
 
-### Tier 6 — Generic model-family listing
+### Tier 6 — Generic model-family / aggregator / price-history context
 
-Same chassis/model family with incomplete CPU/memory/storage/RAID/license/service scope.
+This includes:
 
-Useful only as weak context. It is not a procurement-level quote for a fully configured system.
+- same chassis/model family with incomplete CPU/memory/storage/RAID/license/service scope;
+- market-aggregator prices that have not been independently verified as exact configuration/SKU quotes;
+- price-history/deal-community evidence.
+
+Useful as context, sanity checking, or channel discovery. It is not automatically a procurement-level quote for a fully configured system.
 
 ### Tier 7 — Engineering estimate
 
@@ -135,7 +142,17 @@ Build a normalized key set:
 
 Do not start from a favorite model.
 
-### Step 2 — find candidate product families
+### Step 2 — classify the procurement object
+
+Before choosing price channels, classify each item as:
+
+- `configurable-enterprise` — server, storage, HCI, configured firewall, modular switch, project UPS, etc.;
+- `fixed-sku` — fixed switch/AP/display/Mini PC/fixed UPS/NAS SKU;
+- `commodity-component` — CPU, DIMM, SSD/HDD, optics, cable, accessory.
+
+This classification changes the price-search workflow. A configured server should not use the same evidence strategy as an SSD.
+
+### Step 3 — find candidate product families
 
 Search manufacturer domains first for technical fit and lifecycle.
 
@@ -149,7 +166,7 @@ site:<manufacturer-domain> <model> compatibility
 site:<manufacturer-domain> <model> EOL OR EOS OR lifecycle
 ```
 
-### Step 3 — verify the exact procurement configuration
+### Step 4 — verify the exact procurement configuration
 
 For configurable servers normally capture:
 
@@ -176,7 +193,7 @@ For network/security equipment capture:
 
 A model family is not a procurement configuration.
 
-### Step 4 — verify lifecycle and supportability
+### Step 5 — verify lifecycle and supportability
 
 Before selecting primary candidates check:
 
@@ -189,31 +206,55 @@ Before selecting primary candidates check:
 
 Avoid discontinued products as the primary choice unless the user explicitly requests legacy/used hardware.
 
-### Step 5 — seek exact current quotes first for configurable enterprise equipment
+### Step 6 — perform live price research when current price is requested
 
-For servers, storage, firewalls, HCI, modular switches and similar equipment, ask for or search a quote that matches the complete BOM.
+If live research/search tools are available, **current-price requests must use them**. Do not answer a current-price question from model memory, an old internal budget, or historical procurement evidence alone.
+
+Use `references/live-price-research.md` to choose channels by product class.
+
+For China-market research, channel examples may include:
+
+- manufacturer direct/official/authorized channels for configuration-level quotes;
+- JD/Tmall enterprise or official brand channels for fixed SKUs, components, or seller-confirmed configured quotes;
+- ZOL/market aggregators for spread/sanity checking and channel discovery;
+- price-history services for relatively standard SKUs/components;
+- government/public procurement for historical transaction context.
+
+These are not a permanent fixed authority ranking. Configuration match, quote mode, tax/warranty scope and current orderability determine whether a price can anchor the budget.
+
+If live research tools are unavailable, state that the current price cannot be verified and return only an estimate or a structured RFQ request.
+
+### Step 7 — seek exact current quotes first for configurable enterprise equipment
+
+For servers, storage, firewalls, HCI, modular switches and similar equipment, seek **2–3 current exact-configuration quotations** when practical.
 
 Record:
 
 - quote date;
 - source/channel;
 - exact configuration;
+- quote mode (human-configured/exact-config/exact-SKU/base listing);
 - tax status;
 - warranty/support;
 - included licenses/subscriptions;
 - included accessories;
 - implementation scope;
-- shipping if relevant.
+- shipping if relevant;
+- orderability/lead time where known.
 
 When two or more exact current quotes are available, their observed range becomes the primary current market range.
 
-### Step 6 — collect current market evidence
+A public e-commerce starting price is not a configured-server quote. Treat it as a lead and seek seller/customer-service confirmation of the full BOM.
 
-For commodity/semi-standard devices, collect 2–5 current sources where useful.
+### Step 8 — collect current market context
+
+For fixed or semi-standard devices, collect 2–5 current sources where useful.
 
 For highly configurable enterprise devices, quantity is less important than match quality. Two exact quotations are more useful than ten generic chassis listings.
 
-### Step 7 — collect historical transaction evidence
+Market aggregators, price-history tools and deal communities normally remain context sources unless the exact seller/SKU/quote has been independently verified.
+
+### Step 9 — collect historical transaction evidence
 
 Search official procurement records with model/category plus key configuration terms.
 
@@ -230,7 +271,7 @@ Capture:
 
 Reject a historical price as directly comparable when configuration or service scope differs materially.
 
-### Step 8 — score configuration match
+### Step 10 — score configuration match
 
 For configurable servers use the default match model in `references/exact-configuration-pricing.md` unless a better device-specific model is justified.
 
@@ -245,7 +286,7 @@ Default interpretation:
 
 Same chassis does not imply a high score.
 
-### Step 9 — normalize commercial scope
+### Step 11 — normalize commercial scope
 
 Normalize prices to:
 
@@ -268,11 +309,24 @@ Do not compare:
 - firewall appliance-only vs appliance + 3-year security subscription;
 - UPS main unit vs UPS + battery cabinet.
 
-### Step 10 — select the budget anchor by evidence priority
+### Step 12 — exclude misleading price signals from the anchor
+
+Do not let these become primary budget anchors:
+
+- starting/base-configuration prices;
+- unavailable/non-orderable offers;
+- incomplete configurations;
+- used/refurbished offers when the project requires new equipment;
+- quotes with materially incomplete tax/license/warranty/service scope;
+- low configuration-match prices.
+
+Keep the records visible with an exclusion reason rather than silently deleting them.
+
+### Step 13 — select the budget anchor by evidence priority
 
 If Tier 1 exact current quotes exist, use only Tier 1 quotes to form the primary quote range. Lower tiers remain context.
 
-If no Tier 1 evidence exists, move to the highest available tier and state the confidence/limitations.
+If no Tier 1 evidence exists, move to the highest available eligible tier and state the confidence/limitations.
 
 Do not calculate one average across all evidence tiers.
 
@@ -344,8 +398,8 @@ Action: obtain 2–3 exact configuration tax-included quotes
 
 For important selections provide:
 
-| Candidate | Technical fit | Lifecycle | Exact configuration | Match score | Price source/date | Normalized cost | Priority | Confidence |
-|---|---|---|---|---:|---|---:|---:|---|
+| Candidate | Product class | Technical fit | Lifecycle | Exact configuration | Match score | Price source/date | Normalized cost | Priority | Anchor eligible | Confidence |
+|---|---|---|---|---|---:|---|---:|---:|---|---|
 
 Then state:
 
@@ -365,6 +419,8 @@ Then state:
 - Government transaction prices may include tax, services, warranty and bundled scope; inspect before using them.
 - Retail/e-commerce listings may omit enterprise warranty, tax or options.
 - Distributor/customer-service quotes may be more realistic for configured enterprise servers, storage, firewalls and HCI than public list prices.
+- Aggregator prices are useful for market spread/sanity checks, but exact SKU/configuration and commercial scope still need verification.
+- Price-history tools are most useful for standard SKUs/components, not custom enterprise configurations.
 - Record the research date.
 - If evidence supports only a range, return a range.
 
@@ -374,12 +430,14 @@ Then state:
 
 Do not:
 
+- answer a current-price request from memory when live research is available;
 - search one marketplace and call that the market price;
 - use a reseller page as sole proof of critical technical specifications when official documentation exists;
 - compare different configurations by chassis/model name alone;
-- let a bare-chassis or low-storage price set the budget for a fully configured enterprise server;
+- let a bare-chassis, starting-price or low-storage price set the budget for a fully configured enterprise server;
 - average current exact quotes with old government procurement prices;
 - treat an old procurement transaction as a current quote;
+- use a fixed site ranking without considering product class and configuration match;
 - hide unknown warranty, tax, licensing, optics, RAID or service costs;
 - return a precise budget when evidence only supports a broad estimate;
 - assume HCI, Xinchuang, HA or other architectures without requirement evidence.
