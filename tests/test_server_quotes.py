@@ -50,6 +50,12 @@ class ServerQuoteTests(unittest.TestCase):
         self.assertEqual(result["independent_quote_count"], 1)
         self.assertEqual(result["confidence_level"], "Medium")
 
+    def test_supplier_identity_is_case_and_whitespace_normalized(self):
+        first = dict(self.case["quotes"][0], supplier=" Supplier A ")
+        second = dict(first, quote_id="Q-A-SECOND", supplier="supplier   a")
+        result = compare(self.case["requirement"], [first, second])
+        self.assertEqual(result["independent_quote_count"], 1)
+
     def test_negative_risk_reserve_is_rejected(self):
         requirement = dict(self.case["requirement"], risk_reserve_percent=-20)
         with self.assertRaisesRegex(ValueError, "risk_reserve_percent"):
@@ -67,6 +73,12 @@ class ServerQuoteTests(unittest.TestCase):
         result = validate_quote(self.case["requirement"], quote)
         self.assertFalse(result["eligible_for_pricing"])
         self.assertIn("supplier", result["missing_commercial_fields"])
+
+    def test_non_text_quote_identity_is_rejected(self):
+        quote = dict(self.case["quotes"][0], quote_id=12345, supplier=99, sales_channel=True)
+        result = validate_quote(self.case["requirement"], quote)
+        self.assertFalse(result["eligible_for_pricing"])
+        self.assertTrue({"quote_id", "supplier", "sales_channel"}.issubset(result["missing_commercial_fields"]))
 
     def test_incomplete_server_baseline_is_rejected(self):
         requirement = dict(self.case["requirement"], required_configuration={"cpu_cores": 24})

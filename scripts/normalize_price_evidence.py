@@ -86,10 +86,6 @@ COMMERCIAL_COST_FIELDS = (
 )
 
 
-def _number(value: Any) -> float:
-    return require_float(value, "number", minimum=0)
-
-
 def _clamp01(value: Any) -> float:
     return require_float(value, "configuration match", minimum=0, maximum=1)
 
@@ -459,7 +455,10 @@ def assess_budget_revision(
     anchor_count = int(anchor.get("anchor_count", 0))
 
     strong_for_downward_revision = priority in (1, 2) or (priority == 3 and anchor_count >= 2)
-    proposes_downward_revision = high < existing
+    # A range whose lower bound is below the current budget still authorizes a
+    # possible reduction.  Gate that case even when the upper bound overlaps
+    # or exceeds the existing amount.
+    proposes_downward_revision = low < existing
 
     if proposes_downward_revision:
         anchor_rows = [
