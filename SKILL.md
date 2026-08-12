@@ -122,23 +122,35 @@ For real equipment selection/budgeting use:
 
 - `references/procurement-research.md`
 - `references/price-evidence.md`
-- `scripts/normalize_price_evidence.py` when multiple price records need normalization.
+- `references/exact-configuration-pricing.md` for highly configurable enterprise equipment
+- `scripts/normalize_price_evidence.py` when multiple price records need normalization/ranking.
 
 Separate four questions:
 
 1. **Technical fit** — does the exact configuration meet the requirement?
 2. **Lifecycle and availability** — is it current/orderable/supportable?
-3. **Current market price** — what is a realistic purchasing range now?
-4. **Comparable transaction evidence** — what did sufficiently similar configurations actually transact for?
+3. **Current market price** — what is a realistic purchasing range now for the required configuration?
+4. **Comparable transaction evidence** — what did sufficiently similar configurations actually transact for historically?
 
 Key rules:
 
 - Prefer manufacturer product pages/datasheets/configurators/compatibility matrices for technical facts.
+- For **pricing**, configuration match and commercial scope outrank source prestige.
+- A current exact-configuration quote from manufacturer/direct/official-store/authorized channel is the strongest practical budget anchor when tax/support/accessories are understood.
+- Two or more exact current quotes define the primary current market range; do not average lower-priority historical or generic prices into that range.
+- One exact current quote is a primary anchor, but obtain a second quote before fixing a procurement control price when practical.
 - Use government procurement award/transaction records as historical comparable evidence, not live quotes.
-- Use authorized channels/enterprise procurement platforms as current market evidence where appropriate.
-- Compare exact configured cost including mandatory accessories, licenses, warranty/support, tax and required implementation.
+- Same chassis/model family does not mean same procurement configuration.
+- Compare configured cost including CPU/memory/storage/RAID/NIC/PSU/accessories/licenses/warranty/support/tax/implementation as applicable.
+- For highly configurable enterprise equipment without exact current quotations, output a range and mark it `Estimated` or `Needs confirmation`; do not present false precision.
 - Do not average unrelated prices.
-- If evidence supports only a range, output a range rather than false precision.
+
+Default server configuration-match guidance:
+
+- `>= 0.95` exact/effectively exact;
+- `0.85–0.949` highly comparable;
+- `0.70–0.849` partial comparison only;
+- `< 0.70` not a direct budget anchor.
 
 Evidence levels:
 
@@ -146,6 +158,14 @@ Evidence levels:
 - Market-verified
 - Comparable-transaction
 - Estimated
+- Needs confirmation
+
+Pricing qualifiers may include:
+
+- Market-verified / Exact-config
+- Market-verified / Highly-matched
+- Comparable-transaction
+- Estimated / Partial-config
 - Needs confirmation
 
 ## Project BOM
@@ -238,6 +258,7 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 - Separate verified specifications from assumptions and estimates.
 - Separate technical evidence from price evidence.
 - Compare exact configurations, not chassis/model family names.
+- Price evidence is selected by configuration match and evidence tier, not by naïvely averaging all observed prices.
 - Keep tender parameters vendor-neutral unless a restriction is justified.
 - Do not invent topology, licensing or safety details.
 - Surface single points of failure, exclusions, uncertainty and upgrade triggers.
