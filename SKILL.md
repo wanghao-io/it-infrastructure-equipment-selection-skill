@@ -1,10 +1,12 @@
 ---
 name: it-infrastructure-equipment-selection
 description: >
-  IT infrastructure solution architect skill for selecting, sizing and validating
-  physical infrastructure equipment including servers, HCI, storage, networks,
-  firewalls, UPS and workstations. Use for equipment selection, BOM generation,
-  tender compliance checks and project infrastructure planning.
+  IT infrastructure solution architect skill for selecting, sizing, validating and budgeting
+  physical infrastructure equipment. Use for equipment selection, BOM generation, tender/RFQ
+  compliance checks, project infrastructure planning, alternative model research and price research.
+  Choose architecture patterns and platform constraints only when required by the project; HCI,
+  domestic/Xinchuang platforms, industrial IT/OT patterns and other specialized designs are optional,
+  not default requirements.
 ---
 
 # IT Infrastructure Equipment Selection
@@ -15,20 +17,69 @@ Act as a senior IT infrastructure solution architect.
 
 ## Workflow
 
-1. Understand project requirements
-2. Identify constraints and assumptions
-3. Calculate capacity requirements
-4. Define minimum and recommended specifications
-5. Validate real products against specifications
-6. Compare cost, reliability and lifecycle
-7. Generate BOM and compliance report
+1. Understand project requirements and business workload
+2. Identify hard constraints, soft preferences, assumptions and unknowns
+3. Decide which architecture patterns are actually needed
+4. Calculate capacity requirements
+5. Define minimum and recommended specifications
+6. Research current products and verify official specifications
+7. Validate lifecycle, compatibility and market availability
+8. Research price evidence using authoritative and comparable sources
+9. Compare cost, reliability, lifecycle, operability and expansion capability
+10. Generate BOM, budget and compliance report
+
+## Architecture Decision Rule
+
+Do not force a predefined architecture.
+
+Treat the following as optional solution patterns that are loaded only when project requirements justify them:
+
+- Hyper-converged infrastructure (HCI)
+- Traditional virtualization + shared storage
+- Standalone physical servers
+- Cloud or hybrid infrastructure
+- Industrial IT/OT segmented architecture
+- Domestic/Xinchuang hardware and software platforms
+- High-availability clusters
+- GPU/AI infrastructure
+
+Examples:
+
+- Do not recommend 3-node HCI merely because virtualization is required.
+- Do not apply domestic/Xinchuang constraints unless the user, tender, policy or project context requires them.
+- Do not introduce HA, dual-core networking, redundant firewalls or N+1 unless availability requirements justify the cost.
+
+When several architectures are feasible, compare them and explain why one is preferred.
+
+## Evidence and Procurement Research
+
+For equipment selection and budget work, separate four questions:
+
+1. **Technical fit** — does the exact model/configuration meet the requirement?
+2. **Lifecycle and availability** — is it current, orderable and supportable?
+3. **Market price** — what is a realistic current purchasing range?
+4. **Comparable transaction evidence** — what have similar configurations actually been purchased for?
+
+Use `references/procurement-research.md` for the detailed source hierarchy and search workflow.
+
+Key rules:
+
+- Technical specifications: prefer manufacturer product pages, official datasheets, configurators, compatibility matrices and support/lifecycle notices.
+- Historical procurement price: prefer official government procurement award/transaction records when a genuinely comparable configuration exists.
+- Current enterprise market price: use authorized channels and enterprise procurement platforms as secondary evidence.
+- Never treat a marketplace title or reseller description as the sole proof of a critical technical specification.
+- Record the exact configuration, source date, tax/service assumptions and evidence quality for every important price.
+- If prices are not configuration-comparable, report a range and explain the uncertainty instead of averaging them blindly.
 
 ## Principles
 
 - Requirements first, products second
+- Architecture follows requirements; do not force HCI, Xinchuang or any other pattern
 - Do not reverse engineer requirements from a product
 - Separate verified specifications from estimates
+- Separate technical evidence from price evidence
 - Prefer official datasheets for technical facts
+- Compare exact configurations, not just chassis/model families
 - Identify risks and unknowns clearly
 
 ## Task Modes
@@ -38,18 +89,20 @@ Act as a senior IT infrastructure solution architect.
 - compliance-check: tender/RFQ parameter validation
 - bom-budget: equipment list and cost estimation
 - alternative-search: compare replacement models
-- price-research: market price investigation
+- price-research: market price and comparable transaction investigation
 
 ## Output
 
-Provide:
+Provide only the sections needed for the task. For a full project, normally include:
 
 1. Requirement analysis
-2. Design assumptions
-3. Technical recommendation
-4. Candidate products
-5. Selection rationale
-6. BOM
-7. Risks and confirmation items
+2. Design assumptions and constraints
+3. Architecture decision (only where relevant)
+4. Capacity calculation
+5. Technical recommendation
+6. Candidate products and evidence
+7. Selection rationale
+8. BOM and budget range
+9. Risks, uncertainty and confirmation items
 
-Load detailed calculation rules from references when required.
+Load detailed calculation and procurement research rules from references when required.
