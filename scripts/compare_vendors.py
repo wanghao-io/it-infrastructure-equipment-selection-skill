@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generate a weighted vendor/model comparison matrix from JSON input.
+"""Generate a requirement-gated vendor/model comparison matrix from JSON input.
 
-This tool does not contain vendor rankings. It scores project-specific candidates
-using caller-supplied criteria, evidence and hard-gate results.
+The tool has no permanent vendor rankings. Mandatory constraints are evaluated
+first; only then are preference criteria scored. A failed mandatory requirement
+can never be rescued by a weighted score.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 VALID_GATE = {"PASS", "CONDITIONAL", "FAIL"}
+GATE_ORDER = {"PASS": 0, "CONDITIONAL": 1, "FAIL": 2}
 
 
 def load_json(path: str) -> dict[str, Any]:
@@ -21,12 +23,124 @@ def load_json(path: str) -> dict[str, Any]:
 
 
 def overall_gate(gates: list[dict[str, Any]]) -> str:
+    if not gates:
+        return "CONDITIONAL"
     statuses = {str(g.get("status", "CONDITIONAL")).upper() for g in gates}
     if "FAIL" in statuses:
         return "FAIL"
     if "CONDITIONAL" in statuses:
         return "CONDITIONAL"
     return "PASS"
+
+
+def compare_value(actual: Any, operator: str, expected: Any) -> bool:
+    op = operator.lower()
+    if op == "eq":
+        return actual == expected
+    if op == "ne":
+        return actual != expected
+    if op == "min":
+        return float(actual) >= float(expected)
+    if op == "max":
+        return float(actual) <= float(expected)
+    if op == "in":
+        return actual in expected
+    if op == "contains":
+        return expected in actual
+    if op == "truthy":
+        return bool(actual)
+    if op == "falsy":
+        return not bool(actual)
+    raise ValueError(f"Unsupported constraint operator: {operator}")
+
+
+def constraint_gates(
+    constraints: list[dict[str, Any]],
+    attributes: dict[str, Any],
+) -> list[dict[str, Any]]:
+    gates: list[dict[str, Any]] = []
+    for rule in constraints:
+        if str(rule.get("severity", "mandatory")).lower() != "mandatory":
+            continue
+        key = str(rule.get("key", ""))
+        label = rule.get("name") or rule.get("requirement") or key or "Unnamed requirement"
+        operator = str(rule.get("operator", "eq"))
+        expected = rule.get("value")
+        if key not in attributes or attributes.get(key) in (None, "", "TBD"):
+            gates.append(
+                {
+                    "status": "CONDITIONAL",
+                    "requirement": label,
+                    "note": f"Missing candidate attribute '{key}'; confirmation required.",
+                    "source": "constraint-engine",
+                }
+            )
+            continue
+        actual = attributes[key]
+        try:
+            passed = compare_value(actual, operator, expected)
+        except (TypeError, ValueError) as exc:
+            gates.append(
+                {
+                    "status": "CONDITIONAL",
+                    "requirement": label,
+                    "note": f"Could not evaluate {key}: {exc}",
+                    "source": "constraint-engine",
+                }
+            )
+            continue
+        gates.append(
+            {
+                "status": "PASS" if passed else "FAIL",
+                "requirement": label,
+                "note": f"{key}={actual!r}; rule {operator} {expected!r}",
+                "source": "constraint-engine",
+            }
+        )
+    return gates
+
+
+def score_candidates(data: dict[str, Any]) -> list[dict[str, Any]]:
+    criteria = data.get("criteria", [])
+    candidates = data.get("candidates", [])
+    constraints = data.get("constraints", [])
+    if not criteria or not candidates:
+        raise ValueError("Input must contain non-empty 'criteria' and 'candidates'.")
+
+    total_weight = sum(float(c.get("weight", 0)) for c in criteria)
+    if total_weight <= 0:
+        raise ValueError("Total criterion weight must be greater than zero.")
+
+    rows: list[dict[str, Any]] = []
+    for candidate in candidates:
+        name = candidate.get("name", "Unnamed")
+        weighted_total = 0.0
+        for criterion in criteria:
+            key = criterion.get("key")
+            weight = float(criterion.get("weight", 0)) / total_weight
+            score_obj = candidate.get("scores", {}).get(key, {})
+            score = float(score_obj.get("score", 0))
+            if not 0 <= score <= 10:
+                raise ValueError(f"{name}: score for '{key}' must be between 0 and 10")
+            weighted_total += score * weight
+
+        gates = list(candidate.get("gates", []))
+        if constraints:
+            gates.extend(constraint_gates(constraints, candidate.get("attributes", {})))
+        gate = overall_gate(gates)
+
+        rows.append(
+            {
+                "name": name,
+                "gate": gate,
+                "score": weighted_total,
+                "gates": gates,
+                "candidate": candidate,
+            }
+        )
+
+    rows.sort(key=lambda item: (GATE_ORDER[item["gate"]], -item["score"], item["name"]))
+    return rows
 
 
 def build_report(data: dict[str, Any]) -> str:
@@ -39,15 +153,18 @@ def build_report(data: dict[str, Any]) -> str:
     if total_weight <= 0:
         raise ValueError("Total criterion weight must be greater than zero.")
 
+    ranked = score_candidates(data)
+    row_by_name = {item["name"]: item for item in ranked}
+
     lines: list[str] = ["# Vendor / Model Comparison", ""]
-    lines.append("Weighted scores are project-specific and do not represent permanent vendor rankings.")
+    lines.append(
+        "Mandatory constraints are evaluated before preference scoring. Scores are project-specific, not permanent vendor rankings."
+    )
     lines.append("")
 
     headers = ["Criterion", "Weight"] + [c.get("name", "Unnamed") for c in candidates]
     lines.append("| " + " | ".join(headers) + " |")
     lines.append("|" + "|".join(["---"] * len(headers)) + "|")
-
-    weighted_totals: dict[str, float] = {c.get("name", "Unnamed"): 0.0 for c in candidates}
 
     for criterion in criteria:
         key = criterion.get("key")
@@ -56,45 +173,54 @@ def build_report(data: dict[str, Any]) -> str:
         norm_weight = weight / total_weight
         row = [label, f"{norm_weight * 100:.1f}%"]
         for candidate in candidates:
-            name = candidate.get("name", "Unnamed")
             score_obj = candidate.get("scores", {}).get(key, {})
             score = float(score_obj.get("score", 0))
             evidence = score_obj.get("evidence", "Needs confirmation")
-            weighted_totals[name] += score * norm_weight
             row.append(f"{score:.1f}/10 ({evidence})")
         lines.append("| " + " | ".join(row) + " |")
 
-    lines.extend(["", "## Gate Results", ""])
+    lines.extend(["", "## Mandatory Gate Results", ""])
     for candidate in candidates:
         name = candidate.get("name", "Unnamed")
-        gates = candidate.get("gates", [])
-        gate = overall_gate(gates)
-        lines.append(f"### {name} — {gate}")
-        if not gates:
-            lines.append("- No hard gates supplied; treat result as CONDITIONAL until mandatory requirements are checked.")
-        for item in gates:
+        info = row_by_name[name]
+        lines.append(f"### {name} — {info['gate']}")
+        if not info["gates"]:
+            lines.append("- CONDITIONAL: No mandatory gates supplied; mandatory requirements still need confirmation.")
+        for item in info["gates"]:
             status = str(item.get("status", "CONDITIONAL")).upper()
             if status not in VALID_GATE:
                 status = "CONDITIONAL"
-            lines.append(f"- {status}: {item.get('requirement', 'Unnamed requirement')} — {item.get('note', '')}".rstrip())
+            lines.append(
+                f"- {status}: {item.get('requirement', 'Unnamed requirement')} — {item.get('note', '')}".rstrip()
+            )
         lines.append("")
 
-    lines.extend(["## Weighted Score", ""])
-    lines.append("| Candidate | Gate | Score / 10 |")
-    lines.append("|---|---|---:|")
-    ranked: list[tuple[str, str, float]] = []
-    for candidate in candidates:
-        name = candidate.get("name", "Unnamed")
-        gate = overall_gate(candidate.get("gates", [])) if candidate.get("gates") else "CONDITIONAL"
-        ranked.append((name, gate, weighted_totals[name]))
-    ranked.sort(key=lambda x: (x[1] == "FAIL", -x[2]))
-    for name, gate, score in ranked:
-        lines.append(f"| {name} | {gate} | {score:.2f} |")
+    lines.extend(["## Recommendation Order", ""])
+    lines.append("| Rank | Candidate | Gate | Preference score / 10 | Decision |")
+    lines.append("|---:|---|---|---:|---|")
+    rank = 0
+    for item in ranked:
+        if item["gate"] == "PASS":
+            rank += 1
+            decision = "Eligible; rank by preference score after mandatory fit."
+            rank_text = str(rank)
+        elif item["gate"] == "CONDITIONAL":
+            decision = "Not yet eligible for final recommendation; resolve missing mandatory evidence."
+            rank_text = "—"
+        else:
+            decision = "Excluded by mandatory requirement."
+            rank_text = "—"
+        lines.append(
+            f"| {rank_text} | {item['name']} | {item['gate']} | {item['score']:.2f} | {decision} |"
+        )
 
-    lines.extend([
-        "",
-        "> A weighted score never overrides a failed mandatory requirement. Verify exact configuration, lifecycle, licensing, support and price evidence before procurement.",
-    ])
+    lines.extend(
+        [
+            "",
+            "> PASS candidates outrank CONDITIONAL candidates regardless of preference score. "
+            "FAIL candidates are excluded. Weighted scoring never overrides a failed or unresolved mandatory requirement.",
+        ]
+    )
     return "\n".join(lines)
 
 
