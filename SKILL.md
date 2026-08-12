@@ -169,6 +169,7 @@ Key rules:
 - Prefer manufacturer product pages/datasheets/configurators/compatibility matrices for technical facts.
 - For **pricing**, configuration match and commercial scope outrank source prestige.
 - A current exact-configuration quote from manufacturer/direct/official-store/authorized channel is the strongest practical budget anchor when tax/support/accessories are understood.
+- User-provided or project-saved current human quotations are valid evidence even when they have no public URL, provided channel, date, configuration match and commercial scope are captured.
 - Two or more exact current quotes define the primary current market range; do not average lower-priority historical or generic prices into that range.
 - One exact current quote is a primary anchor, but obtain a second quote before fixing a procurement control price when practical.
 - For configurable enterprise equipment, public marketplace starting/base prices are leads, not configured-system prices; obtain or verify the full configuration quote.
@@ -181,6 +182,43 @@ Key rules:
 - Exclude starting/base prices, unavailable offers, low-match configurations, incomplete commercial scope, and disallowed used/refurbished offers from the primary anchor; keep them visible with an exclusion reason.
 - For highly configurable enterprise equipment without exact current quotations, output a range and mark it `Estimated` or `Needs confirmation`; do not present false precision.
 - Do not average unrelated prices.
+
+### Mandatory existing-budget revision workflow
+
+This workflow is **mandatory** whenever the user asks to update, refresh, reprice, revise or optimize prices in an existing BOM, CSV, XLSX or budget file. It applies even when the user gives only a short instruction such as “更新一下价格”.
+
+1. Read the source artifact first and preserve each existing line-item unit price as the **revision baseline**. A previous budget is not automatically current-price evidence, but it must not be silently overwritten by weaker evidence.
+2. Before broad web research, inspect accessible project evidence for current quotations: the source file, adjacent/previous budget versions, quote records, notes, screenshots, user-provided figures and prior project artifacts. Do not discard a human quotation merely because it has no public URL.
+3. For every `configurable-enterprise` item, load `references/exact-configuration-pricing.md` and `references/live-price-research.md` before deciding a revised price.
+4. If a proposed revision would **lower** an existing `configurable-enterprise` unit price, create structured price-evidence records and run the deterministic guard:
+
+```bash
+python scripts/normalize_price_evidence.py <evidence.json> \
+  --summary \
+  --existing-budget <old-unit-price> \
+  --product-class configurable-enterprise
+```
+
+5. Apply a lower price only when `budget_revision.decision` is `revise-to-current-anchor`. If the result is `hold-existing-provisional`, keep the old unit price, mark it `Needs confirmation`, and show weaker prices only as excluded/context evidence.
+6. The following **cannot by themselves justify lowering** an existing configurable-enterprise budget: `Partial-config`, generic/model-family listings, market aggregators such as ZOL/PConline-style context pages, starting/base prices, historical transactions, component models, and engineering estimates.
+7. One Tier-3 highly matched current quote is not enough by itself to lower an existing configurable-enterprise budget. Require at least one exact-current Tier-1/2 quote, or two independent Tier-3 highly matched current quotes.
+8. Never derive a new lower “control price” by taking a partial public configuration and adding/subtracting an engineering adjustment. `Partial-config + configuration-difference estimate` is context only, not a downward budget anchor.
+9. If strong current evidence is **higher** than the existing budget, revise upward or report the verified range; the guard is not a reason to preserve an obviously under-budgeted amount.
+10. Recalculate line totals, contingency and project totals only **after** every configurable-enterprise line passes this revision gate.
+11. In the final response, explicitly list every configurable-enterprise line whose price changed, its old price, new price/range, evidence tier and revision decision. If none passed the gate, say that no such line was lowered.
+
+A failure example that must be rejected:
+
+```text
+Existing configured-server budget: CNY 92,000
+Public same-family partial config: CNY 47,000
+Public low config: CNY 16,600
+Engineering adjusted estimate: CNY 60,000
+Decision: HOLD existing CNY 92,000 provisionally; Needs confirmation
+Reason: weak/partial public evidence cannot justify a downward revision
+```
+
+If two current exact configuration quotes of CNY 89,000 and CNY 91,500 are available instead, they become the primary current range and lower generic listings remain context only.
 
 Default server configuration-match guidance:
 
@@ -290,6 +328,7 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 - project-design
 - compliance-check
 - bom-budget
+- budget-revision
 - alternative-search
 - price-research
 - vendor-compare
@@ -308,6 +347,7 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 - Compare exact configurations, not chassis/model family names.
 - Price evidence is selected by configuration match, product class and evidence tier, not by naïvely averaging all observed prices.
 - Current-price requests use live research when available.
+- Existing-budget downward revisions for configurable enterprise equipment must pass the deterministic price-evidence guard before the old price is changed.
 - Keep tender parameters vendor-neutral unless a restriction is justified.
 - Do not invent topology, licensing or safety details.
 - Surface single points of failure, exclusions, uncertainty and upgrade triggers.
