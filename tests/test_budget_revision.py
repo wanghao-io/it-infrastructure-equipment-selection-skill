@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from normalize_price_evidence import assess_budget_revision, select_budget_anchor  # noqa: E402
+
+
+SERVER_CONFIG = "2U; 1x4410Y; 128GB; 2x960GB SSD; 2x1.92TB SSD; 4x4TB HDD; RAID cache/PLP; dual PSU"
+
+
+class BudgetRevisionGuardrailTests(unittest.TestCase):
+    def test_partial_public_context_cannot_lower_existing_server_budget(self) -> None:
+        items = [
+            {
+                "candidate": "same-family-public-config-A",
+                "product_class": "configurable-enterprise",
+                "configuration": "same chassis; dual CPU; 64GB; partial SSD configuration",
+                "source_type": "market-aggregator",
+                "source_date": "2026-08-12",
+                "quote_current": True,
+                "comparable": True,
+                "configuration_match_score": 0.74,
+                "price": 47000,
+                "quote_mode": "generic-listing",
+            },
+            {
+                "candidate": "same-family-public-config-B",
+                "product_class": "configurable-enterprise",
+                "configuration": "same chassis; single CPU; 32GB; 4TB storage",
+                "source_type": "generic-listing",
+                "source_date": "2026-08-12",
+                "quote_current": True,
+                "comparable": True,
+                "configuration_match_score": 0.71,
+                "price": 16600,
+            },
+            {
+                "candidate": "configuration-difference-estimate",
+                "product_class": "configurable-enterprise",
+                "configuration": SERVER_CONFIG,
+                "source_type": "engineering-estimate",
+                "source_date": "2026-08-12",
+                "quote_current": False,
+                "comparable": True,
+                "configuration_match_score": 1.0,
+                "price": 60000,
+            },
+        ]
+
+        revision = assess_budget_revision(65000, items)
+        self.assertEqual(revision["decision"], "hold-existing-provisional")
+        self.assertEqual(revision["recommended_budget_low"], 65000.0)
+        self.assertEqual(revision["recommended_budget_high"], 65000.0)
+        self.assertEqual(revision["confidence"], "Needs confirmation")
+        self.assertIn("cannot justify lowering", revision["reason"])
+
+    def test_user_supplied_exact_quotes_are_tier_one_even_without_public_url(self) -> None:
+        items = [
+            {
+                "candidate": "Lenovo human quote",
+                "product_class": "configurable-enterprise",
+                "configuration": SERVER_CONFIG,
+                "source_type": "user-provided-current-quote",
+                "source_date": "2026-08-12",
+                "quote_current": True,
+                "comparable": True,
+                "exact_configuration_match": True,
+                "price": 89000,
+                "orderability_confirmed": True,
+                "price_scope_complete": True,
+            },
+            {
+                "candidate": "H3C human quote",
+                "product_class": "configurable-enterprise",
+                "configuration": SERVER_CONFIG,
+                "source_type": "project-saved-current-quote",
+                "source_date": "2026-08-12",
+                "quote_current": True,
+                "comparable": True,
+                "exact_configuration_match": True,
+                "price": 91500,
+                "orderability_confirmed": True,
+                "price_scope_complete": True,
+            },
+            {
+                "candidate": "generic web listing",
+                "product_class": "configurable-enterprise",
+                "configuration": "same chassis, incomplete configuration",
+                "source_type": "market-aggregator",
+                "source_date": "2026-08-12",
+                "quote_current": True,
+                "comparable": True,
+                "configuration_match_score": 0.72,
+                "price": 46000,
+            },
+        ]
+
+        anchor = select_budget_anchor(items)
+        self.assertEqual(anchor["preferred_evidence_priority"], 1)
+        self.assertEqual(anchor["recommended_budget_low"], 89000.0)
+        self.assertEqual(anchor["recommended_budget_high"], 91500.0)
+        self.assertEqual(anchor["confidence"], "Market-verified / Exact-config")
+
+        revision = assess_budget_revision(65000, items)
+        self.assertEqual(revision["decision"], "revise-to-current-anchor")
+        self.assertEqual(revision["recommended_budget_low"], 89000.0)
+        self.assertEqual(revision["recommended_budget_high"], 91500.0)
+
+    def test_one_highly_matched_quote_is_not_enough_to_lower_existing_budget(self) -> None:
+        items = [
+            {
+                "candidate": "one highly matched quote",
+                "product_class": "configurable-enterprise",
+                "configuration": SERVER_CONFIG,
+                "source_type": "enterprise-marketplace-quote",
+                "source_date": "2026-08-12",
+                "quote_current": True,
+                "comparable": True,
+                "configuration_match_score": 0.90,
+                "price": 59000,
+            }
+        ]
+
+        revision = assess_budget_revision(65000, items)
+        self.assertEqual(revision["decision"], "hold-existing-provisional")
+        self.assertEqual(revision["recommended_budget_low"], 65000.0)
+        self.assertEqual(revision["recommended_budget_high"], 65000.0)
+
+
+if __name__ == "__main__":
+    unittest.main()
