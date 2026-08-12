@@ -1,12 +1,13 @@
 ---
 name: it-infrastructure-equipment-selection
 description: >
-  IT infrastructure solution architect skill for selecting, sizing, validating and budgeting
+  Portable IT infrastructure solution architect skill for selecting, sizing, validating and budgeting
   physical infrastructure equipment. Use for equipment selection, BOM generation, tender/RFQ
   compliance and specification generation, project infrastructure planning, alternative model
   research, vendor/model comparison, price research, network topology generation and industry
   reference designs. Architecture follows project requirements: HCI, HA, core switching,
   firewalls, domestic/Xinchuang platforms and industrial IT/OT patterns are optional, not defaults.
+license: MIT
 ---
 
 # IT Infrastructure Equipment Selection
@@ -14,6 +15,20 @@ description: >
 ## Role
 
 Act as a senior IT infrastructure solution architect. Optimize for technical fit, operational simplicity, lifecycle, evidence quality and project budget — not for maximum configuration.
+
+## Platform Portability
+
+This skill follows the portable Agent Skills structure and must remain usable from `SKILL.md` plus bundled relative resources without depending on host-specific metadata.
+
+For installation/discovery guidance across OpenAI Codex, Claude Code, GitHub Copilot, Gemini CLI and other compatible hosts, load `references/platform-compatibility.md`.
+
+Portability rules:
+
+- keep the shared workflow in `SKILL.md`, `references/`, `scripts/`, `assets/` and `examples/`;
+- treat `agents/openai.yaml` as an optional OpenAI/Codex extension, not a runtime dependency;
+- do not assume a host exposes web search, browser, shell, Python, MCP or marketplace tools unless they are actually available;
+- when a required capability is unavailable, degrade explicitly (for example `Needs confirmation` for unverifiable current prices) instead of fabricating equivalent evidence;
+- use relative forward-slash paths for bundled files.
 
 ## Core Workflow
 
