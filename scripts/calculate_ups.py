@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""UPS power and short-runtime sizing helper.
+"""UPS sizing and candidate technical-fit helper.
 
-Runtime output is an engineering target only. Actual battery runtime must be
-validated against the selected UPS manufacturer's runtime curve.
+Pricing must follow the validated technical requirement. A cheaper UPS candidate
+is not eligible for budget comparison merely because its nominal VA looks close.
+Actual battery runtime must still be validated against the selected UPS
+manufacturer's runtime curve.
 """
 
 from __future__ import annotations
@@ -10,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+from typing import Any
 
 
 def calculate(
@@ -60,6 +63,72 @@ def calculate(
     }
 
 
+def assess_candidate(
+    load_w: float,
+    candidate_output_w: float,
+    candidate_va: float,
+    *,
+    power_factor: float = 0.90,
+    capacity_margin: float = 1.30,
+    runtime_minutes: float = 10.0,
+    inverter_efficiency: float = 0.85,
+    runtime_curve_verified: bool = False,
+    graceful_shutdown_required: bool = True,
+    shutdown_interface_verified: bool = False,
+) -> dict[str, Any]:
+    """Determine whether a UPS candidate is technically eligible for pricing.
+
+    The result deliberately separates nominal capacity from runtime and shutdown
+    integration. A candidate that fails any mandatory requirement must not be
+    used as a cheaper price anchor for the project BOM.
+    """
+    if candidate_output_w <= 0:
+        raise ValueError("candidate_output_w must be > 0")
+    if candidate_va <= 0:
+        raise ValueError("candidate_va must be > 0")
+
+    sizing = calculate(
+        load_w,
+        power_factor,
+        capacity_margin,
+        runtime_minutes,
+        inverter_efficiency,
+    )
+
+    output_w_ok = candidate_output_w >= float(sizing["minimum_output_w_with_margin"])
+    va_ok = candidate_va >= float(sizing["minimum_va_with_margin"])
+    runtime_ok = runtime_minutes <= 0 or runtime_curve_verified
+    shutdown_ok = (not graceful_shutdown_required) or shutdown_interface_verified
+
+    reasons: list[str] = []
+    if not output_w_ok:
+        reasons.append("candidate-output-W-below-required-margin")
+    if not va_ok:
+        reasons.append("candidate-VA-below-required-margin")
+    if not runtime_ok:
+        reasons.append("runtime-curve-not-verified-at-protected-load")
+    if not shutdown_ok:
+        reasons.append("graceful-shutdown-interface-not-verified")
+
+    eligible = output_w_ok and va_ok and runtime_ok and shutdown_ok
+    return {
+        "status": "eligible-for-pricing" if eligible else "not-eligible-for-pricing",
+        "eligible_for_pricing": eligible,
+        "candidate_output_w": round(candidate_output_w, 1),
+        "candidate_va": round(candidate_va, 1),
+        "capacity_checks": {
+            "output_w_ok": output_w_ok,
+            "va_ok": va_ok,
+        },
+        "runtime_curve_verified": runtime_curve_verified,
+        "graceful_shutdown_required": graceful_shutdown_required,
+        "shutdown_interface_verified": shutdown_interface_verified,
+        "reasons": reasons,
+        "sizing": sizing,
+        "rule": "Validate technical fit before comparing price; a cheaper undersized or unverified UPS cannot redefine the project requirement.",
+    }
+
+
 def ups_rating(load_kw: float, margin: float = 1.3) -> float:
     """Backward-compatible W/kW margin helper."""
     if load_kw <= 0 or margin < 1:
@@ -68,21 +137,57 @@ def ups_rating(load_kw: float, margin: float = 1.3) -> float:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Estimate UPS W/VA target and short-runtime energy requirement")
+    parser = argparse.ArgumentParser(description="Estimate UPS W/VA target and optionally validate a candidate before pricing")
     parser.add_argument("load_w", type=float)
     parser.add_argument("--power-factor", type=float, default=0.90)
     parser.add_argument("--margin", type=float, default=1.30)
     parser.add_argument("--runtime-minutes", type=float, default=10.0)
     parser.add_argument("--efficiency", type=float, default=0.85)
+    parser.add_argument("--candidate-w", type=float, help="Candidate UPS real output rating in W")
+    parser.add_argument("--candidate-va", type=float, help="Candidate UPS apparent-power rating in VA")
+    parser.add_argument(
+        "--runtime-curve-verified",
+        action="store_true",
+        help="Manufacturer runtime data confirms the target runtime at the protected load",
+    )
+    parser.add_argument(
+        "--shutdown-interface-verified",
+        action="store_true",
+        help="Required graceful-shutdown interface/software compatibility is confirmed",
+    )
+    parser.add_argument(
+        "--no-graceful-shutdown-required",
+        action="store_true",
+        help="The project does not require UPS-triggered graceful shutdown",
+    )
     args = parser.parse_args()
 
-    print(json.dumps(calculate(
-        args.load_w,
-        args.power_factor,
-        args.margin,
-        args.runtime_minutes,
-        args.efficiency,
-    ), ensure_ascii=False, indent=2))
+    if (args.candidate_w is None) != (args.candidate_va is None):
+        parser.error("--candidate-w and --candidate-va must be supplied together")
+
+    if args.candidate_w is not None and args.candidate_va is not None:
+        result: Any = assess_candidate(
+            args.load_w,
+            args.candidate_w,
+            args.candidate_va,
+            power_factor=args.power_factor,
+            capacity_margin=args.margin,
+            runtime_minutes=args.runtime_minutes,
+            inverter_efficiency=args.efficiency,
+            runtime_curve_verified=args.runtime_curve_verified,
+            graceful_shutdown_required=not args.no_graceful_shutdown_required,
+            shutdown_interface_verified=args.shutdown_interface_verified,
+        )
+    else:
+        result = calculate(
+            args.load_w,
+            args.power_factor,
+            args.margin,
+            args.runtime_minutes,
+            args.efficiency,
+        )
+
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
