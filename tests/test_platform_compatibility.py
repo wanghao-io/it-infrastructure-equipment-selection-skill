@@ -103,6 +103,7 @@ class InstallationPathTests(unittest.TestCase):
 
             self.assertEqual(installed, destination)
             self.assertTrue((destination / "SKILL.md").is_file())
+            self.assertEqual((destination / "VERSION").read_text(encoding="utf-8").strip(), "1.2.1")
             self.assertTrue((destination / "references").is_dir())
             self.assertTrue((destination / "scripts").is_dir())
             self.assertTrue((destination / "assets").is_dir())

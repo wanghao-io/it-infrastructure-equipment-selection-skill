@@ -325,6 +325,8 @@ python3 scripts/compare_server_quotes.py assets/server-rfq-example.json --pretty
 
 A server quote can enter the budget anchor only when its technical-fit and commercial-completeness gates both pass. Require explicit CPU, memory, storage/RAID, NIC, redundant power, warranty, licenses, accessories, tax, freight, implementation, validity and orderability scope. Reject mixed currencies, expired quotes and duplicate evidence. Two independent exact-configuration quotes define the preferred control range; a partial web listing cannot lower the existing budget.
 
+Treat independence as supplier independence, not quotation-number independence. Multiple quote IDs from the same supplier count as one source. Require a deterministic project `as_of_date`; a quote marked current is still excluded when its source date is older than the allowed freshness window (90 days by default). Risk reserve must be explicit, non-negative and no more than 100%.
+
 ## TCO Analysis
 
 When multiple technically eligible alternatives differ materially in acquisition price, power, support, licenses, facility cost or implementation cost, load `references/tco.md` and use `scripts/calculate_tco.py`.

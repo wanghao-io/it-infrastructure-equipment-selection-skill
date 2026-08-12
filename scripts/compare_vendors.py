@@ -14,6 +14,8 @@ import math
 from pathlib import Path
 from typing import Any
 
+from contracts import is_unresolved
+
 VALID_GATE = {"PASS", "CONDITIONAL", "FAIL"}
 GATE_ORDER = {"PASS": 0, "CONDITIONAL": 1, "FAIL": 2}
 
@@ -73,7 +75,7 @@ def constraint_gates(
         label = rule.get("name") or rule.get("requirement") or key or "Unnamed requirement"
         operator = str(rule.get("operator", "eq"))
         expected = rule.get("value")
-        if key not in attributes or attributes.get(key) in (None, "", "TBD"):
+        if key not in attributes or is_unresolved(attributes.get(key)):
             gates.append(
                 {
                     "status": "CONDITIONAL",

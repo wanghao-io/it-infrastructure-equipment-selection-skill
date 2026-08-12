@@ -35,6 +35,16 @@ class HciFailoverTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "JSON boolean"):
             calculate(self.case)
 
+    def test_fractional_node_count_is_rejected(self):
+        self.case["nodes"] = 4.9
+        with self.assertRaisesRegex(ValueError, "integer"):
+            calculate(self.case)
+
+    def test_legacy_wrapper_is_covered(self):
+        from calculate_hci_failover import check_n_plus_one
+        self.assertTrue(check_n_plus_one(4, 100, 512))
+        self.assertFalse(check_n_plus_one(2, 100, 512))
+
 
 if __name__ == "__main__":
     unittest.main()

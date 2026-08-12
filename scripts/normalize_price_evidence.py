@@ -19,7 +19,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
-from contracts import require_bool, require_currency, require_iso_date
+from contracts import is_unresolved, require_bool, require_currency, require_float, require_iso_date
 
 
 DEFAULT_MATCH_WEIGHTS: Dict[str, float] = {
@@ -87,30 +87,38 @@ COMMERCIAL_COST_FIELDS = (
 
 
 def _number(value: Any) -> float:
-    if value is True:
-        return 1.0
-    if value is False or value is None:
-        return 0.0
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return 0.0
+    return require_float(value, "number", minimum=0)
 
 
 def _clamp01(value: Any) -> float:
-    return max(0.0, min(1.0, _number(value)))
+    return require_float(value, "configuration match", minimum=0, maximum=1)
 
 
 def normalized_cost(item: Mapping[str, Any]) -> float:
     """Return project-comparable cost using all disclosed commercial scope."""
-    base = _number(item.get("hardware_price", item.get("price", 0)))
-    accessories = _number(item.get("mandatory_accessories", 0))
-    licenses = _number(item.get("required_licenses", 0))
-    support = _number(item.get("warranty_support", 0))
-    implementation = _number(item.get("required_implementation", 0))
-    tax = _number(item.get("tax_amount", 0))
-    shipping = _number(item.get("shipping", 0))
-    return base + accessories + licenses + support + implementation + tax + shipping
+    base_value = item.get("hardware_price", item.get("price"))
+    base = require_float(base_value, "hardware_price/price", minimum=0)
+    total = base
+    for field in COMMERCIAL_COST_FIELDS:
+        value = item.get(field, 0)
+        total += require_float(value, field, minimum=0)
+    return total
+
+
+def invalid_commercial_fields(item: Mapping[str, Any]) -> list[str]:
+    invalid: list[str] = []
+    base_value = item.get("hardware_price", item.get("price"))
+    try:
+        require_float(base_value, "hardware_price/price", minimum=0)
+    except (TypeError, ValueError):
+        invalid.append("hardware_price/price")
+    for field in COMMERCIAL_COST_FIELDS:
+        if field in item:
+            try:
+                require_float(item[field], field, minimum=0)
+            except (TypeError, ValueError):
+                invalid.append(field)
+    return invalid
 
 
 def configuration_match_score(
@@ -226,7 +234,15 @@ def anchor_exclusion_reasons(item: Mapping[str, Any], match_score: Optional[floa
             reasons.append("missing-or-invalid-tax-included")
 
     if item.get("source_date"):
-        require_iso_date(item["source_date"], "source_date")
+        source_date = require_iso_date(item["source_date"], "source_date")
+        if require_bool(item.get("quote_current", False), "quote_current"):
+            as_of = require_iso_date(item.get("as_of_date", date.today().isoformat()), "as_of_date")
+            max_age_days = require_float(item.get("max_quote_age_days", 90), "max_quote_age_days", minimum=0)
+            age_days = (as_of - source_date).days
+            if age_days < 0:
+                reasons.append("quote-date-in-future")
+            elif age_days > max_age_days:
+                reasons.append("quote-stale")
     if item.get("quote_valid_until"):
         valid_until = require_iso_date(item["quote_valid_until"], "quote_valid_until")
         as_of = require_iso_date(item.get("as_of_date", date.today().isoformat()), "as_of_date")
@@ -234,6 +250,7 @@ def anchor_exclusion_reasons(item: Mapping[str, Any], match_score: Optional[floa
             reasons.append("quote-expired")
     if item.get("currency"):
         require_currency(item["currency"])
+    reasons.extend(f"invalid-commercial-field:{field}" for field in invalid_commercial_fields(item))
 
     return list(dict.fromkeys(reasons))
 
@@ -256,7 +273,11 @@ def normalize(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
         row = dict(item)
         score = configuration_match_score(item)
         priority = evidence_priority(item, score)
-        row["normalized_comparable_cost"] = round(normalized_cost(item), 2)
+        try:
+            cost = round(normalized_cost(item), 2)
+        except (TypeError, ValueError):
+            cost = None
+        row["normalized_comparable_cost"] = cost
         row["configuration_match_score"] = score
         row["exact_configuration_match"] = bool(score is not None and score >= 0.95)
         row["highly_comparable_configuration"] = bool(score is not None and score >= 0.85)
@@ -286,7 +307,9 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
     eligible = [
         row
         for row in rows
-        if row["anchor_eligible"] and float(row["normalized_comparable_cost"]) > 0
+        if row["anchor_eligible"]
+        and row["normalized_comparable_cost"] is not None
+        and float(row["normalized_comparable_cost"]) > 0
     ]
 
     if not eligible:
@@ -357,6 +380,7 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
         for row in rows
         if row["comparison_ready"]
         and int(row["evidence_priority"]) == 4
+        and row["normalized_comparable_cost"] is not None
         and float(row["normalized_comparable_cost"]) > 0
     )
 
@@ -403,7 +427,7 @@ def assess_budget_revision(
     item_list = list(items)
     rows = normalize(item_list)
     anchor = select_budget_anchor(item_list)
-    existing = round(_number(existing_budget), 2)
+    existing = round(require_float(existing_budget, "existing_budget", minimum=0), 2)
     inferred_class = _infer_product_class(rows, product_class)
 
     if existing <= 0:
@@ -436,6 +460,31 @@ def assess_budget_revision(
 
     strong_for_downward_revision = priority in (1, 2) or (priority == 3 and anchor_count >= 2)
     proposes_downward_revision = high < existing
+
+    if proposes_downward_revision:
+        anchor_rows = [
+            row for row in rows
+            if row.get("anchor_eligible")
+            and int(row.get("evidence_priority", 99)) == priority
+            and str(row.get("currency", "")).upper() == anchor.get("currency")
+        ]
+        technical_fit_verified = bool(anchor_rows) and all(
+            row.get("technical_fit_status") == "PASS" and row.get("eligible_for_pricing") is True
+            for row in anchor_rows
+        )
+        if not technical_fit_verified:
+            return {
+                "decision": "hold-existing-provisional",
+                "product_class": inferred_class,
+                "existing_budget": existing,
+                "recommended_budget_low": existing,
+                "recommended_budget_high": existing,
+                "confidence": "Needs confirmation",
+                "reason": "A downward revision requires explicit PASS technical fit and eligible_for_pricing=true for every anchor, regardless of product class.",
+                "rejected_anchor_low": round(low, 2),
+                "rejected_anchor_high": round(high, 2),
+                "budget_anchor": anchor,
+            }
 
     if inferred_class == "configurable-enterprise" and proposes_downward_revision and not strong_for_downward_revision:
         return {

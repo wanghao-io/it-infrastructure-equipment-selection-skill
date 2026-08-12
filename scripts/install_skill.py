@@ -22,6 +22,7 @@ SUPPORTED_TARGETS = ("codex", "claude-code", "copilot", "gemini", "generic")
 
 RUNTIME_ENTRIES = (
     "SKILL.md",
+    "VERSION",
     "references",
     "scripts",
     "assets",

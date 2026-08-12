@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import sys
 import json
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -17,11 +19,45 @@ from normalize_price_evidence import select_budget_anchor  # noqa: E402
 
 
 class WorkflowHardeningTests(unittest.TestCase):
-    def test_three_end_to_end_project_prompts_cover_critical_routes(self):
+    def test_three_end_to_end_project_prompts_execute_critical_workflows(self):
         cases = json.loads((ROOT / "tests/scenarios/end-to-end-projects.json").read_text(encoding="utf-8"))
         self.assertEqual(len(cases), 3)
-        routes = {route for case in cases for route in case["expected"]}
-        self.assertTrue({"server-rfq", "hci-n-plus-one", "budget-revision-guard"}.issubset(routes))
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+
+            scada_input = tmp / "scada.json"
+            scada_input.write_text(json.dumps({"scada_io_points": 3000}), encoding="utf-8")
+            discovery = json.loads(subprocess.check_output([
+                sys.executable, str(ROOT / "scripts/guide_requirements.py"),
+                "--scenario", "manufacturing-scada-small", "--input", str(scada_input),
+            ]))
+            self.assertFalse(discovery["ready_for_architecture"])
+            self.assertIn("historian_points", discovery["missing_required_fields"])
+
+            hci = json.loads(subprocess.check_output([
+                sys.executable, str(ROOT / "scripts/calculate_hci_failover.py"),
+                str(ROOT / "assets/hci-failover-example.json"),
+            ]))
+            self.assertEqual(hci["status"], "PASS")
+            tco_result = subprocess.check_output([
+                sys.executable, str(ROOT / "scripts/calculate_tco.py"),
+                str(ROOT / "assets/tco-example.json"), "--format", "markdown",
+            ]).decode()
+            self.assertIn("Infrastructure TCO", tco_result)
+
+            weak = tmp / "weak-prices.json"
+            weak.write_text(json.dumps({"items": [{
+                "candidate": "same-family starting price", "product_class": "configurable-enterprise",
+                "configuration": "partial configuration", "source_type": "market-aggregator",
+                "source_date": "2026-08-12", "as_of_date": "2026-08-12", "quote_current": True,
+                "comparable": True, "configuration_match_score": 0.75, "price": 47000,
+                "currency": "CNY", "quote_mode": "starting-price",
+            }]}), encoding="utf-8")
+            revision = json.loads(subprocess.check_output([
+                sys.executable, str(ROOT / "scripts/normalize_price_evidence.py"), str(weak),
+                "--summary", "--existing-budget", "92000", "--product-class", "configurable-enterprise",
+            ]))
+            self.assertEqual(revision["budget_revision"]["decision"], "hold-existing-provisional")
     def test_tbd_tco_stays_incomplete_without_crashing(self):
         result = tco({"electricity_rate_per_kwh": 0, "candidates": [{"name": "A", "purchase_cost": 1, "one_time_implementation": 0, "annual_support": "TBD", "annual_license": 0, "annual_facility": 0, "annual_other_opex": 0}]})
         self.assertIsNone(result["results"][0]["total_tco"])

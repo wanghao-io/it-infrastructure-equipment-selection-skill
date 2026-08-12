@@ -1,4 +1,8 @@
-# IT Infrastructure Equipment Selection Skill v1.2.0
+# IT Infrastructure Equipment Selection Skill v1.2.1
+
+## 预算与询价门禁热修
+
+v1.2.1 修复 v1.2.0 发布后复核发现的所有问题：所有品类的预算下调均强制要求明确技术适配；`TBD`/非法费用不再按零处理；同一供应商的多个报价号不再伪装为独立证据；服务器报价增加完整 RFQ 基线、供应商身份、报价新鲜度和风险准备金校验；Mandatory 未知值、HCI 节点整数以及真实工作流回归测试也已修正。
 
 ## 可执行询价、容量与发布门禁
 

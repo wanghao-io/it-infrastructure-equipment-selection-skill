@@ -128,6 +128,13 @@ class DecisionSupportTests(unittest.TestCase):
     def test_unknown_gate_status_never_becomes_pass(self):
         self.assertEqual(self.compare.overall_gate([{"status": "typo"}]), "CONDITIONAL")
 
+    def test_unknown_mandatory_attribute_is_conditional(self):
+        gates = self.compare.constraint_gates(
+            [{"key": "support", "operator": "eq", "value": "active", "severity": "mandatory"}],
+            {"support": "unknown"},
+        )
+        self.assertEqual(gates[0]["status"], "CONDITIONAL")
+
     def test_negative_weight_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "non-negative"):
             self.compare.score_candidates(

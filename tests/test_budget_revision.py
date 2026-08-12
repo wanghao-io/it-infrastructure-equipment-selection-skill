@@ -15,6 +15,54 @@ SERVER_CONFIG = "2U; 1x4410Y; 128GB; 2x960GB SSD; 2x1.92TB SSD; 4x4TB HDD; RAID 
 
 
 class BudgetRevisionGuardrailTests(unittest.TestCase):
+    def test_fixed_sku_cannot_be_lowered_without_technical_fit(self) -> None:
+        item = {
+            "candidate": "Cheap fixed SKU", "product_class": "fixed-sku",
+            "configuration": "exact SKU", "source_type": "retail-exact-sku",
+            "source_date": "2026-08-12", "quote_current": True,
+            "comparable": True, "exact_configuration_match": True,
+            "currency": "CNY", "price": 50,
+        }
+        result = assess_budget_revision(100, [item])
+        self.assertEqual(result["decision"], "hold-existing-provisional")
+        self.assertIn("technical fit", result["reason"])
+
+    def test_tbd_commercial_cost_is_excluded_not_zero(self) -> None:
+        item = {
+            "candidate": "Incomplete quote", "product_class": "configurable-enterprise",
+            "configuration": SERVER_CONFIG, "source_type": "official-store-human-quote",
+            "source_date": "2026-08-12", "quote_current": True, "comparable": True,
+            "exact_configuration_match": True, "technical_fit_status": "PASS",
+            "eligible_for_pricing": True, "orderability_confirmed": True,
+            "price_scope_complete": True, "tax_included": True, "currency": "CNY",
+            "price": 50000, "mandatory_accessories": "TBD", "required_licenses": 0,
+            "warranty_support": 0, "required_implementation": 0, "tax_amount": 0, "shipping": 0,
+        }
+        anchor = select_budget_anchor([item])
+        self.assertEqual(anchor["status"], "needs-confirmation")
+
+    def test_stale_self_declared_current_quote_is_excluded(self) -> None:
+        item = {
+            "candidate": "Old quote", "product_class": "fixed-sku", "configuration": "SKU",
+            "source_type": "retail-exact-sku", "source_date": "2020-01-01",
+            "as_of_date": "2026-08-12", "quote_current": True, "comparable": True,
+            "exact_configuration_match": True, "currency": "CNY", "price": 100,
+        }
+        self.assertEqual(select_budget_anchor([item])["status"], "needs-confirmation")
+
+    def test_duplicate_candidate_name_cannot_hide_unverified_anchor(self) -> None:
+        base = {
+            "candidate": "Same display name", "product_class": "fixed-sku",
+            "configuration": "SKU", "source_type": "retail-exact-sku",
+            "source_date": "2026-08-12", "as_of_date": "2026-08-12",
+            "quote_current": True, "comparable": True, "exact_configuration_match": True,
+            "currency": "CNY", "price": 50,
+        }
+        verified = {**base, "technical_fit_status": "PASS", "eligible_for_pricing": True, "source": "A"}
+        unverified = {**base, "source": "B"}
+        result = assess_budget_revision(100, [verified, unverified])
+        self.assertEqual(result["decision"], "hold-existing-provisional")
+
     def test_shared_skill_requires_budget_revision_guard(self) -> None:
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("### Mandatory existing-budget revision workflow", skill)
