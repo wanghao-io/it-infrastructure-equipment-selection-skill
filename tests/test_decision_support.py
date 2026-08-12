@@ -50,6 +50,34 @@ class DecisionSupportTests(unittest.TestCase):
         self.assertNotIn("named_users", keys)
         self.assertLessEqual(len(keys), 3)
 
+    def test_partial_composite_requirement_remains_unresolved(self):
+        result = self.guide.analyze_requirements(
+            "smb-erp",
+            {
+                "erp_product_and_database": "ERP + PostgreSQL",
+                "named_users": 200,
+                "concurrent_users": 80,
+                "database_size": {"current_size": "500 GB", "annual_growth": "100 GB/year"},
+                "availability_rto_rpo": {"rto": "2 hours", "rpo": "TBD"},
+                "backup_retention": "30 days",
+                "budget_cap": 300000,
+                "domestic_xinchuang_required": False,
+            },
+            template_data=self.templates,
+        )
+        self.assertIn("availability_rto_rpo", result["missing_required_fields"])
+        self.assertFalse(result["ready_for_architecture"])
+
+    def test_unstructured_composite_answer_is_not_silently_complete(self):
+        result = self.guide.analyze_requirements(
+            "smb-erp",
+            {
+                "availability_rto_rpo": "RTO <= 2 hours",
+            },
+            template_data=self.templates,
+        )
+        self.assertIn("availability_rto_rpo", result["missing_required_fields"])
+
     def test_mandatory_pass_outranks_conditional_and_fail(self):
         data = {
             "constraints": [
@@ -110,6 +138,8 @@ class DecisionSupportTests(unittest.TestCase):
                     "average_it_power_w": 1000,
                     "annual_support": 5000,
                     "annual_license": 2000,
+                    "annual_facility": 0,
+                    "annual_other_opex": 0,
                 }
             ],
         }
@@ -118,14 +148,70 @@ class DecisionSupportTests(unittest.TestCase):
         year3 = result["results"][0]
         expected_energy = 1.0 * 1.5 * 8760 * 3 * 0.8
         expected_total = 110000 + expected_energy + (7000 * 3)
+        self.assertEqual(year3["status"], "complete")
         self.assertAlmostEqual(year3["energy_cost"], expected_energy, places=2)
         self.assertAlmostEqual(year3["total_tco"], expected_total, places=2)
+
+    def test_tco_missing_costs_remain_explicit_not_zero(self):
+        result = self.tco.calculate(
+            {
+                "electricity_rate_per_kwh": 0.8,
+                "pue": 1.5,
+                "years": [5],
+                "candidates": [
+                    {
+                        "name": "Incomplete",
+                        "purchase_cost": 100000,
+                        "one_time_implementation": 0,
+                        "average_it_power_w": 800,
+                    }
+                ],
+            }
+        )
+        row = result["results"][0]
+        self.assertEqual(row["status"], "incomplete-needs-confirmation")
+        self.assertIsNone(row["total_tco"])
+        self.assertIn("annual_support", row["missing_fields"])
+        self.assertIn("annual_license", row["missing_fields"])
+        self.assertGreater(row["known_cost_floor"], 100000)
+
+    def test_tco_missing_power_is_incomplete_when_electricity_is_in_scope(self):
+        result = self.tco.calculate(
+            {
+                "electricity_rate_per_kwh": 0.8,
+                "pue": 1.5,
+                "years": [3],
+                "candidates": [
+                    {
+                        "name": "No power",
+                        "purchase_cost": 100000,
+                        "one_time_implementation": 0,
+                        "annual_support": 0,
+                        "annual_license": 0,
+                        "annual_facility": 0,
+                        "annual_other_opex": 0,
+                    }
+                ],
+            }
+        )
+        row = result["results"][0]
+        self.assertIn("average_it_power_w", row["missing_fields"])
+        self.assertIsNone(row["total_tco"])
 
     def test_tco_requires_explicit_electricity_scope(self):
         with self.assertRaises(ValueError):
             self.tco.calculate(
                 {
                     "pue": 1.5,
+                    "candidates": [{"name": "A", "purchase_cost": 100000}],
+                }
+            )
+
+    def test_tco_requires_pue_when_electricity_is_included(self):
+        with self.assertRaises(ValueError):
+            self.tco.calculate(
+                {
+                    "electricity_rate_per_kwh": 0.8,
                     "candidates": [{"name": "A", "purchase_cost": 100000}],
                 }
             )
