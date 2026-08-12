@@ -26,13 +26,60 @@ jobs:
           test -d scripts
           test -d assets
           test -d examples
+          test -d tests/scenarios
+          test -f references/architecture-decision.md
+          test -f references/scada-sizing.md
+          test -f references/ot-control-safety.md
+          test -f references/output-profiles.md
+          test -f references/price-evidence.md
           test -f references/vendor-comparison.md
           test -f references/tender-specification.md
           test -f references/network-topology.md
 
       - name: Python syntax check
         run: |
-          python -m compileall scripts
+          python -m compileall scripts tests
+
+      - name: Engineering scenario regression tests
+        run: |
+          python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Smoke test architecture decisions
+        run: |
+          python - <<'PY'
+          import json, tempfile, subprocess
+          req = {
+            "server_count": 1,
+            "virtualization_required": True,
+            "availability": "standard",
+            "vlan_count": 5,
+            "inter_vlan_communication_required": True
+          }
+          with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as f:
+              json.dump(req, f)
+              name = f.name
+          out = subprocess.check_output(['python', 'scripts/evaluate_architecture.py', name]).decode()
+          assert 'not-required-by-current-requirements' in out
+          assert '"layer3_routing"' in out
+          PY
+
+      - name: Smoke test sizing calculators
+        run: |
+          python scripts/calculate_server_capacity.py --services-json assets/server-workload-example.json > /tmp/server.json
+          python scripts/calculate_historian.py 2000 5 --retention-days 365 > /tmp/historian.json
+          python scripts/calculate_storage.py --drives 4 --drive-tb 4 --raid 10 > /tmp/storage.json
+          python scripts/calculate_network_ports.py 30 --vlan-count 5 --inter-vlan > /tmp/network.json
+          python scripts/calculate_ups.py 600 --runtime-minutes 10 > /tmp/ups.json
+          grep -q 'recommended_memory_gb' /tmp/server.json
+          grep -q 'recommended_online_capacity_tb' /tmp/historian.json
+          grep -q 'usable_capacity_tb' /tmp/storage.json
+          grep -q 'layer3_routing_required' /tmp/network.json
+          grep -q 'minimum_va_with_margin' /tmp/ups.json
+
+      - name: Smoke test price normalization
+        run: |
+          python scripts/normalize_price_evidence.py assets/price-evidence-example.json > /tmp/prices.json
+          grep -q 'normalized_comparable_cost' /tmp/prices.json
 
       - name: Smoke test vendor comparison
         run: |
