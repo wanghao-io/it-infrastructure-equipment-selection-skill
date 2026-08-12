@@ -51,7 +51,7 @@ A 20–30% project margin can be a starting assumption; actual load growth or ve
 Example deterministic sizing:
 
 ```bash
-python scripts/calculate_ups.py 800 --runtime-minutes 10
+python3 scripts/calculate_ups.py 800 --runtime-minutes 10
 ```
 
 ## 4. Candidate Gate Before Pricing
@@ -59,7 +59,7 @@ python scripts/calculate_ups.py 800 --runtime-minutes 10
 When a candidate UPS SKU is being used to justify a budget change, validate it before comparing price:
 
 ```bash
-python scripts/calculate_ups.py 800 \
+python3 scripts/calculate_ups.py 800 \
   --runtime-minutes 10 \
   --candidate-w 1500 \
   --candidate-va 2000 \

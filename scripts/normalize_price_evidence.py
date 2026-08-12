@@ -15,8 +15,11 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
+
+from contracts import require_bool, require_currency, require_iso_date
 
 
 DEFAULT_MATCH_WEIGHTS: Dict[str, float] = {
@@ -73,6 +76,14 @@ ESTIMATE_SOURCES = {"engineering-estimate", "estimate"}
 CONTEXT_ONLY_SOURCES = {"market-aggregator", "price-history", "deal-community"}
 
 MISLEADING_QUOTE_MODES = {"starting-price", "base-config-listing", "generic-listing"}
+COMMERCIAL_COST_FIELDS = (
+    "mandatory_accessories",
+    "required_licenses",
+    "warranty_support",
+    "required_implementation",
+    "tax_amount",
+    "shipping",
+)
 
 
 def _number(value: Any) -> float:
@@ -138,8 +149,8 @@ def configuration_match_score(
 def evidence_priority(item: Mapping[str, Any], match_score: Optional[float] = None) -> int:
     """Return pricing priority where 1 is the strongest budget anchor."""
     source_type = str(item.get("source_type", "")).strip().lower()
-    current = bool(item.get("quote_current", False))
-    comparable = bool(item.get("comparable", False))
+    current = require_bool(item.get("quote_current", False), "quote_current")
+    comparable = require_bool(item.get("comparable", False), "comparable")
     score = match_score if match_score is not None else configuration_match_score(item)
 
     if current and score is not None and score >= 0.95 and source_type in FORMAL_CURRENT_SOURCES:
@@ -176,7 +187,8 @@ def anchor_exclusion_reasons(item: Mapping[str, Any], match_score: Optional[floa
     product_class = str(item.get("product_class", "")).strip().lower()
     quote_mode = str(item.get("quote_mode", "")).strip().lower()
 
-    if not item.get("comparable", False):
+    comparable = require_bool(item.get("comparable", False), "comparable")
+    if not comparable:
         reasons.append("not-marked-comparable")
     if match_score is not None and match_score < 0.70:
         reasons.append("configuration-match-below-0.70")
@@ -186,6 +198,12 @@ def anchor_exclusion_reasons(item: Mapping[str, Any], match_score: Optional[floa
         reasons.append(f"quote-mode:{quote_mode}")
     if product_class == "configurable-enterprise" and quote_mode in MISLEADING_QUOTE_MODES:
         reasons.append("configurable-enterprise-requires-config-level-price")
+    if item.get("technical_fit_status") not in (None, "PASS"):
+        reasons.append("technical-fit-not-pass")
+    if item.get("eligible_for_pricing") is not None and not require_bool(
+        item.get("eligible_for_pricing"), "eligible_for_pricing"
+    ):
+        reasons.append("technical-fit-not-eligible-for-pricing")
     if item.get("orderability_confirmed") is False:
         reasons.append("orderability-not-confirmed")
     if item.get("used_or_refurbished") is True and not item.get("used_allowed", False):
@@ -193,7 +211,31 @@ def anchor_exclusion_reasons(item: Mapping[str, Any], match_score: Optional[floa
     if item.get("price_scope_complete") is False:
         reasons.append("commercial-scope-incomplete")
 
-    return reasons
+    priority = evidence_priority(item, match_score)
+    if product_class == "configurable-enterprise" and priority in (1, 2, 3):
+        if item.get("technical_fit_status") != "PASS" or item.get("eligible_for_pricing") is not True:
+            reasons.append("configurable-enterprise-technical-fit-unverified")
+        if item.get("orderability_confirmed") is not True:
+            reasons.append("configurable-enterprise-orderability-unverified")
+        if item.get("price_scope_complete") is not True:
+            reasons.append("configurable-enterprise-commercial-scope-unverified")
+        for field in COMMERCIAL_COST_FIELDS:
+            if field not in item:
+                reasons.append(f"missing-commercial-field:{field}")
+        if "tax_included" not in item or type(item.get("tax_included")) is not bool:
+            reasons.append("missing-or-invalid-tax-included")
+
+    if item.get("source_date"):
+        require_iso_date(item["source_date"], "source_date")
+    if item.get("quote_valid_until"):
+        valid_until = require_iso_date(item["quote_valid_until"], "quote_valid_until")
+        as_of = require_iso_date(item.get("as_of_date", date.today().isoformat()), "as_of_date")
+        if valid_until < as_of:
+            reasons.append("quote-expired")
+    if item.get("currency"):
+        require_currency(item["currency"])
+
+    return list(dict.fromkeys(reasons))
 
 
 def price_signal_role(priority: int) -> str:
@@ -227,7 +269,8 @@ def normalize(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
                 missing.append(key)
 
         match_usable = score is None or score >= 0.70
-        row["comparison_ready"] = bool(item.get("comparable", False)) and not missing and match_usable
+        comparable = require_bool(item.get("comparable", False), "comparable")
+        row["comparison_ready"] = comparable and not missing and match_usable
         exclusions = anchor_exclusion_reasons(item, score)
         row["anchor_exclusion_reasons"] = exclusions
         row["anchor_eligible"] = bool(row["comparison_ready"] and not exclusions)
@@ -258,7 +301,29 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
         }
 
     best_priority = min(int(row["evidence_priority"]) for row in eligible)
-    anchors = [row for row in eligible if int(row["evidence_priority"]) == best_priority]
+    candidate_anchors = [row for row in eligible if int(row["evidence_priority"]) == best_priority]
+    currencies = {str(row.get("currency", "")).upper() for row in candidate_anchors}
+    if "" in currencies or len(currencies) != 1:
+        return {
+            "status": "needs-confirmation",
+            "reason": "Anchor-eligible evidence must use one explicit currency; convert externally before comparison.",
+            "recommended_budget_low": None,
+            "recommended_budget_high": None,
+            "confidence": "Needs confirmation",
+            "confidence_level": "Low",
+            "currencies": sorted(currencies),
+        }
+
+    anchors = []
+    seen_evidence = set()
+    for row in candidate_anchors:
+        identity = row.get("evidence_id") or row.get("quote_id") or (
+            row.get("source"), row.get("source_type"), row.get("source_date"), row.get("candidate")
+        )
+        identity_key = json.dumps(identity, ensure_ascii=False, sort_keys=True, default=str)
+        if identity_key not in seen_evidence:
+            seen_evidence.add(identity_key)
+            anchors.append(row)
     costs = sorted(float(row["normalized_comparable_cost"]) for row in anchors)
 
     exact_current = best_priority in (1, 2)
@@ -299,6 +364,7 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
         "status": "ready",
         "preferred_evidence_priority": best_priority,
         "anchor_count": len(anchors),
+        "currency": next(iter(currencies)),
         "anchor_candidates": [row.get("candidate") for row in anchors],
         "recommended_budget_low": round(costs[0], 2),
         "recommended_budget_high": round(costs[-1], 2),
@@ -349,6 +415,9 @@ def assess_budget_revision(
         }
 
     if anchor.get("status") != "ready":
+        reason = "No strong current anchor is available; keep the prior amount only as a provisional carry-forward."
+        if inferred_class == "configurable-enterprise":
+            reason += " Incomplete or unverified evidence cannot justify lowering this configurable-enterprise budget."
         return {
             "decision": "hold-existing-provisional",
             "product_class": inferred_class,
@@ -356,7 +425,7 @@ def assess_budget_revision(
             "recommended_budget_low": existing,
             "recommended_budget_high": existing,
             "confidence": "Needs confirmation",
-            "reason": "No strong current anchor is available; keep the prior amount only as a provisional carry-forward.",
+            "reason": reason,
             "budget_anchor": anchor,
         }
 

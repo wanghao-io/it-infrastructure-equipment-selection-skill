@@ -48,13 +48,13 @@ When the request is under-specified but the scenario is clear, load the closest 
 Use:
 
 ```bash
-python scripts/guide_requirements.py --list
+python3 scripts/guide_requirements.py --list
 ```
 
 Then, for example:
 
 ```bash
-python scripts/guide_requirements.py \
+python3 scripts/guide_requirements.py \
   --scenario manufacturing-scada-small \
   --input project-known-fields.json \
   --max-questions 7 \

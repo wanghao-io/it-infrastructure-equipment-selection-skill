@@ -86,13 +86,13 @@ assets/tco-example.json
 Run:
 
 ```bash
-python scripts/calculate_tco.py assets/tco-example.json --format markdown
+python3 scripts/calculate_tco.py assets/tco-example.json --format markdown
 ```
 
 or:
 
 ```bash
-python scripts/calculate_tco.py assets/tco-example.json --pretty
+python3 scripts/calculate_tco.py assets/tco-example.json --pretty
 ```
 
 ## Interpretation

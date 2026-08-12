@@ -11,30 +11,47 @@ from pathlib import Path
 
 def number(value) -> float:
     if value is None:
-        return 0.0
+        raise ValueError("unresolved amount")
     text = str(value).replace(",", "").replace("¥", "").replace("￥", "").strip()
-    return float(text) if text else 0.0
+    if not text or text.lower() in {"tbd", "unknown", "needs confirmation", "待确认", "待定"}:
+        raise ValueError("unresolved amount")
+    value = float(text)
+    if value < 0:
+        raise ValueError("amount must be non-negative")
+    return value
 
 
 def calculate(rows: list[dict], contingency_percent: float = 10.0) -> dict:
+    if contingency_percent < 0:
+        raise ValueError("contingency_percent must be non-negative")
     subtotal = 0.0
-    for row in rows:
+    incomplete_rows = []
+    for index, row in enumerate(rows, start=1):
         if row.get("类别") == "汇总" or row.get("category") == "summary":
             continue
-        explicit_total = row.get("估算合计（元）", row.get("total"))
+        explicit_total = row.get("估算合计（元）", row.get("total", row.get("Total")))
         if explicit_total not in (None, ""):
-            subtotal += number(explicit_total)
+            try:
+                subtotal += number(explicit_total)
+            except ValueError:
+                incomplete_rows.append(index)
         else:
-            qty = number(row.get("数量", row.get("qty", 0)))
-            unit_price = number(row.get("估算单价（元）", row.get("unit_price", 0)))
-            subtotal += qty * unit_price
+            try:
+                qty = number(row.get("数量", row.get("qty", row.get("Quantity"))))
+                unit_price = number(row.get("估算单价（元）", row.get("unit_price", row.get("Unit Price"))))
+                subtotal += qty * unit_price
+            except ValueError:
+                incomplete_rows.append(index)
 
     contingency = subtotal * contingency_percent / 100.0
     return {
-        "subtotal": round(subtotal, 2),
+        "status": "complete" if not incomplete_rows else "incomplete-needs-confirmation",
+        "incomplete_rows": incomplete_rows,
+        "known_cost_floor": round(subtotal, 2),
+        "subtotal": round(subtotal, 2) if not incomplete_rows else None,
         "contingency_percent": contingency_percent,
         "contingency": round(contingency, 2),
-        "total_with_contingency": round(subtotal + contingency, 2),
+        "total_with_contingency": round(subtotal + contingency, 2) if not incomplete_rows else None,
     }
 
 

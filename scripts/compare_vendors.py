@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,8 @@ def overall_gate(gates: list[dict[str, Any]]) -> str:
     if not gates:
         return "CONDITIONAL"
     statuses = {str(g.get("status", "CONDITIONAL")).upper() for g in gates}
+    if not statuses.issubset(VALID_GATE):
+        return "CONDITIONAL"
     if "FAIL" in statuses:
         return "FAIL"
     if "CONDITIONAL" in statuses:
@@ -48,9 +51,13 @@ def compare_value(actual: Any, operator: str, expected: Any) -> bool:
     if op == "contains":
         return expected in actual
     if op == "truthy":
-        return bool(actual)
+        if type(actual) is not bool:
+            raise ValueError("truthy requires a JSON boolean")
+        return actual
     if op == "falsy":
-        return not bool(actual)
+        if type(actual) is not bool:
+            raise ValueError("falsy requires a JSON boolean")
+        return not actual
     raise ValueError(f"Unsupported constraint operator: {operator}")
 
 
@@ -107,7 +114,10 @@ def score_candidates(data: dict[str, Any]) -> list[dict[str, Any]]:
     if not criteria or not candidates:
         raise ValueError("Input must contain non-empty 'criteria' and 'candidates'.")
 
-    total_weight = sum(float(c.get("weight", 0)) for c in criteria)
+    weights = [float(c.get("weight", 0)) for c in criteria]
+    if any(not math.isfinite(weight) or weight < 0 for weight in weights):
+        raise ValueError("Criterion weights must be finite and non-negative.")
+    total_weight = sum(weights)
     if total_weight <= 0:
         raise ValueError("Total criterion weight must be greater than zero.")
 
@@ -120,6 +130,8 @@ def score_candidates(data: dict[str, Any]) -> list[dict[str, Any]]:
             weight = float(criterion.get("weight", 0)) / total_weight
             score_obj = candidate.get("scores", {}).get(key, {})
             score = float(score_obj.get("score", 0))
+            if not math.isfinite(score):
+                raise ValueError(f"{name}: score for '{key}' must be finite")
             if not 0 <= score <= 10:
                 raise ValueError(f"{name}: score for '{key}' must be between 0 and 10")
             weighted_total += score * weight
@@ -210,9 +222,8 @@ def build_report(data: dict[str, Any]) -> str:
         else:
             decision = "Excluded by mandatory requirement."
             rank_text = "—"
-        lines.append(
-            f"| {rank_text} | {item['name']} | {item['gate']} | {item['score']:.2f} | {decision} |"
-        )
+        score_text = f"{item['score']:.2f}" if item["gate"] == "PASS" else "N/A"
+        lines.append(f"| {rank_text} | {item['name']} | {item['gate']} | {score_text} | {decision} |")
 
     lines.extend(
         [

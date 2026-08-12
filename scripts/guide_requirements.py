@@ -99,6 +99,7 @@ def analyze_requirements(
     )
 
     missing = []
+    missing_parts: dict[str, list[str]] = {}
     questions = []
     for item in required:
         key = str(item["key"])
@@ -106,6 +107,12 @@ def analyze_requirements(
         unresolved = item_is_unresolved(item, value)
         if unresolved:
             missing.append(key)
+            parts = [str(x) for x in item.get("required_parts", [])]
+            if parts:
+                if isinstance(value, dict):
+                    missing_parts[key] = [part for part in parts if part not in value or is_unresolved(value.get(part))]
+                else:
+                    missing_parts[key] = parts
             if len(questions) < max_questions:
                 questions.append(
                     {
@@ -127,6 +134,7 @@ def analyze_requirements(
         "scenario_name": template.get("name", scenario_id),
         "known_fields": supplied,
         "missing_required_fields": missing,
+        "missing_required_parts": missing_parts,
         "questions": questions,
         "suggested_assumptions": suggested,
         "guardrails": template.get("guardrails", []),

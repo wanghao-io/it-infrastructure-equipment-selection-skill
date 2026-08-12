@@ -1,0 +1,17 @@
+[
+  {
+    "name": "manufacturing-scada-single-server",
+    "prompt": "为一个3000点制造业SCADA项目选型：单服务器，RTO 4小时，5个VLAN需互通，要求UPS关机联动、预算BOM和询价清单；不要默认HCI。",
+    "expected": ["guided-requirements", "standalone-or-simple-virtualization", "layer3-owner", "ups-gate", "server-rfq", "bom-budget"]
+  },
+  {
+    "name": "hospital-hci-n-plus-one",
+    "prompt": "规划医院核心业务四节点HCI，要求任一节点故障后CPU、内存、存储、IOPS和网络仍满足负载，比较两家方案的5年TCO并输出招标规格。",
+    "expected": ["hci-n-plus-one", "technical-gates", "tco-analysis", "vendor-compare", "tender-spec"]
+  },
+  {
+    "name": "enterprise-server-budget-revision",
+    "prompt": "更新现有服务器预算。旧预算每台92000元，网上同系列起售价47000元；请核对完整配置和当前询价，能否下调要给确定性依据。",
+    "expected": ["preserve-baseline", "exact-configuration", "technical-fit", "commercial-scope", "independent-quotes", "budget-revision-guard"]
+  }
+]

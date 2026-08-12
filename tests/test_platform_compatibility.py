@@ -52,11 +52,14 @@ class AgentSkillMetadataTests(unittest.TestCase):
         self.assertTrue((ROOT / "agents" / "openai.yaml").is_file())
         self.assertTrue((ROOT / "SKILL.md").is_file())
         self.assertIn("SKILL.md", RUNTIME_ENTRIES)
+        metadata = (ROOT / "agents" / "openai.yaml").read_text(encoding="utf-8")
+        self.assertIn("interface:", metadata)
+        self.assertIn("$it-infrastructure-equipment-selection", metadata)
 
 
 class InstallationPathTests(unittest.TestCase):
     def test_user_paths(self) -> None:
-        home = Path("/tmp/example-home")
+        home = Path("/tmp/example-home").resolve()
         self.assertEqual(
             resolve_destination("codex", "user", home=home),
             home / ".agents" / "skills" / SKILL_NAME,
@@ -75,7 +78,7 @@ class InstallationPathTests(unittest.TestCase):
         )
 
     def test_project_paths(self) -> None:
-        project = Path("/tmp/example-project")
+        project = Path("/tmp/example-project").resolve()
         self.assertEqual(
             resolve_destination("codex", "project", project_dir=project),
             project / ".agents" / "skills" / SKILL_NAME,
@@ -109,7 +112,7 @@ class InstallationPathTests(unittest.TestCase):
             self.assertFalse((destination / "tests").exists())
 
     def test_aliases(self) -> None:
-        home = Path("/tmp/example-home")
+        home = Path("/tmp/example-home").resolve()
         self.assertEqual(
             resolve_destination("claude", "user", home=home),
             resolve_destination("claude-code", "user", home=home),

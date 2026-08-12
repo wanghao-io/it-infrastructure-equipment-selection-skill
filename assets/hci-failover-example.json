@@ -1,0 +1,10 @@
+{
+  "nodes": 4,
+  "failed_nodes": 1,
+  "per_node_capacity": {"cpu_cores": 32, "memory_gb": 256, "usable_storage_tb": 8, "storage_iops": 40000, "network_gbps": 20},
+  "workload_demand": {"cpu_cores": 68, "memory_gb": 520, "usable_storage_tb": 17, "storage_iops": 80000, "network_gbps": 35},
+  "reserve_ratio": {"cpu_cores": 0.15, "memory_gb": 0.15, "usable_storage_tb": 0.10, "storage_iops": 0.10, "network_gbps": 0.10},
+  "storage_protection_valid": true,
+  "network_redundancy_valid": true,
+  "failure_domains_independent": true
+}
