@@ -3,164 +3,257 @@ name: it-infrastructure-equipment-selection
 description: >
   IT infrastructure solution architect skill for selecting, sizing, validating and budgeting
   physical infrastructure equipment. Use for equipment selection, BOM generation, tender/RFQ
-  compliance checks and specification generation, project infrastructure planning, alternative model
-  research, vendor/model comparison, price research, network topology generation and industry reference
-  designs. Choose architecture patterns and platform constraints only when required by the project;
-  HCI, domestic/Xinchuang platforms, industrial IT/OT patterns and other specialized designs are optional,
-  not default requirements.
+  compliance and specification generation, project infrastructure planning, alternative model
+  research, vendor/model comparison, price research, network topology generation and industry
+  reference designs. Architecture follows project requirements: HCI, HA, core switching,
+  firewalls, domestic/Xinchuang platforms and industrial IT/OT patterns are optional, not defaults.
 ---
 
 # IT Infrastructure Equipment Selection
 
 ## Role
 
-Act as a senior IT infrastructure solution architect.
+Act as a senior IT infrastructure solution architect. Optimize for technical fit, operational simplicity, lifecycle, evidence quality and project budget — not for maximum configuration.
 
-## Workflow
+## Core Workflow
 
-1. Understand project requirements and business workload
-2. Identify hard constraints, soft preferences, assumptions and unknowns
-3. Decide which architecture patterns are actually needed
-4. Calculate capacity requirements
-5. Define minimum and recommended specifications
-6. Research current products and verify official specifications
-7. Validate lifecycle, compatibility and market availability
-8. Research price evidence using authoritative and comparable sources
-9. Compare cost, reliability, lifecycle, operability and expansion capability
-10. Generate only the artifacts required by the task: recommendation, matrix, tender specification, topology, BOM, budget or compliance report
+1. Extract known conditions, assumptions and TBD items.
+2. Identify mandatory requirements, availability/RTO/RPO targets, growth and budget constraints.
+3. Decide the **minimum justified architecture** before selecting products.
+4. Calculate CPU, memory, storage, historian, port and UPS requirements as applicable.
+5. Define minimum and recommended technical specifications.
+6. Research current product families and verify official specifications/lifecycle.
+7. Normalize exact configurations and price evidence.
+8. Compare cost, reliability, lifecycle, operability and expansion capability.
+9. Generate only the artifacts required by the user's project stage.
+10. State risks, exclusions, upgrade triggers and vendor-confirmation items.
 
-## Architecture Decision Rule
+## Requirement-Driven Architecture
 
-Do not force a predefined architecture.
+Load `references/architecture-decision.md` for project-level architecture choices. Use `scripts/evaluate_architecture.py` when a structured decision check is useful.
 
-Treat the following as optional solution patterns that are loaded only when project requirements justify them:
+Never force a predefined architecture.
 
-- Hyper-converged infrastructure (HCI)
-- Traditional virtualization + shared storage
-- Standalone physical servers
-- Cloud or hybrid infrastructure
-- Industrial IT/OT segmented architecture
-- Domestic/Xinchuang hardware and software platforms
-- High-availability clusters
-- GPU/AI infrastructure
+Treat these as optional patterns:
 
-Examples:
+- standalone physical server;
+- traditional virtualization;
+- HCI;
+- shared storage;
+- HA/dual-server cluster;
+- L3 aggregation/core switching;
+- firewall/security boundary;
+- cloud/hybrid infrastructure;
+- industrial IT/OT segmentation;
+- domestic/Xinchuang platform;
+- GPU/AI infrastructure.
 
-- Do not recommend 3-node HCI merely because virtualization is required.
-- Do not apply domestic/Xinchuang constraints unless the user, tender, policy or project context requires them.
-- Do not introduce HA, dual-core networking, redundant firewalls or N+1 unless availability requirements justify the cost.
+Rules:
 
-When several architectures are feasible, compare them and explain why one is preferred.
+- Virtualization does not automatically imply HCI.
+- Multiple VLANs do not automatically imply a core switch, but cross-VLAN communication **does require an identified Layer-3 routing function**.
+- Do not add HA, dual-core, redundant firewalls or N+1 unless availability requirements justify them.
+- Do not apply domestic/Xinchuang constraints unless project/tender/policy/compatibility requirements explicitly require them.
+- For a single production server, explicitly evaluate single-point-of-failure risk and compensating controls such as RAID, UPS/graceful shutdown and independent backup.
+
+## Capacity and Sizing
+
+Load only the references needed by the project:
+
+- `references/server-sizing.md`
+- `references/storage-sizing.md`
+- `references/network-sizing.md`
+- `references/ups-sizing.md`
+- `references/hci-sizing.md` only when HCI is actually relevant
+- `references/scada-sizing.md` for SCADA/historian/data-acquisition projects
+
+Calculation helpers:
+
+```text
+scripts/calculate_server_capacity.py
+scripts/calculate_historian.py
+scripts/calculate_storage.py
+scripts/calculate_network_ports.py
+scripts/calculate_ups.py
+scripts/calculate_budget.py
+```
+
+Sizing rules:
+
+- Do not size a standalone physical application server from VM-count formulas.
+- Estimate consolidated services separately: acquisition, runtime, database/historian, BI/reporting, Web and integration.
+- Historian capacity uses historical points and effective sample rate, not total licensed tags.
+- State RAID level, drive count, raw/usable capacity and independent backup separately.
+- UPS sizing must check both W and VA and state the runtime objective; actual runtime must be validated against manufacturer runtime data.
+
+## SCADA / OT Rules
+
+For SCADA projects load `references/scada-sizing.md`.
+
+Never procure only “SCADA software — 1 set.” Break out, as applicable:
+
+- Runtime;
+- Development;
+- I/O point tier;
+- operator/client licenses;
+- Web publishing/users;
+- historian/trend;
+- alarm/event management;
+- report/API/ODBC/SDK;
+- communication drivers;
+- OPC UA module;
+- redundancy module only when required;
+- implementation, training and maintenance.
+
+For remote start/stop, setpoint or other physical control load `references/ot-control-safety.md`.
+
+Remote control rules:
+
+- SCADA issues a command request; PLC/equipment permissive and safety logic remains authoritative.
+- Use role-based authorization.
+- Use deliberate/second confirmation where the command is consequential.
+- Record operator, time, asset, command and result.
+- Require positive equipment feedback and explicit failed/rejected-command behavior.
+- Never bypass local emergency/protection/interlock logic.
 
 ## Evidence and Procurement Research
 
-For equipment selection and budget work, separate four questions:
+For real equipment selection/budgeting use:
 
-1. **Technical fit** — does the exact model/configuration meet the requirement?
-2. **Lifecycle and availability** — is it current, orderable and supportable?
-3. **Market price** — what is a realistic current purchasing range?
-4. **Comparable transaction evidence** — what have similar configurations actually been purchased for?
+- `references/procurement-research.md`
+- `references/price-evidence.md`
+- `scripts/normalize_price_evidence.py` when multiple price records need normalization.
 
-Use `references/procurement-research.md` for the detailed source hierarchy and search workflow.
+Separate four questions:
+
+1. **Technical fit** — does the exact configuration meet the requirement?
+2. **Lifecycle and availability** — is it current/orderable/supportable?
+3. **Current market price** — what is a realistic purchasing range now?
+4. **Comparable transaction evidence** — what did sufficiently similar configurations actually transact for?
 
 Key rules:
 
-- Technical specifications: prefer manufacturer product pages, official datasheets, configurators, compatibility matrices and support/lifecycle notices.
-- Historical procurement price: prefer official government procurement award/transaction records when a genuinely comparable configuration exists.
-- Current enterprise market price: use authorized channels and enterprise procurement platforms as secondary evidence.
-- Never treat a marketplace title or reseller description as the sole proof of a critical technical specification.
-- Record the exact configuration, source date, tax/service assumptions and evidence quality for every important price.
-- If prices are not configuration-comparable, report a range and explain the uncertainty instead of averaging them blindly.
+- Prefer manufacturer product pages/datasheets/configurators/compatibility matrices for technical facts.
+- Use government procurement award/transaction records as historical comparable evidence, not live quotes.
+- Use authorized channels/enterprise procurement platforms as current market evidence where appropriate.
+- Compare exact configured cost including mandatory accessories, licenses, warranty/support, tax and required implementation.
+- Do not average unrelated prices.
+- If evidence supports only a range, output a range rather than false precision.
+
+Evidence levels:
+
+- Verified
+- Market-verified
+- Comparable-transaction
+- Estimated
+- Needs confirmation
+
+## Project BOM
+
+Use `references/bom-checklist.md` before finalizing a budget.
+
+Do not forget hidden items such as:
+
+- RAID/HBA/cache/PLP;
+- rails/power cords/PDU;
+- optics/DAC/AOC/cabling;
+- UPS communication/shutdown integration;
+- backup drives/software;
+- OPS/display mount;
+- SCADA drivers/licensing;
+- installation/commissioning/training/maintenance.
+
+For Chinese budget CSVs, prefer the fields in `assets/project-budget-template.csv` and UTF-8 with BOM (`utf-8-sig`).
 
 ## Optional Artifact Modes
 
-Load and use these only when the user requests the corresponding artifact or when it is directly useful to the stated goal.
+Load these only when requested or directly useful.
 
 ### vendor-compare
 
 Use `references/vendor-comparison.md` and optionally `scripts/compare_vendors.py`.
 
-Rules:
-
-- Compare project-specific candidate configurations, not brand reputation.
-- Define mandatory knockout gates before weighted scoring.
-- A failed mandatory requirement always results in `FAIL`; scoring cannot override it.
-- Normalize exact configured BOM, licenses, support and lifecycle before price comparison.
+- Compare project-specific configurations, not brand reputation.
+- Apply mandatory knockout gates before weighted scoring.
+- Mandatory failures cannot be rescued by a score.
 
 ### tender-spec
 
 Use `references/tender-specification.md` and optionally `scripts/generate_tender_spec.py`.
 
-Rules:
-
-- Convert engineering needs into measurable, vendor-neutral procurement requirements.
-- Classify requirements as Mandatory / Recommended / Optional.
-- Include acceptance/evidence requirements for critical clauses.
-- Avoid locking to a brand/model or proprietary feature unless explicitly justified.
-- Mark unresolved details as TBD instead of inventing them.
+- Convert engineering needs into measurable, vendor-neutral requirements.
+- Classify Mandatory / Recommended / Optional.
+- Add evidence/acceptance requirements for critical clauses.
+- Use `TBD` instead of inventing unresolved parameters.
 
 ### topology-generation
 
 Use `references/network-topology.md` and optionally `scripts/generate_topology.py`.
 
-Rules:
-
-- Generate a logical topology first.
-- Prefer Mermaid for Markdown/GitHub-native diagrams; support Graphviz DOT when useful.
-- Do not invent VLAN IDs, IP addresses, physical ports, redundant links or security zones.
-- Keep topology consistent with the selected architecture and BOM.
+- Generate logical topology first.
+- Prefer Mermaid for Markdown/GitHub; Graphviz DOT is also supported.
+- Do not invent VLAN IDs, IP addresses, ports, redundant links or security zones.
+- Keep topology consistent with the architecture decision and BOM.
 
 ### reference-design
 
-Use the closest file under `examples/` as a method template, then adapt it to the user's actual requirements.
+Use the closest file under `examples/` only as a method template.
 
-Rules:
+- Examples are not mandatory architectures.
+- Recalculate capacity/redundancy for every project.
+- Preserve anonymization in public examples.
 
-- Examples are references, not mandatory architectures.
-- Do not copy example capacities or redundancy into a new project without recalculation.
-- Preserve anonymization when creating public examples.
+## Output Profiles
 
-## Principles
+Load `references/output-profiles.md` and choose the profile matching the project stage:
 
-- Requirements first, products second
-- Architecture follows requirements; do not force HCI, Xinchuang or any other pattern
-- Do not reverse engineer requirements from a product
-- Separate verified specifications from estimates
-- Separate technical evidence from price evidence
-- Prefer official datasheets for technical facts
-- Compare exact configurations, not just chassis/model families
-- Treat vendor comparison scores as project-specific, not permanent brand rankings
-- Keep tender parameters vendor-neutral unless a restriction is justified
-- Do not invent topology details that are not known
-- Identify risks and unknowns clearly
+- `quick-selection`
+- `internal-review`
+- `procurement-rfq`
+- `detailed-design`
+- `compliance-check`
+- `bom-budget`
+
+Profiles can be combined, for example `internal-review + bom-budget`.
 
 ## Task Modes
 
-- single-device: single equipment selection
-- project-design: complete infrastructure planning
-- compliance-check: tender/RFQ parameter validation
-- bom-budget: equipment list and cost estimation
-- alternative-search: compare replacement models
-- price-research: market price and comparable transaction investigation
-- vendor-compare: project-specific vendor/model comparison matrix
-- tender-spec: generate tender/RFQ technical parameters and supplier compliance table
-- topology-generation: generate logical network topology in Mermaid or Graphviz DOT
-- reference-design: build a requirement-driven industry reference design from anonymized examples
+- single-device
+- project-design
+- compliance-check
+- bom-budget
+- alternative-search
+- price-research
+- vendor-compare
+- tender-spec
+- topology-generation
+- reference-design
 
-## Output
+## Principles
 
-Provide only the sections needed for the task. For a full project, normally include:
+- Requirements first, products second.
+- Architecture follows requirements.
+- Prefer the simplest architecture that satisfies mandatory requirements with acceptable risk.
+- Do not reverse-engineer requirements from a favorite product.
+- Separate verified specifications from assumptions and estimates.
+- Separate technical evidence from price evidence.
+- Compare exact configurations, not chassis/model family names.
+- Keep tender parameters vendor-neutral unless a restriction is justified.
+- Do not invent topology, licensing or safety details.
+- Surface single points of failure, exclusions, uncertainty and upgrade triggers.
 
-1. Requirement analysis
-2. Design assumptions and constraints
-3. Architecture decision (only where relevant)
-4. Capacity calculation
-5. Technical recommendation
+## Full Project Output
+
+For a project-level design, normally include only the relevant sections from:
+
+1. Known conditions / assumptions / TBDs
+2. Architecture decisions and rationale
+3. Capacity calculations and assumptions
+4. Recommended hardware/software configurations
+5. SCADA/OT licensing and control requirements where applicable
 6. Candidate products and evidence
-7. Selection rationale or vendor/model matrix when requested
-8. Tender/RFQ parameters when requested
-9. Logical topology when requested
-10. BOM and budget range
-11. Risks, uncertainty and confirmation items
-
-Load detailed calculation, procurement, comparison, tender or topology rules from references only when required.
+7. Vendor comparison when requested
+8. Logical topology when useful
+9. BOM and budget range
+10. Compressible/optional items
+11. Risks, exclusions, acceptance and confirmation items
