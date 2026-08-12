@@ -13,13 +13,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Check required files
         run: |
           test -f SKILL.md
           test -f README.md
           test -d references
           test -d scripts
+          test -d assets
+          test -d examples
+          test -f references/vendor-comparison.md
+          test -f references/tender-specification.md
+          test -f references/network-topology.md
 
       - name: Python syntax check
         run: |
           python -m compileall scripts
+
+      - name: Smoke test vendor comparison
+        run: |
+          python scripts/compare_vendors.py assets/vendor-comparison-example.json > /tmp/vendor-comparison.md
+          grep -q "Vendor / Model Comparison" /tmp/vendor-comparison.md
+
+      - name: Smoke test tender specification
+        run: |
+          python scripts/generate_tender_spec.py assets/tender-requirements-example.json > /tmp/tender-spec.md
+          grep -q "Technical Requirements" /tmp/tender-spec.md
+
+      - name: Smoke test Mermaid topology
+        run: |
+          python scripts/generate_topology.py assets/topology-input-example.json --format mermaid > /tmp/topology.mmd
+          grep -q "flowchart" /tmp/topology.mmd
+
+      - name: Smoke test Graphviz topology
+        run: |
+          python scripts/generate_topology.py assets/topology-input-example.json --format dot > /tmp/topology.dot
+          grep -q "digraph topology" /tmp/topology.dot
