@@ -2,104 +2,144 @@
 
 Use this reference when selecting real equipment, estimating budgets, validating current models, or comparing market prices.
 
+For highly configurable enterprise equipment also load `references/exact-configuration-pricing.md` and `references/price-evidence.md`.
+
 ## 1. Separate Evidence Types
 
-Do not use one source for everything. Treat these as different evidence classes:
+Do not use one source hierarchy for everything. Treat these as different evidence classes:
 
-1. Technical specification evidence
-2. Compatibility/certification evidence
-3. Lifecycle and availability evidence
-4. Current market price evidence
-5. Historical transaction evidence
+1. technical specification evidence;
+2. compatibility/certification evidence;
+3. lifecycle and availability evidence;
+4. current configuration-level quotation evidence;
+5. current market-price evidence;
+6. historical transaction evidence.
 
 A source strong in one class may be weak in another.
 
+**Important:** manufacturer documentation remains the strongest source for technical facts, but a current exact-configuration sales quotation may be a stronger **price** anchor than an official public product listing or an older government transaction for a different configuration.
+
 ---
 
-## 2. Source Hierarchy
+## 2. Technical Source Hierarchy
 
-### A. Technical Specifications — highest priority
+### A. Technical Specifications
 
 Prefer, in order:
 
-1. Manufacturer official product page
-2. Official datasheet / product specification PDF
-3. Official product configurator or ordering guide
-4. Official compatibility/interoperability matrix
-5. Official support portal and lifecycle/EOS/EOL notices
+1. manufacturer official product page;
+2. official datasheet / product specification PDF;
+3. official configurator or ordering guide;
+4. official compatibility/interoperability matrix;
+5. official support portal and lifecycle/EOS/EOL notices.
 
-Examples of evidence to verify here:
+Verify here:
 
-- CPU/socket/core limits
-- DIMM count and supported memory capacity
-- PCIe generation and slot layout
-- RAID/HBA options
-- NIC speeds and transceiver support
-- switch port types and stacking capability
-- firewall NGFW/IPS/threat-protection throughput
-- power supply redundancy
-- OS/hypervisor support
-- lifecycle status
+- CPU/socket/core limits;
+- DIMM count/type/capacity;
+- PCIe generation and slot layout;
+- RAID/HBA/controller options;
+- NIC/interface speeds;
+- switch port types and stacking/IRF capability;
+- firewall NGFW/IPS/threat-protection throughput;
+- power-supply redundancy;
+- OS/hypervisor support;
+- lifecycle status.
 
-Do not use marketplace product titles or reseller descriptions as the sole source for critical technical requirements.
+Do not use marketplace titles or reseller descriptions as the sole source for critical technical facts when manufacturer documentation exists.
 
 ### B. Compatibility and Certification
 
 Prefer:
 
-1. Manufacturer compatibility matrix
-2. OS/hypervisor official HCL
-3. Component vendor qualification list
-4. Formal certification or test report from an authoritative organization
+1. manufacturer compatibility matrix;
+2. OS/hypervisor official HCL;
+3. component-vendor qualification list;
+4. formal certification/test report from an authoritative organization.
 
 For domestic/Xinchuang requirements, only perform this check when the project explicitly requires it.
 
-### C. Historical Procurement Price — strong budget benchmark
+---
 
-For China-based public-sector comparable transactions, prefer:
+## 3. Pricing Evidence Hierarchy
 
-1. 中国政府采购网 (ccgp.gov.cn) — central and local award/transaction notices
-2. 中央政府采购网 (zycg.gov.cn) — electronic marketplace, batch procurement, inquiry and transaction information
-3. Provincial/municipal official government procurement or public-resource trading platforms
+Pricing for highly configurable enterprise equipment must be configuration-aware.
 
-Use historical procurement records as **comparable transaction evidence**, not as a live quote.
+Use the highest available tier and do not mechanically blend lower tiers into it.
 
-China Government Procurement Network identifies itself as the Ministry of Finance-designated national government procurement information publication medium, making award and transaction notices useful evidence for historical procurement benchmarking.
+### Tier 1 — Exact current formal quotation
 
-### D. Current Enterprise Market Price
+Strongest primary budget anchor when all or nearly all required configuration and commercial scope are matched.
 
-Prefer:
+Examples:
 
-1. Manufacturer direct quote or official store, where available
-2. Manufacturer-authorized distributor/reseller quote
-3. Enterprise procurement platforms (for example JD Business/JD Enterprise Procurement)
-4. Mainstream retail/e-commerce listings for commodity devices
+- manufacturer direct quotation;
+- official store or official customer-service configuration quotation;
+- manufacturer-authorized reseller quotation.
 
-Use marketplace prices only as a budget reference unless the exact seller, exact configuration, warranty, tax and service scope are known.
+Capture exact configuration, tax, warranty/support, accessories, licenses, quote date and seller identity.
+
+### Tier 2 — Exact current credible market quotation
+
+Examples:
+
+- enterprise procurement marketplace quotation;
+- current enterprise sales-channel quote with exact configuration.
+
+### Tier 3 — Highly matched current quotation
+
+Use when the quote is current and materially comparable but has small understood differences. Quantify the difference or adjustment.
+
+### Tier 4 — Comparable historical transaction
+
+For China-based public-sector historical benchmarking, prefer:
+
+1. 中国政府采购网 (ccgp.gov.cn);
+2. 中央政府采购网 (zycg.gov.cn);
+3. provincial/municipal official government procurement or public-resource trading platforms.
+
+Use these as **historical comparable transaction evidence**, not live quotations.
+
+Historical evidence is valuable, but if current exact-configuration quotations exist, historical prices become context and must not average down the current quote range.
+
+### Tier 5 — Component-cost model
+
+Use current enterprise option/component costs to estimate a configured system when no exact quote exists. Clearly identify components that are estimated rather than quoted.
+
+### Tier 6 — Generic model-family listing
+
+Same chassis/model family with incomplete CPU/memory/storage/RAID/license/service scope.
+
+Useful only as weak context. It is not a procurement-level quote for a fully configured system.
+
+### Tier 7 — Engineering estimate
+
+Use only when stronger evidence is unavailable. Output a range and mark `Estimated` or `Needs confirmation`.
 
 ---
 
-## 3. Search Strategy
+## 4. Search Strategy
 
 ### Step 1 — derive search keys from the technical requirement
 
 Build a normalized key set:
 
-- product category
-- manufacturer or architecture constraint, if any
-- minimum CPU/core/memory/storage/network requirements
-- exact interface requirements
-- required OS/hypervisor compatibility
-- warranty/service requirement
-- region/currency/tax requirement
+- product category;
+- manufacturer/architecture constraint, if any;
+- exact CPU/core/memory/storage/network requirements;
+- RAID/HBA/controller requirements;
+- interface and optics requirements;
+- OS/hypervisor compatibility;
+- warranty/service term;
+- region/currency/tax requirement.
 
-Do not start from a favorite product model.
+Do not start from a favorite model.
 
 ### Step 2 — find candidate product families
 
-Search manufacturer domains first.
+Search manufacturer domains first for technical fit and lifecycle.
 
-Useful query patterns:
+Useful patterns:
 
 ```text
 site:<manufacturer-domain> <product-category> <key-spec>
@@ -109,164 +149,237 @@ site:<manufacturer-domain> <model> compatibility
 site:<manufacturer-domain> <model> EOL OR EOS OR lifecycle
 ```
 
-Example:
+### Step 3 — verify the exact procurement configuration
 
-```text
-site:dell.com PowerEdge 25GbE datasheet
-site:hpe.com ProLiant ordering guide
-site:huawei.com server compatibility openEuler
-```
+For configurable servers normally capture:
 
-### Step 3 — verify exact configuration
+- chassis/model;
+- CPU model and quantity;
+- memory module capacity/count/type;
+- SSD/NVMe quantity/capacity/type;
+- HDD quantity/capacity/type;
+- RAID/HBA/controller/cache/PLP;
+- NIC model/speed/port count;
+- PSU quantity/wattage/redundancy;
+- rail kit/power cords/mandatory accessories;
+- warranty/support term.
 
-For configurable systems, record more than the chassis name.
+For network/security equipment capture:
 
-Server configuration should normally include:
-
-- chassis/model
-- CPU model and quantity
-- memory module capacity/count
-- boot/storage drives
-- RAID/HBA/controller
-- NIC model/speed/port count
-- PSU quantity/wattage
-- rail kit
-- warranty/support term
-
-Network equipment should include required optics/DAC/AOC, power supplies, fans, stacking/licensing and support.
+- chassis/model;
+- power supplies/fans;
+- optics/DAC/AOC;
+- stacking/IRF accessories;
+- security subscriptions/licenses;
+- controller/AP/device licenses;
+- support term.
 
 A model family is not a procurement configuration.
 
 ### Step 4 — verify lifecycle and supportability
 
-Before price comparison, check:
+Before selecting primary candidates check:
 
-- current/active product status
-- EOS/EOL announcements
-- support end date if known
-- firmware/security update availability
-- required software version compatibility
-- region-specific availability where relevant
+- active/current product status;
+- EOS/EOL announcements;
+- support end date where known;
+- firmware/security update availability;
+- required software-version compatibility;
+- region-specific orderability.
 
-Avoid recommending discontinued equipment as the primary choice unless the user explicitly wants used/legacy hardware.
+Avoid discontinued products as the primary choice unless the user explicitly requests legacy/used hardware.
 
-### Step 5 — collect historical transaction evidence
+### Step 5 — seek exact current quotes first for configurable enterprise equipment
 
-Search official procurement records with model/category plus key configuration terms.
-
-Useful patterns:
-
-```text
-site:ccgp.gov.cn <model> 中标
-site:ccgp.gov.cn <product-category> 服务器 中标
-site:ccgp.gov.cn <key-spec> 成交
-site:zycg.gov.cn <model> 成交
-site:zycg.gov.cn <product-category> 电子竞价
-```
-
-For each comparable record capture:
-
-- publication/transaction date
-- buyer or project type
-- model/configuration
-- quantity
-- total and/or unit price if disclosed
-- tax status if disclosed
-- warranty/service scope
-- bundled software/accessories
-
-Reject a historical price as directly comparable when configuration or service scope differs materially.
-
-### Step 6 — collect current market evidence
-
-For commodity or semi-standard equipment, collect 2–5 current sources where possible.
+For servers, storage, firewalls, HCI, modular switches and similar equipment, ask for or search a quote that matches the complete BOM.
 
 Record:
 
-- seller/channel
-- exact SKU/configuration
-- listed or quoted price
-- VAT/tax status
-- shipping
-- warranty/support
-- included accessories/software
-- query date
+- quote date;
+- source/channel;
+- exact configuration;
+- tax status;
+- warranty/support;
+- included licenses/subscriptions;
+- included accessories;
+- implementation scope;
+- shipping if relevant.
 
-### Step 7 — normalize before comparing
+When two or more exact current quotes are available, their observed range becomes the primary current market range.
 
-Normalize prices to the same scope:
+### Step 6 — collect current market evidence
+
+For commodity/semi-standard devices, collect 2–5 current sources where useful.
+
+For highly configurable enterprise devices, quantity is less important than match quality. Two exact quotations are more useful than ten generic chassis listings.
+
+### Step 7 — collect historical transaction evidence
+
+Search official procurement records with model/category plus key configuration terms.
+
+Capture:
+
+- publication/transaction date;
+- buyer/project type;
+- model/configuration;
+- quantity;
+- total/unit price if disclosed;
+- tax status if disclosed;
+- warranty/service scope;
+- bundled software/accessories.
+
+Reject a historical price as directly comparable when configuration or service scope differs materially.
+
+### Step 8 — score configuration match
+
+For configurable servers use the default match model in `references/exact-configuration-pricing.md` unless a better device-specific model is justified.
+
+Default interpretation:
 
 ```text
-Comparable Cost = hardware + mandatory accessories + required licenses + warranty/support + tax + required implementation
+>= 0.95  exact/effectively exact
+0.85–0.949 highly comparable
+0.70–0.849 partially comparable
+< 0.70 not a direct budget anchor
+```
+
+Same chassis does not imply a high score.
+
+### Step 9 — normalize commercial scope
+
+Normalize prices to:
+
+```text
+Comparable Cost =
+hardware
++ mandatory accessories
++ required licenses
++ warranty/support
++ required implementation
++ tax
++ shipping
 ```
 
 Do not compare:
 
-- bare chassis vs fully configured server
-- switch without optics vs switch with full optics
-- firewall appliance-only vs appliance + 3-year security subscription
-- UPS main unit vs UPS + battery cabinet
+- bare chassis vs fully configured server;
+- different CPU/memory/storage/RAID configurations as if identical;
+- switch without optics vs switch with full optics;
+- firewall appliance-only vs appliance + 3-year security subscription;
+- UPS main unit vs UPS + battery cabinet.
 
-### Step 8 — produce a confidence-based budget
+### Step 10 — select the budget anchor by evidence priority
 
-Classify evidence:
+If Tier 1 exact current quotes exist, use only Tier 1 quotes to form the primary quote range. Lower tiers remain context.
 
-- **Verified** — official technical source or direct formal quote
-- **Market-verified** — multiple comparable current market sources
-- **Comparable-transaction** — authoritative historical procurement record with comparable configuration
-- **Estimated** — engineering estimate based on partial market evidence
-- **Needs confirmation** — configuration, availability or commercial terms not adequately verified
+If no Tier 1 evidence exists, move to the highest available tier and state the confidence/limitations.
 
-Recommended budget output:
+Do not calculate one average across all evidence tiers.
+
+Use `scripts/normalize_price_evidence.py --summary` when structured evidence is available.
+
+---
+
+## 5. Evidence Classes
+
+Use:
+
+- **Verified** — official technical evidence or a directly verified formal quote;
+- **Market-verified** — multiple current configuration-comparable market quotes;
+- **Comparable-transaction** — authoritative historical transaction with comparable configuration;
+- **Estimated** — engineering estimate using partial evidence;
+- **Needs confirmation** — configuration/commercial scope/availability not adequately verified.
+
+For pricing, add a qualifier where useful:
 
 ```text
-Technical recommendation: exact minimum/recommended configuration
-Current market range: CNY X–Y
-Comparable procurement range: CNY A–B
-Recommended project budget: CNY M–N
-Evidence date: YYYY-MM-DD
-Confidence: Market-verified / Estimated / ...
+Market-verified / Exact-config
+Market-verified / Highly-matched
+Comparable-transaction
+Estimated / Partial-config
+Needs confirmation
 ```
 
 ---
 
-## 4. Price Interpretation Rules
+## 6. Budget Output Rules
 
-- Do not average unrelated prices.
-- Prefer configuration-matched evidence over a larger number of weak sources.
-- Government procurement transaction prices can include service, tax, warranty, software and project-specific commercial conditions; inspect the notice before using the number.
-- Retail/e-commerce prices can omit enterprise warranty, tax or project services.
-- Distributor quotes may be more realistic for enterprise servers, storage, firewalls and HCI than public retail listings.
-- For highly configurable enterprise equipment, give a budget range unless a formal quote exists.
-- Record the research date because prices and product availability change.
+### Two or more exact current quotes
+
+Report:
+
+```text
+Exact current quote range: CNY X–Y
+Recommended project budget: normally use this observed range, optionally with a separately stated procurement contingency
+Evidence date: YYYY-MM-DD
+Confidence: Market-verified / Exact-config
+```
+
+Do not average Tier 4–7 evidence into the range.
+
+### One exact current quote
+
+Report the exact quote as the primary anchor and recommend obtaining a second quote before fixing a procurement control price.
+
+Do not invent a narrow range around one quote unless a documented contingency rule is applied.
+
+### No exact current quote
+
+Use the best available matched evidence and return a range.
+
+For highly configurable enterprise equipment, avoid a precise single-number estimate until configuration-level quotations exist.
+
+Example:
+
+```text
+Engineering estimate: CNY 75,000–100,000
+Evidence: partial current market + historical comparable transactions
+Confidence: Needs confirmation
+Action: obtain 2–3 exact configuration tax-included quotes
+```
 
 ---
 
-## 5. Required Output for Equipment Research
+## 7. Required Output for Equipment Research
 
-For important selections, provide a compact evidence table:
+For important selections provide:
 
-| Candidate | Technical fit | Lifecycle | Technical source | Price evidence | Budget range | Confidence |
-|---|---|---|---|---|---|---|
+| Candidate | Technical fit | Lifecycle | Exact configuration | Match score | Price source/date | Normalized cost | Priority | Confidence |
+|---|---|---|---|---:|---|---:|---:|---|
 
 Then state:
 
-- why the recommended candidate is selected
-- why cheaper alternatives were rejected or accepted
-- whether higher-priced alternatives provide meaningful value
-- what must still be confirmed by the vendor or reseller
+- why the recommended candidate is selected;
+- which evidence is the primary price anchor;
+- which cheaper/higher prices were excluded from the anchor and why;
+- whether warranty/tax/license/accessory differences remain;
+- what must still be confirmed by manufacturer/reseller.
 
 ---
 
-## 6. Anti-patterns
+## 8. Price Interpretation Rules
+
+- Do not average unrelated prices.
+- Prefer configuration-matched evidence over source count.
+- A current exact authorized quote can outrank an older authoritative transaction for a different configuration when pricing.
+- Government transaction prices may include tax, services, warranty and bundled scope; inspect before using them.
+- Retail/e-commerce listings may omit enterprise warranty, tax or options.
+- Distributor/customer-service quotes may be more realistic for configured enterprise servers, storage, firewalls and HCI than public list prices.
+- Record the research date.
+- If evidence supports only a range, return a range.
+
+---
+
+## 9. Anti-Patterns
 
 Do not:
 
-- search only one e-commerce site and call that the market price
-- use a reseller page to prove a critical hardware specification when official data exists
-- compare different configurations by chassis/model name alone
-- assume HCI is required whenever virtualization appears
-- assume domestic/Xinchuang requirements unless stated or evidenced
-- treat an old government procurement price as a current quote
-- hide unknown warranty, licensing, optics or service costs
-- return a precise budget when evidence only supports a range
+- search one marketplace and call that the market price;
+- use a reseller page as sole proof of critical technical specifications when official documentation exists;
+- compare different configurations by chassis/model name alone;
+- let a bare-chassis or low-storage price set the budget for a fully configured enterprise server;
+- average current exact quotes with old government procurement prices;
+- treat an old procurement transaction as a current quote;
+- hide unknown warranty, tax, licensing, optics, RAID or service costs;
+- return a precise budget when evidence only supports a broad estimate;
+- assume HCI, Xinchuang, HA or other architectures without requirement evidence.
