@@ -33,6 +33,7 @@ jobs:
           test -f references/output-profiles.md
           test -f references/price-evidence.md
           test -f references/exact-configuration-pricing.md
+          test -f references/live-price-research.md
           test -f references/vendor-comparison.md
           test -f references/tender-specification.md
           test -f references/network-topology.md
@@ -77,12 +78,16 @@ jobs:
           grep -q 'layer3_routing_required' /tmp/network.json
           grep -q 'minimum_va_with_margin' /tmp/ups.json
 
-      - name: Smoke test price normalization and anchor selection
+      - name: Smoke test live price normalization and anchor selection
         run: |
           python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary > /tmp/prices.json
           grep -q 'normalized_comparable_cost' /tmp/prices.json
           grep -q 'preferred_evidence_priority' /tmp/prices.json
           grep -q 'Market-verified / Exact-config' /tmp/prices.json
+          grep -q 'confidence_level' /tmp/prices.json
+          grep -q 'anchor_eligible' /tmp/prices.json
+          grep -q 'anchor_exclusion_reasons' /tmp/prices.json
+          grep -q 'starting-or-base-configuration-price' /tmp/prices.json
           grep -q '90000.0' /tmp/prices.json
           grep -q '92000.0' /tmp/prices.json
 
