@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased — v1.1.1
+
+### Fixed
+
+- Exact current configuration quotations now take precedence over lower-match historical or generic model-family prices when deriving budget anchors.
+- Added configuration-match scoring for highly configurable enterprise equipment so same-chassis listings are not treated as equivalent procurement configurations.
+- Two or more exact current quotes now define the primary observed market range without being averaged together with weaker evidence tiers.
+- A single exact current quote is treated as the primary anchor while explicitly recommending a second quote before fixing a procurement control price.
+- Highly configurable equipment without exact current quotes now defaults to a range with `Estimated` / `Needs confirmation` rather than false-precision single-number pricing.
+
+### Added
+
+- `references/exact-configuration-pricing.md`
+- Price-evidence priority tiers for exact current formal quotes, exact current market quotes, highly matched current quotes, historical transactions, component models, generic listings and engineering estimates
+- Weighted default server configuration-match model covering CPU, memory, SSD, HDD, RAID/PLP, NIC, PSU, warranty, tax and mandatory accessories
+- `--summary` mode in `scripts/normalize_price_evidence.py` to select the preferred budget anchor without blending weaker evidence tiers
+- Pricing regression tests ensuring exact current quotes cannot be pulled down by cheaper historical or bare-chassis prices
+
 ## v1.1.0 — 2026-08-12
 
 ### Added
