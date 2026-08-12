@@ -123,6 +123,7 @@ For real equipment selection/budgeting use:
 - `references/procurement-research.md`
 - `references/price-evidence.md`
 - `references/exact-configuration-pricing.md` for highly configurable enterprise equipment
+- `references/live-price-research.md` for current/live prices, quotation-oriented BOMs and market-price research
 - `scripts/normalize_price_evidence.py` when multiple price records need normalization/ranking.
 
 Separate four questions:
@@ -132,6 +133,22 @@ Separate four questions:
 3. **Current market price** — what is a realistic purchasing range now for the required configuration?
 4. **Comparable transaction evidence** — what did sufficiently similar configurations actually transact for historically?
 
+### Current-price rule
+
+When the user asks for **current price, real-time price, market price, quotation, inquiry budget, or a current BOM budget** and live research tools are available, perform live research before returning the budget.
+
+Do not answer a current-price request from model memory, an old project budget, or historical procurement data alone.
+
+If live research is unavailable, say that current price cannot be verified and return only an engineering estimate or a structured quotation request with `Needs confirmation`.
+
+Before choosing price sources, classify the item:
+
+- `configurable-enterprise` — servers, storage, HCI, configured firewalls, modular switches, project UPS, etc.;
+- `fixed-sku` — fixed switches/APs/displays/Mini PCs/NAS/fixed UPS SKUs;
+- `commodity-component` — CPU, DIMM, SSD/HDD, optics, cables and other standard components.
+
+Do not use one shopping workflow for all three classes.
+
 Key rules:
 
 - Prefer manufacturer product pages/datasheets/configurators/compatibility matrices for technical facts.
@@ -139,9 +156,14 @@ Key rules:
 - A current exact-configuration quote from manufacturer/direct/official-store/authorized channel is the strongest practical budget anchor when tax/support/accessories are understood.
 - Two or more exact current quotes define the primary current market range; do not average lower-priority historical or generic prices into that range.
 - One exact current quote is a primary anchor, but obtain a second quote before fixing a procurement control price when practical.
+- For configurable enterprise equipment, public marketplace starting/base prices are leads, not configured-system prices; obtain or verify the full configuration quote.
+- For fixed SKUs and standard components, multiple current official/enterprise-marketplace prices can be strong evidence when exact SKU, tax and warranty are comparable.
+- Market aggregators are useful for spread/sanity checking and channel discovery, but do not automatically become procurement anchors.
+- Price-history/deal-community sources are primarily trend/context evidence for standard SKUs/components, not configured enterprise systems.
 - Use government procurement award/transaction records as historical comparable evidence, not live quotes.
 - Same chassis/model family does not mean same procurement configuration.
 - Compare configured cost including CPU/memory/storage/RAID/NIC/PSU/accessories/licenses/warranty/support/tax/implementation as applicable.
+- Exclude starting/base prices, unavailable offers, low-match configurations, incomplete commercial scope, and disallowed used/refurbished offers from the primary anchor; keep them visible with an exclusion reason.
 - For highly configurable enterprise equipment without exact current quotations, output a range and mark it `Estimated` or `Needs confirmation`; do not present false precision.
 - Do not average unrelated prices.
 
@@ -167,6 +189,17 @@ Pricing qualifiers may include:
 - Comparable-transaction
 - Estimated / Partial-config
 - Needs confirmation
+
+For a quotation-oriented BOM, include where material:
+
+- exact configuration/SKU;
+- current quote low/high;
+- recommended inquiry budget;
+- source/channel and date;
+- configuration match;
+- evidence tier;
+- confidence;
+- exclusion/notes for misleading price signals.
 
 ## Project BOM
 
@@ -258,7 +291,8 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 - Separate verified specifications from assumptions and estimates.
 - Separate technical evidence from price evidence.
 - Compare exact configurations, not chassis/model family names.
-- Price evidence is selected by configuration match and evidence tier, not by naïvely averaging all observed prices.
+- Price evidence is selected by configuration match, product class and evidence tier, not by naïvely averaging all observed prices.
+- Current-price requests use live research when available.
 - Keep tender parameters vendor-neutral unless a restriction is justified.
 - Do not invent topology, licensing or safety details.
 - Surface single points of failure, exclusions, uncertainty and upgrade triggers.
