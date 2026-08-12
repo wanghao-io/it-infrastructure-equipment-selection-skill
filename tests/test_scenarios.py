@@ -15,6 +15,11 @@ from calculate_server_capacity import calculate_services  # noqa: E402
 from calculate_storage import raid_usable_capacity  # noqa: E402
 from calculate_ups import calculate as calculate_ups  # noqa: E402
 from evaluate_architecture import evaluate  # noqa: E402
+from normalize_price_evidence import (  # noqa: E402
+    configuration_match_score,
+    evidence_priority,
+    select_budget_anchor,
+)
 
 
 class ArchitectureRegressionTests(unittest.TestCase):
@@ -75,6 +80,129 @@ class SizingRegressionTests(unittest.TestCase):
         result = calculate_services(services, minimum_cpu_cores=12, minimum_memory_gb=96)
         self.assertGreaterEqual(result["recommended_cpu_cores"], 12)
         self.assertGreaterEqual(result["recommended_memory_gb"], 96)
+
+
+class PricingRegressionTests(unittest.TestCase):
+    def _exact_match(self) -> dict[str, float]:
+        return {
+            "cpu": 1.0,
+            "memory": 1.0,
+            "ssd": 1.0,
+            "hdd": 1.0,
+            "raid": 1.0,
+            "network": 1.0,
+            "power": 1.0,
+            "warranty": 1.0,
+            "tax": 1.0,
+            "accessories": 1.0,
+        }
+
+    def test_exact_configuration_scores_one(self) -> None:
+        item = {"configuration_match": self._exact_match()}
+        self.assertEqual(configuration_match_score(item), 1.0)
+
+    def test_missing_major_components_reduce_match_score(self) -> None:
+        item = {
+            "configuration_match": {
+                "cpu": 1.0,
+                "memory": 1.0,
+                "ssd": 0.2,
+                "hdd": 0.0,
+                "raid": 0.0,
+                "network": 1.0,
+                "power": 1.0,
+                "warranty": 0.5,
+                "tax": 0.0,
+                "accessories": 0.0,
+            }
+        }
+        self.assertLess(configuration_match_score(item), 0.70)
+
+    def test_exact_current_quote_has_higher_priority_than_historical(self) -> None:
+        exact = {
+            "source_type": "authorized-channel-quote",
+            "quote_current": True,
+            "configuration_match": self._exact_match(),
+            "comparable": True,
+        }
+        historical = {
+            "source_type": "government-award",
+            "quote_current": False,
+            "configuration_match_score": 0.90,
+            "comparable": True,
+        }
+        self.assertLess(evidence_priority(exact), evidence_priority(historical))
+
+    def test_exact_quotes_define_budget_anchor_not_old_lower_price(self) -> None:
+        base = {
+            "configuration": "full enterprise server configuration",
+            "source_date": "2026-08-12",
+            "quote_current": True,
+            "tax_included": True,
+            "comparable": True,
+        }
+        items = [
+            {
+                **base,
+                "candidate": "Quote A",
+                "source_type": "official-store-quote",
+                "hardware_price": 89000,
+                "configuration_match": self._exact_match(),
+            },
+            {
+                **base,
+                "candidate": "Quote B",
+                "source_type": "authorized-channel-quote",
+                "hardware_price": 91500,
+                "configuration_match": self._exact_match(),
+            },
+            {
+                "candidate": "Historical lower price",
+                "configuration": "similar but not exact server configuration",
+                "source_type": "government-award",
+                "source_date": "2025-04-01",
+                "quote_current": False,
+                "hardware_price": 65000,
+                "tax_included": True,
+                "configuration_match_score": 0.88,
+                "comparable": True,
+            },
+            {
+                "candidate": "Bare chassis listing",
+                "configuration": "bare chassis",
+                "source_type": "generic-listing",
+                "source_date": "2026-08-12",
+                "quote_current": True,
+                "hardware_price": 48000,
+                "configuration_match_score": 0.40,
+                "comparable": False,
+            },
+        ]
+
+        result = select_budget_anchor(items)
+        self.assertEqual(result["preferred_evidence_priority"], 1)
+        self.assertEqual(result["recommended_budget_low"], 89000)
+        self.assertEqual(result["recommended_budget_high"], 91500)
+        self.assertEqual(result["historical_context_low"], 65000)
+        self.assertGreaterEqual(result["lower_priority_evidence_excluded_from_anchor"], 1)
+        self.assertEqual(result["confidence"], "Market-verified / Exact-config")
+
+    def test_single_exact_quote_requests_second_quote(self) -> None:
+        item = {
+            "candidate": "Single quote",
+            "configuration": "full enterprise server configuration",
+            "source_type": "manufacturer-direct-quote",
+            "source_date": "2026-08-12",
+            "quote_current": True,
+            "hardware_price": 90000,
+            "tax_included": True,
+            "configuration_match": self._exact_match(),
+            "comparable": True,
+        }
+        result = select_budget_anchor([item])
+        self.assertTrue(result["needs_second_quote"])
+        self.assertEqual(result["recommended_budget_low"], 90000)
+        self.assertEqual(result["recommended_budget_high"], 90000)
 
 
 if __name__ == "__main__":
