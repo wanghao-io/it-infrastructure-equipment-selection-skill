@@ -1,0 +1,28 @@
+{
+  "direction": "LR",
+  "zones": [
+    {"id": "internet", "label": "Internet / WAN"},
+    {"id": "it", "label": "IT Network"},
+    {"id": "dmz", "label": "DMZ"},
+    {"id": "ot", "label": "OT Network"}
+  ],
+  "devices": [
+    {"id": "wan", "label": "WAN Router", "zone": "internet"},
+    {"id": "edgefw", "label": "Edge Firewall", "zone": "it"},
+    {"id": "itcore", "label": "IT Core Switch", "zone": "it"},
+    {"id": "jump", "label": "Bastion / Jump Host", "zone": "dmz"},
+    {"id": "otfw", "label": "IT/OT Firewall", "zone": "dmz"},
+    {"id": "otcore", "label": "OT Core Switch", "zone": "ot"},
+    {"id": "scada", "label": "SCADA Server", "zone": "ot"},
+    {"id": "plc", "label": "PLC / Control Network", "zone": "ot"}
+  ],
+  "links": [
+    {"source": "wan", "target": "edgefw", "label": "WAN"},
+    {"source": "edgefw", "target": "itcore", "label": "LAN"},
+    {"source": "itcore", "target": "jump", "label": "Controlled access"},
+    {"source": "jump", "target": "otfw", "label": "Admin path"},
+    {"source": "otfw", "target": "otcore", "label": "Filtered"},
+    {"source": "otcore", "target": "scada", "label": "Server VLAN"},
+    {"source": "otcore", "target": "plc", "label": "Control network"}
+  ]
+}
