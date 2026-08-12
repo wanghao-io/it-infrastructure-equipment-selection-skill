@@ -1,16 +1,27 @@
 # Structured Price Evidence
 
-Use this schema when equipment/budget research returns multiple prices. The goal is to decide whether two prices are actually comparable before using them in a budget.
+Use this schema when equipment/budget research returns multiple prices. The goal is to decide whether two prices are commercially comparable before using them in a budget.
+
+For highly configurable equipment also load `references/exact-configuration-pricing.md`.
+
+## Core Rule
+
+For **technical facts**, manufacturer documentation has the highest authority.
+
+For **price anchoring**, configuration match and commercial scope come first. A current exact-configuration quote from a credible sales channel can be a stronger pricing anchor than an official public listing or historical procurement record for a materially different configuration.
+
+Never average lower-quality evidence into an exact current quote range merely because more sources are available.
 
 ## Recommended JSON Record
 
 ```json
 {
   "candidate": "model/configuration name",
-  "configuration": "CPU, memory, drives, NIC, licenses, support and mandatory accessories",
-  "source_type": "official-quote | authorized-channel | government-award | enterprise-marketplace | retail",
+  "configuration": "human-readable full configuration",
+  "source_type": "manufacturer-direct-quote | official-store-quote | authorized-channel-quote | enterprise-marketplace-quote | government-award | component-estimate | generic-listing | engineering-estimate",
   "source": "source name or URL",
   "source_date": "YYYY-MM-DD",
+  "quote_current": true,
   "hardware_price": 0,
   "mandatory_accessories": 0,
   "required_licenses": 0,
@@ -21,11 +32,49 @@ Use this schema when equipment/budget research returns multiple prices. The goal
   "currency": "CNY",
   "tax_included": true,
   "warranty": "3 years",
+  "configuration_match": {
+    "cpu": 1.0,
+    "memory": 1.0,
+    "ssd": 1.0,
+    "hdd": 1.0,
+    "raid": 1.0,
+    "network": 1.0,
+    "power": 1.0,
+    "warranty": 1.0,
+    "tax": 1.0,
+    "accessories": 1.0
+  },
   "comparable": true,
   "evidence_level": "Verified | Market-verified | Comparable-transaction | Estimated | Needs confirmation",
   "notes": ""
 }
 ```
+
+`configuration_match` values range from `0.0` to `1.0`. Omit a field only when it truly does not apply; an unknown field should not be silently treated as a full match.
+
+## Default Server Configuration Match Weights
+
+| Field | Weight |
+|---|---:|
+| CPU model/quantity | 15% |
+| Memory capacity/type/layout | 10% |
+| SSD/NVMe configuration | 15% |
+| HDD configuration | 15% |
+| RAID/HBA/cache/PLP | 15% |
+| NIC/network | 5% |
+| PSU/redundancy | 5% |
+| Warranty/support | 10% |
+| Tax | 5% |
+| Mandatory accessories | 5% |
+
+Interpretation:
+
+- `>= 0.95`: exact/effectively exact configuration;
+- `0.85–0.949`: highly comparable;
+- `0.70–0.849`: partial comparison only;
+- `< 0.70`: not a direct budget anchor.
+
+For another equipment class, change the weights when justified and document the change.
 
 ## Comparable Cost
 
@@ -43,12 +92,26 @@ hardware
 
 Use `scripts/normalize_price_evidence.py`.
 
+## Price Evidence Priority
+
+For budget anchoring, prefer:
+
+1. exact current formal quote from manufacturer/direct/official/authorized channel;
+2. exact current credible market quote;
+3. highly matched current quote;
+4. comparable historical government/public transaction;
+5. component-cost model;
+6. generic model-family listing;
+7. engineering estimate.
+
+Lower-priority evidence can be shown as context, but must not override a higher-priority exact-current quote.
+
 ## Comparability Gate
 
 Before treating a price as directly comparable, confirm:
 
 - same functional class;
-- materially equivalent CPU/memory/storage/network configuration;
+- configuration-match score is sufficiently high;
 - same included licenses;
 - comparable warranty/support term;
 - same tax treatment;
@@ -65,16 +128,34 @@ Prefer a smaller number of configuration-matched records over many unrelated pri
 Do not average:
 
 - bare chassis and configured server;
+- server with different CPU/memory/storage/RAID merely because the chassis is identical;
 - switch without optics and switch with optics;
 - appliance-only firewall and licensed/subscribed firewall;
 - UPS main unit and UPS plus battery cabinets;
-- historical award including services and current retail hardware-only price.
+- exact current quotes and low-match historical transactions into one blended mean.
+
+## Budget Anchor Rules
+
+- Two or more exact current quotes: use the observed exact-quote range as the primary market range.
+- One exact current quote: use that quote as the primary anchor and request a second quote before fixing a procurement control price.
+- No exact current quote: use the best matched evidence and output a range with `Estimated` or `Needs confirmation` as appropriate.
+- Do not create false precision from weak evidence.
 
 ## Output
 
 For important equipment show:
 
-| Candidate | Exact configuration | Source type/date | Normalized cost | Comparable? | Evidence level | Note |
-|---|---|---|---:|---|---|---|
+| Candidate | Exact configuration | Match score | Source type/date | Normalized cost | Priority | Comparable? | Evidence level |
+|---|---|---:|---|---:|---:|---|---|
 
-Then derive a **budget range**, not a false-precision single number, unless a formal current quotation exists.
+Then report separately:
+
+```text
+Exact current quote range: CNY X–Y (if available)
+Historical comparable range: CNY A–B (context only)
+Recommended project budget: CNY M–N
+Evidence date: YYYY-MM-DD
+Confidence: Market-verified / Estimated / Needs confirmation
+```
+
+Do not let historical or generic evidence mechanically pull an exact current quote range downward.
