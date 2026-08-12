@@ -2,193 +2,213 @@
 
 [中文说明](#中文说明) | [English](#english)
 
+> Requirements first. Architecture second. Sizing third. Products last.
+
 ---
 
 # 中文说明
 
-这是一个面向 **Codex / AI Agent** 的 IT 基础设施解决方案工程师 Skill。
+这是一个面向 **Codex / AI Agent** 的 IT 基础设施解决方案工程师 Skill，用于项目级设备选型、容量规划、预算、招标参数、合规核验和网络拓扑输出。
 
-目标是帮助 IT 架构师、售前工程师和运维工程师完成企业级基础设施项目规划，包括：
+它的目标不是把每个项目都做成“大而全”的数据中心，而是：
 
-- 服务器与虚拟化基础设施选型
-- 存储容量规划
-- 网络设备选型
-- 防火墙性能评估
-- UPS 容量计算
-- 工作站与终端规划
-- 工业 IT/OT 架构设计（按需）
-- 超融合 HCI 架构设计（按需）
-- 国产化/信创适配分析（按需）
-- 厂商/型号比较矩阵（按需）
-- 自动生成招标/RFQ技术参数（按需）
-- 自动生成 Mermaid / Graphviz 网络拓扑图（按需）
-- 招标参数核验
-- BOM 编制
-- 项目预算估算
-- 当前在售型号、生命周期与价格证据调研
-- 多行业脱敏参考设计
+> **用满足实际需求的最简架构，明确风险，再选择可采购的设备和软件。**
 
-核心原则：
+因此以下方案全部是**按需**而不是默认：
 
-> 先理解业务需求，再进行容量计算，最后选择具体产品。
+- 超融合 HCI
+- 高可用/双机
+- 核心交换机/双核心
+- 防火墙/安全边界
+- 国产化/信创
+- 工业 IT/OT 分区
+- GPU/AI 基础设施
 
-> 架构跟着需求走，不默认强制使用 HCI、信创、双机、双核心或其他特定方案。
+## v1.1.0 开发版重点
 
-避免简单根据商品型号倒推技术方案。
+### 1. 架构决策
 
----
+新增 [`references/architecture-decision.md`](references/architecture-decision.md)。
 
-## 工作流程
+可以判断：
 
-```text
-需求分析
-    ↓
-约束与可用性目标
-    ↓
-选择合适的架构模式
-    ↓
-容量计算
-    ↓
-技术规格定义
-    ↓
-官方规格 / 生命周期验证
-    ↓
-市场价格 + 可比采购成交记录调研
-    ↓
-按需生成：厂商矩阵 / 招标参数 / 网络拓扑
-    ↓
-BOM 与预算区间
-    ↓
-采购决策
+- 单服务器 vs 虚拟化 vs HCI/HA
+- 二层网管交换机 vs 轻三层 vs 独立核心/汇聚
+- 是否需要防火墙/边界设备
+- 是否需要国产化/信创
+- 经济型 UPS vs 在线长延时 UPS
+- 大屏内置播放 vs OPS vs Mini PC
+
+关键规则：
+
+- 虚拟化不等于必须 HCI。
+- VLAN 不等于路由；多个 VLAN 需要互通时必须明确谁承担三层路由。
+- 单服务器可以是合理的低预算方案，但必须暴露单点风险并检查 RAID、UPS/自动关机、独立备份。
+
+结构化检查工具：
+
+```bash
+python scripts/evaluate_architecture.py <requirements.json> --pretty
 ```
 
----
+### 2. SCADA / Historian / OT 专项
 
-## 新增能力（v1.1.0 开发中）
+新增：
 
-### 厂商 / 型号比较矩阵
+- [`references/scada-sizing.md`](references/scada-sizing.md)
+- [`references/ot-control-safety.md`](references/ot-control-safety.md)
 
-比较对象是**项目中的具体配置**，不是给品牌打永久分数。
+SCADA 采购不再只写“软件1套”，而是按需拆分：
 
-- 先定义强制淘汰条件
-- 再做加权评分
-- 强制项不满足直接 `FAIL`
-- 配置需统一到 CPU、内存、硬盘、网卡、授权、维保、附件等可比口径
-- 分数必须同时显示证据等级
+- Runtime
+- Development
+- I/O 点数档位
+- 操作站/客户端
+- Web 发布/并发用户
+- Historian/历史趋势
+- 报警
+- API/ODBC/SDK/报表接口
+- Modbus TCP / OPC UA / PLC 品牌驱动
+- 冗余模块（仅在需要时）
+- 安装调试、培训、维护
 
-参考：[`references/vendor-comparison.md`](references/vendor-comparison.md)
+远程启动/停止等 OT 控制必须保留 PLC/设备侧许可与联锁，并考虑权限、二次确认、操作审计和执行反馈。
 
-工具：
+### 3. 更实用的工程计算器
+
+```text
+scripts/calculate_server_capacity.py   # 虚拟化或多服务整合服务器CPU/内存
+scripts/calculate_historian.py         # Historian点数/采样周期/保留容量
+scripts/calculate_storage.py           # RAID1/5/6/10及保留容量
+scripts/calculate_network_ports.py     # 端口余量及跨VLAN三层需求
+scripts/calculate_ups.py               # W、VA、短时续航目标/自动关机
+scripts/calculate_budget.py            # BOM合计及不可预见费
+```
+
+例如：
+
+```bash
+python scripts/calculate_server_capacity.py --services-json assets/server-workload-example.json
+python scripts/calculate_historian.py 2000 5 --retention-days 365
+python scripts/calculate_storage.py --drives 4 --drive-tb 4 --raid 10
+python scripts/calculate_network_ports.py 30 --vlan-count 5 --inter-vlan
+python scripts/calculate_ups.py 600 --runtime-minutes 10
+```
+
+### 4. 设备选型与预算证据
+
+详细方法：
+
+- [`references/procurement-research.md`](references/procurement-research.md)
+- [`references/price-evidence.md`](references/price-evidence.md)
+
+技术参数与价格证据分开：
+
+- **技术参数**：优先厂商官网、Datasheet、配置/订购指南、兼容性矩阵、生命周期公告。
+- **当前市场价**：厂家/授权渠道优先，企业采购平台用于市场参考。
+- **历史可比成交价**：政府采购/公共资源交易等正式成交记录可作为历史基准，但不是实时报价。
+- **预算**：比较完整配置，而不是只比较机箱型号。
+
+统一价格记录后可运行：
+
+```bash
+python scripts/normalize_price_evidence.py assets/price-evidence-example.json
+```
+
+证据等级：
+
+```text
+Verified
+Market-verified
+Comparable-transaction
+Estimated
+Needs confirmation
+```
+
+### 5. 厂商比较、招标参数和网络拓扑
+
+厂商/型号比较：
 
 ```bash
 python scripts/compare_vendors.py assets/vendor-comparison-example.json
 ```
 
-### 自动生成招标 / RFQ 参数
+规则：强制项先淘汰，再做加权评分；评分是项目级配置评分，不是品牌永久排名。
 
-从项目需求生成可量化、可验收、尽量厂商中立的技术参数和供应商响应表。
-
-- Mandatory / Recommended / Optional 分级
-- 为关键条款增加验收证据要求
-- 不必要时不锁品牌、型号或专有功能
-- 未确认项保留 `TBD`
-
-参考：[`references/tender-specification.md`](references/tender-specification.md)
-
-工具：
+招标/RFQ参数：
 
 ```bash
 python scripts/generate_tender_spec.py assets/tender-requirements-example.json
 ```
 
-### 自动生成网络拓扑图
+按 Mandatory / Recommended / Optional 生成尽量厂商中立、可验收的技术条款。
 
-从结构化 JSON 输入生成逻辑拓扑：
-
-- Mermaid：适合 GitHub / Markdown
-- Graphviz DOT：适合后续渲染和程序化处理
-
-不会自动虚构 VLAN、IP、物理端口、冗余链路或安全区域。
-
-参考：[`references/network-topology.md`](references/network-topology.md)
-
-工具：
+网络拓扑：
 
 ```bash
 python scripts/generate_topology.py assets/topology-input-example.json --format mermaid --markdown
 python scripts/generate_topology.py assets/topology-input-example.json --format dot
 ```
 
----
+不会自动虚构 VLAN ID、IP、物理端口、冗余链路或安全区域。
 
-## 设备选型与预算证据
+## 输出模式
 
-设备参数和价格不能只靠单一电商搜索。
+见 [`references/output-profiles.md`](references/output-profiles.md)：
 
-本 Skill 将证据分开处理：
+- `quick-selection`
+- `internal-review`
+- `procurement-rfq`
+- `detailed-design`
+- `compliance-check`
+- `bom-budget`
 
-- **技术参数**：优先厂商官网、官方 Datasheet、配置指南、兼容性矩阵和生命周期公告。
-- **当前市场价格**：优先厂商/授权渠道报价，企业采购平台作为市场参考。
-- **历史成交价格**：可使用中国政府采购网、中央政府采购网及各地官方政府采购/公共资源交易平台中的可比中标或成交记录。
-- **预算输出**：必须核对具体配置、税费、维保、授权、光模块/附件及实施服务，不能只比较裸机型号。
+可以组合，例如：
 
-详细方法见：[`references/procurement-research.md`](references/procurement-research.md)
+```text
+internal-review + bom-budget
+procurement-rfq + tender-spec
+detailed-design + topology-generation
+```
 
----
+中文预算 CSV 推荐字段模板：[`assets/project-budget-template.csv`](assets/project-budget-template.csv)。CSV 生成工具默认可使用 `utf-8-sig`，便于中文版 Excel 直接打开。
 
-## 示例场景
+## 工作流程
 
-### 工业 SCADA 项目
+```text
+已知条件 / 假设 / TBD
+        ↓
+强制要求 / 可用性 / 预算
+        ↓
+最简合理架构决策
+        ↓
+CPU / 内存 / Historian / 存储 / 网络 / UPS容量
+        ↓
+技术规格
+        ↓
+官方规格与生命周期验证
+        ↓
+市场价格与历史可比成交证据
+        ↓
+按需生成厂商矩阵 / 招标参数 / 拓扑
+        ↓
+BOM + 预算区间 + 可压缩项
+        ↓
+风险 / 升级触发条件 / 待厂家确认项
+```
 
-输入：
+## BOM 防漏项
 
-- SCADA 点数：3000
-- PLC数量：50
-- 需要虚拟化平台
-- 有国产化要求
-- 有预算约束
+见 [`references/bom-checklist.md`](references/bom-checklist.md)。目前覆盖：
 
-此时 Skill 才会根据可用性、规模、预算和维护条件判断是否适合三节点 HCI；如果传统虚拟化、物理服务器或其他架构更合理，也应给出比较后再选择。
-
-输出可能包括：
-
-- VM资源规划
-- 架构方案比较
-- CPU/内存建议
-- 存储容量设计
-- 网络架构建议
-- 防火墙规格
-- 候选设备与官方证据
-- 厂商/型号比较矩阵
-- 市场价格与可比成交价格
-- 招标技术参数
-- Mermaid / Graphviz 网络拓扑
-- BOM清单
-- 风险分析
-
----
-
-## 核心能力
-
-- Server sizing
-- Virtualization infrastructure planning
-- HCI sizing (when required)
-- Storage planning
-- Network architecture design
-- Firewall sizing
-- UPS calculation
-- Industrial IT/OT infrastructure planning (when required)
-- 国产化/信创适配（按需）
-- Product lifecycle validation
-- Authoritative procurement research
-- Project-specific vendor/model comparison
-- Tender/RFQ specification generation
-- Mermaid / Graphviz topology generation
-- BOM generation
-- Compliance checking
-- Procurement risk analysis
-
----
+- Server / Storage / Backup
+- Network / optics / cabling
+- UPS / PDU / rack
+- Workstation
+- Large display / OPS
+- SCADA / Historian / BI 授权
+- OT远程控制配置
+- 安装、调试、培训、维保
 
 ## Examples
 
@@ -197,38 +217,28 @@ python scripts/generate_topology.py assets/topology-input-example.json --format 
 - [Healthcare IT Infrastructure Reference Design](examples/healthcare-it-reference-design.md)
 - [Small Data Center / Server Room Reference Design](examples/small-datacenter-reference-design.md)
 
-案例均应脱敏并聚焦工程方法，不公开客户特定敏感信息。示例中的容量、冗余和架构不是默认配置，必须按新项目重新计算。
+Examples 是方法模板，不是默认架构。所有容量、冗余和安全设计都必须针对新项目重新判断。
 
----
+## 回归测试
 
-## 项目结构
+除了脚本 smoke test，v1.1 增加工程判断场景：
 
-```text
-.
-├── SKILL.md
-├── references/
-│   ├── procurement-research.md
-│   ├── vendor-comparison.md
-│   ├── tender-specification.md
-│   └── network-topology.md
-├── scripts/
-│   ├── compare_vendors.py
-│   ├── generate_tender_spec.py
-│   └── generate_topology.py
-├── assets/
-├── examples/
-├── tests/
-└── agents/
+- 小规模单服务器不应自动推荐 HCI；
+- 多 VLAN 互通必须明确 Layer-3；
+- 未要求信创时不应强制信创；
+- 隔离小型 OT 不自动堆防火墙；
+- 单服务器必须暴露 RAID/UPS/备份要求；
+- OT 远程启停必须保留权限、审计、联锁和执行反馈。
+
+```bash
+python -m unittest discover -s tests -p 'test_*.py' -v
 ```
-
----
 
 ## 安装
 
-复制到 Codex Skill 目录：
-
 ```bash
-~/.agents/skills/it-infrastructure-equipment-selection-skill
+git clone https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill.git \
+  ~/.agents/skills/it-infrastructure-equipment-selection-skill
 ```
 
 调用：
@@ -241,78 +251,40 @@ $it-infrastructure-equipment-selection
 
 # English
 
-AI Agent skill for IT infrastructure solution architects.
-
-This skill helps engineers design, validate and document enterprise infrastructure projects while keeping architecture choices requirement-driven rather than forcing a predefined pattern.
-
-Typical capabilities include:
-
-- Servers and virtualization infrastructure
-- Storage
-- Network equipment
-- Firewalls
-- UPS
-- Workstations
-- HCI when justified by project requirements
-- Industrial IT/OT architecture when required
-- Domestic/Xinchuang compatibility analysis when required
-- Product lifecycle validation
-- Equipment pricing and comparable procurement research
-- Project-specific vendor/model comparison matrices
-- Vendor-neutral tender/RFQ specification generation
-- Mermaid / Graphviz logical network topology generation
-- Anonymized multi-industry reference designs
+An AI Agent / Codex skill for IT infrastructure solution architects covering equipment selection, sizing, procurement research, BOM/budget, tender specifications and topology generation.
 
 ## Design Principle
 
-> Requirements first. Sizing second. Products last.
+> Requirements first. Architecture second. Sizing third. Products last.
 
-> Architecture follows requirements. HCI, domestic platforms, redundancy and other specialized patterns are optional, not defaults.
+The skill deliberately avoids forcing HCI, HA, core switching, firewalls or domestic/Xinchuang platforms into every project.
 
-## Workflow
+## v1.1 Development Highlights
 
-```text
-Requirements
-    ↓
-Constraints and availability targets
-    ↓
-Architecture decision
-    ↓
-Capacity sizing
-    ↓
-Technical specification
-    ↓
-Official product/lifecycle validation
-    ↓
-Market and comparable procurement research
-    ↓
-Optional artifacts: comparison matrix / tender spec / topology
-    ↓
-BOM and budget range
-    ↓
-Procurement decision
-```
+- Requirement-driven architecture decisions
+- SCADA/historian sizing and licensing breakdown
+- OT remote-control safety requirements
+- Service-based server sizing
+- Historian retention calculator
+- RAID-aware storage sizing
+- W/VA/runtime-objective UPS sizing
+- Network port and inter-VLAN routing checks
+- Structured price evidence normalization
+- Project budget CSV template and contingency calculation
+- Engineering scenario regression tests
 
-## Optional artifact tools
+## Procurement Principle
 
-```bash
-python scripts/compare_vendors.py assets/vendor-comparison-example.json
-python scripts/generate_tender_spec.py assets/tender-requirements-example.json
-python scripts/generate_topology.py assets/topology-input-example.json --format mermaid --markdown
-```
+Technical facts should be verified with manufacturer documentation. Price evidence is normalized separately from technical evidence, and exact configured cost should include required accessories, licenses, warranty/support, tax and implementation scope.
 
-## Procurement Research
+## Artifacts
 
-Technical specifications should be verified primarily with manufacturer documentation. Current pricing should use comparable enterprise market evidence, while official government procurement award records can provide historical comparable transaction benchmarks when configurations are sufficiently similar.
+Optional modes include:
 
-See [`references/procurement-research.md`](references/procurement-research.md).
-
-## Examples
-
-- [Industrial SCADA + HCI Reference Design](examples/industrial-scada-hci-reference-design.md)
-- [Enterprise Campus IT Infrastructure Reference Design](examples/enterprise-campus-reference-design.md)
-- [Healthcare IT Infrastructure Reference Design](examples/healthcare-it-reference-design.md)
-- [Small Data Center / Server Room Reference Design](examples/small-datacenter-reference-design.md)
+- vendor/model comparison
+- tender/RFQ specification generation
+- Mermaid/Graphviz topology generation
+- anonymized industry reference designs
 
 ## License
 
