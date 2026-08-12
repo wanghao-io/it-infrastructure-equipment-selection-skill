@@ -9,14 +9,22 @@
 - Two or more exact current quotes now define the primary observed market range without being averaged together with weaker evidence tiers.
 - A single exact current quote is treated as the primary anchor while explicitly recommending a second quote before fixing a procurement control price.
 - Highly configurable equipment without exact current quotes now defaults to a range with `Estimated` / `Needs confirmation` rather than false-precision single-number pricing.
+- Current-price requests now require live research when live search tools are available instead of relying on model memory, old project budgets or historical transaction data alone.
+- E-commerce starting/base prices, unavailable offers, low-match configurations, incomplete commercial scope and disallowed used/refurbished offers are explicitly excluded from primary budget anchors.
+- Market aggregators and price-history sources are now treated as context by default unless an exact seller/SKU/quote is independently verified.
 
 ### Added
 
 - `references/exact-configuration-pricing.md`
+- `references/live-price-research.md` for quotation-oriented current market research and batch BOM pricing
+- Product-class-specific price research for `configurable-enterprise`, `fixed-sku` and `commodity-component` items
+- China-market channel guidance covering manufacturer/authorized quotes, JD/Tmall official/enterprise channels, ZOL/market aggregators, price-history tools and government procurement context without hard-coding a single universal source ranking
 - Price-evidence priority tiers for exact current formal quotes, exact current market quotes, highly matched current quotes, historical transactions, component models, generic listings and engineering estimates
 - Weighted default server configuration-match model covering CPU, memory, SSD, HDD, RAID/PLP, NIC, PSU, warranty, tax and mandatory accessories
+- `product_class`, `quote_mode`, orderability, commercial-scope and starting-price fields in the structured price-evidence model
+- `anchor_eligible`, `anchor_exclusion_reasons`, `price_signal_role` and confidence-level outputs in `scripts/normalize_price_evidence.py`
 - `--summary` mode in `scripts/normalize_price_evidence.py` to select the preferred budget anchor without blending weaker evidence tiers
-- Pricing regression tests ensuring exact current quotes cannot be pulled down by cheaper historical or bare-chassis prices
+- Pricing regression tests ensuring exact current quotes cannot be pulled down by cheaper historical, aggregator, bare-chassis or starting-price signals
 
 ## v1.1.0 — 2026-08-12
 
