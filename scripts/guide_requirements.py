@@ -14,6 +14,17 @@ from typing import Any
 
 DEFAULT_TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "assets" / "scenario-templates.json"
 
+UNRESOLVED_MARKERS = (
+    "tbd",
+    "unknown",
+    "needs confirmation",
+    "to be confirmed",
+    "待确认",
+    "未确认",
+    "待定",
+    "未知",
+)
+
 
 def load_templates(path: Path = DEFAULT_TEMPLATE_PATH) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -25,6 +36,47 @@ def load_templates(path: Path = DEFAULT_TEMPLATE_PATH) -> dict[str, Any]:
 
 def template_index(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {str(item["id"]): item for item in data["templates"]}
+
+
+def is_unresolved(value: Any) -> bool:
+    """Return True when a supplied requirement value is absent or explicitly unresolved."""
+    if value is None:
+        return True
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return True
+        lowered = text.lower()
+        return any(marker in lowered for marker in UNRESOLVED_MARKERS)
+    if isinstance(value, dict):
+        if not value:
+            return True
+        return any(is_unresolved(v) for v in value.values())
+    if isinstance(value, (list, tuple)):
+        if not value:
+            return True
+        return any(is_unresolved(v) for v in value)
+    return False
+
+
+def item_is_unresolved(item: dict[str, Any], value: Any) -> bool:
+    """Evaluate a field, including optional required_parts for composite requirements."""
+    if is_unresolved(value):
+        return True
+
+    required_parts = [str(x) for x in item.get("required_parts", [])]
+    if not required_parts:
+        return False
+
+    # Composite requirements must be supplied structurally so partial answers
+    # such as only RTO (without RPO) cannot accidentally look complete.
+    if not isinstance(value, dict):
+        return True
+
+    for part in required_parts:
+        if part not in value or is_unresolved(value.get(part)):
+            return True
+    return False
 
 
 def analyze_requirements(
@@ -51,7 +103,7 @@ def analyze_requirements(
     for item in required:
         key = str(item["key"])
         value = supplied.get(key)
-        unresolved = value is None or value == "" or value == "TBD"
+        unresolved = item_is_unresolved(item, value)
         if unresolved:
             missing.append(key)
             if len(questions) < max_questions:
@@ -60,13 +112,14 @@ def analyze_requirements(
                         "key": key,
                         "question": item.get("question", key),
                         "priority": int(item.get("priority", 99)),
+                        "required_parts": item.get("required_parts", []),
                     }
                 )
 
     suggested = {
         key: value
         for key, value in template.get("suggested_assumptions", {}).items()
-        if key not in supplied or supplied.get(key) in (None, "", "TBD")
+        if key not in supplied or is_unresolved(supplied.get(key))
     }
 
     return {
@@ -80,7 +133,8 @@ def analyze_requirements(
         "ready_for_architecture": len(missing) == 0,
         "note": (
             "Suggested assumptions are not project facts. Confirm or explicitly carry them as assumptions; "
-            "they must not force HCI, HA, core switching, firewall, Xinchuang or other architecture choices."
+            "they must not force HCI, HA, core switching, firewall, Xinchuang or other architecture choices. "
+            "Composite requirements are resolved only when every required part is supplied; partial answers remain TBD."
         ),
     }
 
