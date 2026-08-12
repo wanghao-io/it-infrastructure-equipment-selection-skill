@@ -4,7 +4,7 @@
 
 > Requirements first. Architecture second. Sizing third. Products last.
 
-**Current release: v1.1.0**
+**Current release: v1.1.1**
 
 ---
 
@@ -25,6 +25,31 @@
 - 国产化/信创
 - 工业 IT/OT 分区
 - GPU/AI 基础设施
+
+## v1.1.1 价格准确性修复
+
+v1.1.1 重点修复企业级硬件询价和预算准确性：
+
+- 当前完全同配置报价优先于低匹配历史成交价、裸机价和同系列起售价；
+- 同机箱/同系列不再自动视为同一采购配置；
+- 服务器等高度可配置设备按 CPU、内存、SSD、HDD、RAID、网卡、电源、维保、税和附件计算配置匹配度；
+- 两个及以上当前同配置报价直接形成主市场区间，不再与旧政采价或泛型号价格做平均；
+- 当前价格请求在具备联网能力时必须先做实时研究；
+- 先区分 `configurable-enterprise`、`fixed-sku`、`commodity-component`，再选择价格渠道；
+- 京东/天猫官方或企业渠道、厂商/授权报价、ZOL/市场聚合器、价格历史和政采记录按证据角色使用，不硬编码单一网站优先级；
+- 起售价、不可下单、低匹配、商业范围不完整、二手/翻新等信号会被排除出主预算锚点并保留排除原因。
+
+详细方法：
+
+- [`references/exact-configuration-pricing.md`](references/exact-configuration-pricing.md)
+- [`references/live-price-research.md`](references/live-price-research.md)
+- [`references/price-evidence.md`](references/price-evidence.md)
+
+结构化价格证据可运行：
+
+```bash
+python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary
+```
 
 ## v1.1.0 正式版重点
 
@@ -107,15 +132,9 @@ python scripts/calculate_ups.py 600 --runtime-minutes 10
 技术参数与价格证据分开：
 
 - **技术参数**：优先厂商官网、Datasheet、配置/订购指南、兼容性矩阵、生命周期公告。
-- **当前市场价**：厂家/授权渠道优先，企业采购平台用于市场参考。
+- **当前市场价**：优先当前、可购、配置匹配的报价；企业采购平台和市场聚合器按证据角色使用。
 - **历史可比成交价**：政府采购/公共资源交易等正式成交记录可作为历史基准，但不是实时报价。
 - **预算**：比较完整配置，而不是只比较机箱型号。
-
-统一价格记录后可运行：
-
-```bash
-python scripts/normalize_price_evidence.py assets/price-evidence-example.json
-```
 
 证据等级：
 
@@ -190,7 +209,7 @@ CPU / 内存 / Historian / 存储 / 网络 / UPS容量
         ↓
 官方规格与生命周期验证
         ↓
-市场价格与历史可比成交证据
+实时价格 / 配置匹配 / 历史可比成交证据
         ↓
 按需生成厂商矩阵 / 招标参数 / 拓扑
         ↓
@@ -223,14 +242,15 @@ Examples 是方法模板，不是默认架构。所有容量、冗余和安全�
 
 ## 回归测试
 
-除了脚本 smoke test，v1.1.0 增加工程判断场景：
+当前回归测试覆盖：
 
 - 小规模单服务器不应自动推荐 HCI；
 - 多 VLAN 互通必须明确 Layer-3；
 - 未要求信创时不应强制信创；
 - 隔离小型 OT 不自动堆防火墙；
 - 单服务器必须暴露 RAID/UPS/备份要求；
-- OT 远程启停必须保留权限、审计、联锁和执行反馈。
+- OT 远程启停必须保留权限、审计、联锁和执行反馈；
+- 当前完全同配置报价不能被更低的历史价、聚合器价、裸机价或起售价拉低。
 
 ```bash
 python -m unittest discover -s tests -p 'test_*.py' -v
@@ -261,6 +281,16 @@ An AI Agent / Codex skill for IT infrastructure solution architects covering equ
 
 The skill deliberately avoids forcing HCI, HA, core switching, firewalls or domestic/Xinchuang platforms into every project.
 
+## v1.1.1 Pricing Accuracy Fix
+
+- Live current-price research when live research tools are available
+- Procurement-object classification: configurable enterprise, fixed SKU and commodity component
+- Exact-configuration pricing priority for highly configurable enterprise hardware
+- Configuration-match scoring for servers and similar equipment
+- Exact current quote ranges are not blended with weaker historical or generic prices
+- Starting/base prices, unavailable offers and incomplete commercial scopes are excluded from primary budget anchors
+- Market aggregators and price-history tools are treated according to evidence role rather than as universal authorities
+
 ## v1.1.0 Highlights
 
 - Requirement-driven architecture decisions
@@ -277,7 +307,7 @@ The skill deliberately avoids forcing HCI, HA, core switching, firewalls or dome
 
 ## Procurement Principle
 
-Technical facts should be verified with manufacturer documentation. Price evidence is normalized separately from technical evidence, and exact configured cost should include required accessories, licenses, warranty/support, tax and implementation scope.
+Technical facts should be verified with manufacturer documentation. Price evidence is evaluated separately by configuration match, current orderability and commercial scope; exact configured cost should include required accessories, licenses, warranty/support, tax and implementation scope.
 
 ## Artifacts
 
