@@ -1,0 +1,70 @@
+[
+  {
+    "name": "budget-limited-single-server-does-not-imply-hci",
+    "requirements": {
+      "server_count": 1,
+      "virtualization_required": true,
+      "workload_count": 5,
+      "availability": "standard",
+      "access_switch_count": 1,
+      "vlan_count": 1
+    },
+    "expect": {
+      "hci": "not-required-by-current-requirements",
+      "aggregation_core": "not-required-by-current-requirements",
+      "raid": "required",
+      "ups_graceful_shutdown": "required",
+      "independent_backup": "required"
+    }
+  },
+  {
+    "name": "multiple-vlans-that-communicate-require-routing",
+    "requirements": {
+      "server_count": 1,
+      "access_switch_count": 1,
+      "vlan_count": 5,
+      "inter_vlan_communication_required": true
+    },
+    "expect": {
+      "layer3_routing": "required",
+      "aggregation_core": "not-required-by-current-requirements"
+    }
+  },
+  {
+    "name": "xinchuang-is-not-assumed",
+    "requirements": {
+      "server_count": 1,
+      "domestic_xinchuang_required": false
+    },
+    "expect": {
+      "domestic_xinchuang": "not-required-by-current-requirements"
+    }
+  },
+  {
+    "name": "isolated-ot-does-not-automatically-add-firewall",
+    "requirements": {
+      "server_count": 1,
+      "external_network_interconnection": false,
+      "remote_access_required": false,
+      "cross_trust_zone_connection": false
+    },
+    "expect": {
+      "firewall": "not-required-by-current-isolated-scope"
+    }
+  },
+  {
+    "name": "remote-start-stop-preserves-controller-interlocks-and-audit",
+    "requirements": {
+      "server_count": 1,
+      "ot_remote_control": true
+    },
+    "expect": {
+      "remote_control_required_controls": [
+        "role_based_access",
+        "operation_audit",
+        "local_interlocks_preserved",
+        "command_result_feedback"
+      ]
+    }
+  }
+]
