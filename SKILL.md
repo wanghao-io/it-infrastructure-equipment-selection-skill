@@ -100,6 +100,7 @@ Sizing rules:
 - Historian capacity uses historical points and effective sample rate, not total licensed tags.
 - State RAID level, drive count, raw/usable capacity and independent backup separately.
 - UPS sizing must check both W and VA and state the runtime objective; actual runtime must be validated against manufacturer runtime data.
+- **Technical fit is a prerequisite for price comparison.** A cheaper SKU must not redefine the project requirement after pricing begins.
 
 ## SCADA / OT Rules
 
@@ -183,14 +184,39 @@ Key rules:
 - For highly configurable enterprise equipment without exact current quotations, output a range and mark it `Estimated` or `Needs confirmation`; do not present false precision.
 - Do not average unrelated prices.
 
+### Mandatory technical-fit gate before price reduction
+
+This gate applies to **every** downward price revision, including `fixed-sku` and commodity-like lines. Price research may identify candidates, but a cheaper candidate is eligible to influence the budget only after it is shown to satisfy the requirement that existed before price comparison.
+
+Rules:
+
+1. Preserve the required technical scope before researching cheaper candidates. Do not weaken CPU, memory, ports, display/OPS capability, UPS capacity/runtime, warranty, license scope or other mandatory attributes merely to match a cheaper listing.
+2. Reject a cheaper SKU from the pricing anchor when its mandatory technical fit is unknown or fails. Keep its price only as excluded/context evidence.
+3. For UPS lines, always load `references/ups-sizing.md` before lowering the budget. Establish protected load, W margin, VA margin, runtime objective and graceful-shutdown requirement first.
+4. When a concrete UPS SKU is proposed as the reason for a lower budget and Shell/Python is available, run:
+
+```bash
+python scripts/calculate_ups.py <protected-load-W> \
+  --runtime-minutes <minutes> \
+  --candidate-w <candidate-output-W> \
+  --candidate-va <candidate-VA> \
+  --runtime-curve-verified \
+  --shutdown-interface-verified
+```
+
+5. Use the UPS candidate as a lower-price anchor only when the result is `status = eligible-for-pricing`. If protected load/runtime is unresolved or the result is `not-eligible-for-pricing`, hold the previous UPS budget provisionally and mark it `Needs confirmation` rather than sizing the requirement from the cheap SKU.
+6. A nominal `1500VA` label does not prove suitability; real output W, VA, runtime at actual load and required shutdown integration are independent checks.
+7. Apply the same principle to displays and other bundled fixed SKUs: for example, a display without OS/network capability does not satisfy a browser/BI requirement unless OPS or an equivalent playback device is included in the compared commercial scope.
+
 ### Mandatory existing-budget revision workflow
 
 This workflow is **mandatory** whenever the user asks to update, refresh, reprice, revise or optimize prices in an existing BOM, CSV, XLSX or budget file. It applies even when the user gives only a short instruction such as “更新一下价格”.
 
 1. Read the source artifact first and preserve each existing line-item unit price as the **revision baseline**. A previous budget is not automatically current-price evidence, but it must not be silently overwritten by weaker evidence.
 2. Before broad web research, inspect accessible project evidence for current quotations: the source file, adjacent/previous budget versions, quote records, notes, screenshots, user-provided figures and prior project artifacts. Do not discard a human quotation merely because it has no public URL.
-3. For every `configurable-enterprise` item, load `references/exact-configuration-pricing.md` and `references/live-price-research.md` before deciding a revised price.
-4. If a proposed revision would **lower** an existing `configurable-enterprise` unit price, create structured price-evidence records and run the deterministic guard:
+3. Apply the **mandatory technical-fit gate before price reduction** to every line whose lower-priced candidate changes or leaves uncertain any mandatory requirement.
+4. For every `configurable-enterprise` item, load `references/exact-configuration-pricing.md` and `references/live-price-research.md` before deciding a revised price.
+5. If a proposed revision would **lower** an existing `configurable-enterprise` unit price, create structured price-evidence records and run the deterministic guard:
 
 ```bash
 python scripts/normalize_price_evidence.py <evidence.json> \
@@ -199,13 +225,13 @@ python scripts/normalize_price_evidence.py <evidence.json> \
   --product-class configurable-enterprise
 ```
 
-5. Apply a lower price only when `budget_revision.decision` is `revise-to-current-anchor`. If the result is `hold-existing-provisional`, keep the old unit price, mark it `Needs confirmation`, and show weaker prices only as excluded/context evidence.
-6. The following **cannot by themselves justify lowering** an existing configurable-enterprise budget: `Partial-config`, generic/model-family listings, market aggregators such as ZOL/PConline-style context pages, starting/base prices, historical transactions, component models, and engineering estimates.
-7. One Tier-3 highly matched current quote is not enough by itself to lower an existing configurable-enterprise budget. Require at least one exact-current Tier-1/2 quote, or two independent Tier-3 highly matched current quotes.
-8. Never derive a new lower “control price” by taking a partial public configuration and adding/subtracting an engineering adjustment. `Partial-config + configuration-difference estimate` is context only, not a downward budget anchor.
-9. If strong current evidence is **higher** than the existing budget, revise upward or report the verified range; the guard is not a reason to preserve an obviously under-budgeted amount.
-10. Recalculate line totals, contingency and project totals only **after** every configurable-enterprise line passes this revision gate.
-11. In the final response, explicitly list every configurable-enterprise line whose price changed, its old price, new price/range, evidence tier and revision decision. If none passed the gate, say that no such line was lowered.
+6. Apply a lower price only when `budget_revision.decision` is `revise-to-current-anchor`. If the result is `hold-existing-provisional`, keep the old unit price, mark it `Needs confirmation`, and show weaker prices only as excluded/context evidence.
+7. The following **cannot by themselves justify lowering** an existing configurable-enterprise budget: `Partial-config`, generic/model-family listings, market aggregators such as ZOL/PConline-style context pages, starting/base prices, historical transactions, component models, and engineering estimates.
+8. One Tier-3 highly matched current quote is not enough by itself to lower an existing configurable-enterprise budget. Require at least one exact-current Tier-1/2 quote, or two independent Tier-3 highly matched current quotes.
+9. Never derive a new lower “control price” by taking a partial public configuration and adding/subtracting an engineering adjustment. `Partial-config + configuration-difference estimate` is context only, not a downward budget anchor.
+10. If strong current evidence is **higher** than the existing budget, revise upward or report the verified range; the guard is not a reason to preserve an obviously under-budgeted amount.
+11. Recalculate line totals, contingency and project totals only **after** every relevant line passes the technical-fit gate and every configurable-enterprise line passes the price-evidence revision gate.
+12. In the final response, explicitly list every configurable-enterprise line whose price changed, its old price, new price/range, evidence tier and revision decision. If none passed the gate, say that no such line was lowered.
 
 A failure example that must be rejected:
 
@@ -270,6 +296,11 @@ Do not forget hidden items such as:
 - installation/commissioning/training/maintenance.
 
 For Chinese budget CSVs, prefer the fields in `assets/project-budget-template.csv` and UTF-8 with BOM (`utf-8-sig`).
+
+Budget-summary wording rule:
+
+- Do not claim the overall budget is `tax included`, `delivered`, `fully scoped` or equivalent unless those commercial attributes are confirmed for every material line relevant to the claim.
+- If any material line still has unknown tax, warranty, implementation or delivery scope, state that the project total is based on currently available evidence and explicitly identify the remaining commercial-scope confirmations.
 
 ## Optional Artifact Modes
 
@@ -347,6 +378,7 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 - Compare exact configurations, not chassis/model family names.
 - Price evidence is selected by configuration match, product class and evidence tier, not by naïvely averaging all observed prices.
 - Current-price requests use live research when available.
+- Technical fit must be validated before a cheaper candidate can influence a budget.
 - Existing-budget downward revisions for configurable enterprise equipment must pass the deterministic price-evidence guard before the old price is changed.
 - Keep tender parameters vendor-neutral unless a restriction is justified.
 - Do not invent topology, licensing or safety details.
