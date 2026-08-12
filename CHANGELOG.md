@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.1.2 — 2026-08-12
+
+### Fixed
+
+- Existing-budget revisions now preserve the previous line-item amount when weaker evidence cannot justify a lower configurable-enterprise price.
+- `SKILL.md` now makes the budget-revision guard mandatory for short requests such as “更新一下价格”, preventing agents from bypassing the deterministic evidence gate.
+- Project-saved and user-provided current human quotations can be treated as strong evidence when channel, date, configuration match and commercial scope are captured, even without a public URL.
+- Added a specification-first price gate: cheaper products cannot redefine mandatory technical requirements after price research begins.
+- UPS price reductions now require W, VA, runtime and graceful-shutdown checks before a candidate is allowed to influence the budget.
+- A nominal `1500VA` label no longer implies suitability when real output W, runtime data or shutdown integration is insufficient or unverified.
+- Budget summaries no longer claim `tax included`, `delivered` or equivalent complete commercial scope unless those attributes are confirmed for all material lines relevant to the statement.
+
+### Added
+
+- `assess_budget_revision()` and `--existing-budget` / `--product-class` guard support in `scripts/normalize_price_evidence.py`.
+- Deterministic UPS candidate assessment in `scripts/calculate_ups.py` with `eligible-for-pricing` / `not-eligible-for-pricing` results.
+- Regression tests covering weak-evidence server budget reductions, saved exact quotations, dirty/unsafe installation updates, UPS real-power sizing, runtime verification and shared Skill pricing gates.
+
+### Changed
+
+- Existing Git-based Skill installations can be safely refreshed with `--update`; `--force` refuses to delete Git metadata.
+- Copy-based updates synchronize managed runtime files while preserving unrelated local files.
+- Pricing workflow is now explicitly ordered as: requirements → technical fit → evidence quality → price.
+
 ## v1.1.1 — 2026-08-12
 
 ### Fixed
