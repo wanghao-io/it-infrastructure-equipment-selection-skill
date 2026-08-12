@@ -56,25 +56,25 @@ This keeps the skill useful across hosts without silently degrading evidence qua
 Use the repository's portable installer:
 
 ```bash
-python scripts/install_skill.py --target codex --scope user
-python scripts/install_skill.py --target claude-code --scope user
-python scripts/install_skill.py --target copilot --scope user
-python scripts/install_skill.py --target gemini --scope user
+python3 scripts/install_skill.py --target codex --scope user
+python3 scripts/install_skill.py --target claude-code --scope user
+python3 scripts/install_skill.py --target copilot --scope user
+python3 scripts/install_skill.py --target gemini --scope user
 ```
 
 For project/workspace scope:
 
 ```bash
-python scripts/install_skill.py --target claude-code --scope project --project-dir /path/to/project
-python scripts/install_skill.py --target copilot --scope project --project-dir /path/to/project
-python scripts/install_skill.py --target gemini --scope project --project-dir /path/to/project
-python scripts/install_skill.py --target codex --scope project --project-dir /path/to/project
+python3 scripts/install_skill.py --target claude-code --scope project --project-dir /path/to/project
+python3 scripts/install_skill.py --target copilot --scope project --project-dir /path/to/project
+python3 scripts/install_skill.py --target gemini --scope project --project-dir /path/to/project
+python3 scripts/install_skill.py --target codex --scope project --project-dir /path/to/project
 ```
 
 The default installation mode is `copy`. For local development, use `--mode symlink` so edits in the cloned repository are picked up by the host:
 
 ```bash
-python scripts/install_skill.py --target claude-code --scope user --mode symlink
+python3 scripts/install_skill.py --target claude-code --scope user --mode symlink
 ```
 
 Use `--force` only when intentionally replacing an existing installed copy.

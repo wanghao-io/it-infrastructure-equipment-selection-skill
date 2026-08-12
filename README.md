@@ -67,10 +67,10 @@ gh skill install wanghao-io/it-infrastructure-equipment-selection-skill
 ### Cross-platform installer
 
 ```bash
-python scripts/install_skill.py --target codex --scope user
-python scripts/install_skill.py --target claude-code --scope user
-python scripts/install_skill.py --target copilot --scope user
-python scripts/install_skill.py --target gemini --scope user
+python3 scripts/install_skill.py --target codex --scope user
+python3 scripts/install_skill.py --target claude-code --scope user
+python3 scripts/install_skill.py --target copilot --scope user
+python3 scripts/install_skill.py --target gemini --scope user
 ```
 
 完整平台路径和安装说明见 [`references/platform-compatibility.md`](references/platform-compatibility.md)。
@@ -137,13 +137,13 @@ backup-storage
 查看模板：
 
 ```bash
-python scripts/guide_requirements.py --list
+python3 scripts/guide_requirements.py --list
 ```
 
 根据已知项目条件生成下一轮关键问题：
 
 ```bash
-python scripts/guide_requirements.py \
+python3 scripts/guide_requirements.py \
   --scenario manufacturing-scada-small \
   --input project-known-fields.json \
   --max-questions 7 \
@@ -257,7 +257,7 @@ Needs confirmation
 如果要下调，执行：
 
 ```bash
-python scripts/normalize_price_evidence.py <evidence.json> \
+python3 scripts/normalize_price_evidence.py <evidence.json> \
   --summary \
   --existing-budget <old-unit-price> \
   --product-class configurable-enterprise
@@ -280,7 +280,7 @@ budget_revision.decision = revise-to-current-anchor
 UPS 例如不能只看 `VA`：
 
 ```bash
-python scripts/calculate_ups.py 800 \
+python3 scripts/calculate_ups.py 800 \
   --runtime-minutes 10 \
   --candidate-w 1500 \
   --candidate-va 2000 \
@@ -327,7 +327,7 @@ PASS / CONDITIONAL / FAIL
 当多个方案都满足 Mandatory，但采购价、电力、维保、License 或实施成本差异明显时，可以计算 3 年/5 年总拥有成本：
 
 ```bash
-python scripts/calculate_tco.py assets/tco-example.json --format markdown
+python3 scripts/calculate_tco.py assets/tco-example.json --format markdown
 ```
 
 模型包括：
@@ -371,6 +371,13 @@ detailed-design + topology-generation
 compliance-check
 ```
 
+## v1.2.0 — Strict Quote, Capacity and Release Gates
+
+- Server RFQ validation and independent quote comparison
+- Full-dimensional HCI N+1 failover validation
+- Strict shared input contracts, BOM/TCO unknown handling and safe installer updates
+- Linux/macOS/Windows CI plus tag-release gates
+
 ## v1.1.2 — Budget Revision Guardrails & Specification-First Pricing
 
 当前正式 Release 重点：
@@ -398,7 +405,7 @@ git -C ~/.agents/skills/it-infrastructure-equipment-selection pull --ff-only
 安装器更新：
 
 ```bash
-python scripts/install_skill.py --target codex --scope user --update
+python3 scripts/install_skill.py --target codex --scope user --update
 ```
 
 安全规则包括：
@@ -424,7 +431,7 @@ agents/openai.yaml               # optional OpenAI/Codex metadata
 ## 回归测试
 
 ```bash
-python -m unittest discover -s tests -p 'test_*.py' -v
+python3 -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
 覆盖包括：

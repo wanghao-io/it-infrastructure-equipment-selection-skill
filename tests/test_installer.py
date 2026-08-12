@@ -21,6 +21,14 @@ class InstallerUpdateTests(unittest.TestCase):
         (source / "references" / "example.md").write_text(text, encoding="utf-8")
         return source
 
+    def test_copy_installation_cannot_destructively_update_itself(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            source = self._make_source(Path(td))
+            before = (source / "SKILL.md").read_text(encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "independent clone"):
+                install_skill(source, source, update=True)
+            self.assertEqual((source / "SKILL.md").read_text(encoding="utf-8"), before)
+
     def test_copy_update_preserves_unmanaged_files(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -74,24 +82,39 @@ class InstallerUpdateTests(unittest.TestCase):
                 ["git", "-C", str(publisher), "config", "user.name", "CI"],
                 check=True,
             )
-            (publisher / "SKILL.md").write_text("# v1\n", encoding="utf-8")
+            (publisher / "SKILL.md").write_text(
+                "---\nname: it-infrastructure-equipment-selection\ndescription: test\n---\n# v1\n",
+                encoding="utf-8",
+            )
             subprocess.run(["git", "-C", str(publisher), "add", "SKILL.md"], check=True)
             subprocess.run(["git", "-C", str(publisher), "commit", "-m", "v1"], check=True, capture_output=True)
             subprocess.run(["git", "-C", str(publisher), "push", "origin", "HEAD"], check=True, capture_output=True)
 
             subprocess.run(["git", "clone", str(remote), str(installed)], check=True, capture_output=True)
 
-            (publisher / "SKILL.md").write_text("# v2\n", encoding="utf-8")
+            (publisher / "SKILL.md").write_text(
+                "---\nname: it-infrastructure-equipment-selection\ndescription: test\n---\n# v2\n",
+                encoding="utf-8",
+            )
             subprocess.run(["git", "-C", str(publisher), "add", "SKILL.md"], check=True)
             subprocess.run(["git", "-C", str(publisher), "commit", "-m", "v2"], check=True, capture_output=True)
             subprocess.run(["git", "-C", str(publisher), "push", "origin", "HEAD"], check=True, capture_output=True)
 
             install_skill(publisher, installed, update=True)
-            self.assertEqual((installed / "SKILL.md").read_text(encoding="utf-8"), "# v2\n")
+            self.assertIn("# v2", (installed / "SKILL.md").read_text(encoding="utf-8"))
 
             (installed / "local.txt").write_text("local change", encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "local changes"):
                 install_skill(publisher, installed, update=True)
+
+    def test_update_rejects_unrelated_git_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            target = Path(td) / "unrelated"
+            target.mkdir()
+            subprocess.run(["git", "init", str(target)], check=True, capture_output=True)
+            (target / "SKILL.md").write_text("# another project\n", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "is not it-infrastructure"):
+                install_skill(target, target, update=True)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
-name: it-infrastructure-equipment-selection
-description: Portable IT infrastructure equipment selection and solution architecture Agent Skill; OpenAI/Codex metadata extension.
-version: 1.1.2
+interface:
+  display_name: "IT Infrastructure Equipment Selection"
+  short_description: "Size, validate and budget physical IT infrastructure."
+  default_prompt: "Use $it-infrastructure-equipment-selection to design or review an infrastructure solution with explicit technical, commercial and evidence gates."

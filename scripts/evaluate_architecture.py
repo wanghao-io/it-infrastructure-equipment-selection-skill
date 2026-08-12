@@ -13,23 +13,25 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
+from contracts import optional_bool
+
 
 def evaluate(req: Dict[str, Any]) -> Dict[str, Any]:
     availability = str(req.get("availability", "standard")).lower()
-    virtualization = bool(req.get("virtualization_required", False))
-    explicit_hci = bool(req.get("hci_required", False))
+    virtualization = optional_bool(req.get("virtualization_required"), "virtualization_required")
+    explicit_hci = optional_bool(req.get("hci_required"), "hci_required")
     workload_count = int(req.get("workload_count", 1) or 1)
     single_server = int(req.get("server_count", 1) or 1) == 1
-    redundant_switching = bool(req.get("redundant_switching_required", False))
+    redundant_switching = optional_bool(req.get("redundant_switching_required"), "redundant_switching_required")
     access_switches = int(req.get("access_switch_count", 1) or 1)
-    high_speed_aggregation = bool(req.get("high_speed_aggregation_required", False))
+    high_speed_aggregation = optional_bool(req.get("high_speed_aggregation_required"), "high_speed_aggregation_required")
     vlan_count = int(req.get("vlan_count", 1) or 1)
-    inter_vlan = bool(req.get("inter_vlan_communication_required", False))
-    external = bool(req.get("external_network_interconnection", False))
-    remote_access = bool(req.get("remote_access_required", False))
-    cross_trust = bool(req.get("cross_trust_zone_connection", False))
-    domestic = bool(req.get("domestic_xinchuang_required", False))
-    remote_control = bool(req.get("ot_remote_control", False))
+    inter_vlan = optional_bool(req.get("inter_vlan_communication_required"), "inter_vlan_communication_required")
+    external = optional_bool(req.get("external_network_interconnection"), "external_network_interconnection")
+    remote_access = optional_bool(req.get("remote_access_required"), "remote_access_required")
+    cross_trust = optional_bool(req.get("cross_trust_zone_connection"), "cross_trust_zone_connection")
+    domestic = optional_bool(req.get("domestic_xinchuang_required"), "domestic_xinchuang_required")
+    remote_control = optional_bool(req.get("ot_remote_control"), "ot_remote_control")
 
     if explicit_hci:
         hci = "required"

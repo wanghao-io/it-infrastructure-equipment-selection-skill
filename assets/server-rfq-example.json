@@ -1,0 +1,29 @@
+{
+  "requirement": {
+    "as_of_date": "2026-08-12",
+    "risk_reserve_percent": 5,
+    "required_configuration": {
+      "cpu_cores": 24,
+      "memory_gb": 256,
+      "usable_storage_tb": 8,
+      "raid_cache_with_plp": true,
+      "network_ports_10gbe": 2,
+      "redundant_power": true,
+      "warranty_years": 3
+    }
+  },
+  "quotes": [
+    {
+      "quote_id": "Q-A-20260812", "supplier": "Synthetic supplier A", "sales_channel": "authorized",
+      "configuration": {"cpu_cores": 24, "memory_gb": 256, "usable_storage_tb": 8, "raid_cache_with_plp": true, "network_ports_10gbe": 2, "redundant_power": true, "warranty_years": 3},
+      "hardware_price": 100000, "mandatory_accessories": 3000, "required_licenses": 5000, "warranty_support": 0, "required_implementation": 2000, "tax_amount": 0, "shipping": 0,
+      "currency": "CNY", "tax_included": true, "orderability_confirmed": true, "source_date": "2026-08-12", "quote_valid_until": "2026-09-12"
+    },
+    {
+      "quote_id": "Q-B-20260812", "supplier": "Synthetic supplier B", "sales_channel": "manufacturer",
+      "configuration": {"cpu_cores": 32, "memory_gb": 256, "usable_storage_tb": 10, "raid_cache_with_plp": true, "network_ports_10gbe": 4, "redundant_power": true, "warranty_years": 3},
+      "hardware_price": 106000, "mandatory_accessories": 0, "required_licenses": 4000, "warranty_support": 0, "required_implementation": 2000, "tax_amount": 0, "shipping": 0,
+      "currency": "CNY", "tax_included": true, "orderability_confirmed": true, "source_date": "2026-08-12", "quote_valid_until": "2026-09-12"
+    }
+  ]
+}

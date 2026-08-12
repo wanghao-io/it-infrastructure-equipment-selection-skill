@@ -35,7 +35,8 @@ def unresolved(value: Any) -> bool:
 
 
 def num(obj: dict[str, Any], key: str, default: float = 0.0) -> float:
-    value = float(obj.get(key, default) or 0.0)
+    raw = obj.get(key, default)
+    value = 0.0 if unresolved(raw) else float(raw)
     if value < 0:
         raise ValueError(f"{key} must be non-negative")
     return value

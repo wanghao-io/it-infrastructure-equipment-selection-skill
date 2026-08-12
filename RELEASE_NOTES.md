@@ -1,4 +1,20 @@
-# IT Infrastructure Equipment Selection Skill v1.1.2
+# IT Infrastructure Equipment Selection Skill v1.2.0
+
+## 可执行询价、容量与发布门禁
+
+v1.2.0 把“建议”落成确定性工具：服务器报价必须同时通过技术配置、商业范围、有效期、币种和独立证据检查；HCI N+1 会验证故障后的 CPU、内存、存储、IOPS、网络和故障域。安装器、BOM、TCO、拓扑、评分和发布链路也加入了严格回归门禁。
+
+服务器询价示例：
+
+```bash
+python3 scripts/compare_server_quotes.py assets/server-rfq-example.json --pretty
+```
+
+HCI N+1 示例：
+
+```bash
+python3 scripts/calculate_hci_failover.py assets/hci-failover-example.json --pretty
+```
 
 ## 预算修订保护 + 规格先于价格
 
@@ -26,7 +42,7 @@ v1.1.2 是一次针对实际项目回归问题的修复版本，重点解决两�
 确定性检查：
 
 ```bash
-python scripts/normalize_price_evidence.py <evidence.json> \
+python3 scripts/normalize_price_evidence.py <evidence.json> \
   --summary \
   --existing-budget <old-unit-price> \
   --product-class configurable-enterprise
@@ -60,7 +76,7 @@ v1.1.2 新增通用 technical-fit gate：
 `scripts/calculate_ups.py` 现在可以对具体 UPS SKU 做技术适配检查：
 
 ```bash
-python scripts/calculate_ups.py 800 \
+python3 scripts/calculate_ups.py 800 \
   --runtime-minutes 10 \
   --candidate-w 1500 \
   --candidate-va 2000 \

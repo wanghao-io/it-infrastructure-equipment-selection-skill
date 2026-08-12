@@ -39,11 +39,13 @@ def generate(data: dict[str, Any]) -> str:
     lines.append("|---|---|---|---|---|")
 
     seen_ids: set[str] = set()
+    ordered_ids: list[str] = []
     for idx, req in enumerate(requirements, start=1):
         rid = str(req.get("id") or f"R{idx:03d}")
         if rid in seen_ids:
             raise ValueError(f"Duplicate requirement id: {rid}")
         seen_ids.add(rid)
+        ordered_ids.append(rid)
         level = str(req.get("level", "Mandatory"))
         if level not in VALID_LEVELS:
             level = "Mandatory"
@@ -59,7 +61,7 @@ def generate(data: dict[str, Any]) -> str:
         "| ID | Supplier response | Evidence reference | Result | Notes |",
         "|---|---|---|---|---|",
     ])
-    for rid in seen_ids:
+    for rid in ordered_ids:
         lines.append(f"| {rid} |  |  | Needs confirmation |  |")
 
     lines.extend([

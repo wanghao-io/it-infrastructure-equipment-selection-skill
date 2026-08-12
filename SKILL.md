@@ -58,8 +58,8 @@ assets/scenario-templates.json
 Use `scripts/guide_requirements.py` when a concise deterministic checklist is useful:
 
 ```bash
-python scripts/guide_requirements.py --list
-python scripts/guide_requirements.py \
+python3 scripts/guide_requirements.py --list
+python3 scripts/guide_requirements.py \
   --scenario manufacturing-scada-small \
   --input project-known-fields.json \
   --max-questions 7 \
@@ -125,6 +125,7 @@ scripts/calculate_network_ports.py
 scripts/calculate_ups.py
 scripts/calculate_budget.py
 scripts/calculate_tco.py
+scripts/calculate_hci_failover.py
 ```
 
 Sizing rules:
@@ -230,7 +231,7 @@ Rules:
 4. When a concrete UPS SKU is proposed as the reason for a lower budget and Shell/Python is available, run:
 
 ```bash
-python scripts/calculate_ups.py <protected-load-W> \
+python3 scripts/calculate_ups.py <protected-load-W> \
   --runtime-minutes <minutes> \
   --candidate-w <candidate-output-W> \
   --candidate-va <candidate-VA> \
@@ -253,7 +254,7 @@ This workflow is **mandatory** whenever the user asks to update, refresh, repric
 5. If a proposed revision would **lower** an existing `configurable-enterprise` unit price, create structured price-evidence records and run the deterministic guard:
 
 ```bash
-python scripts/normalize_price_evidence.py <evidence.json> \
+python3 scripts/normalize_price_evidence.py <evidence.json> \
   --summary \
   --existing-budget <old-unit-price> \
   --product-class configurable-enterprise
@@ -314,6 +315,16 @@ For a quotation-oriented BOM, include where material:
 - confidence;
 - exclusion/notes for misleading price signals.
 
+### Mandatory server quotation workflow
+
+For a server inquiry, freeze the exact technical and commercial RFQ baseline before collecting price. Load `references/server-quotation-workflow.md` and use:
+
+```bash
+python3 scripts/compare_server_quotes.py assets/server-rfq-example.json --pretty
+```
+
+A server quote can enter the budget anchor only when its technical-fit and commercial-completeness gates both pass. Require explicit CPU, memory, storage/RAID, NIC, redundant power, warranty, licenses, accessories, tax, freight, implementation, validity and orderability scope. Reject mixed currencies, expired quotes and duplicate evidence. Two independent exact-configuration quotes define the preferred control range; a partial web listing cannot lower the existing budget.
+
 ## TCO Analysis
 
 When multiple technically eligible alternatives differ materially in acquisition price, power, support, licenses, facility cost or implementation cost, load `references/tco.md` and use `scripts/calculate_tco.py`.
@@ -331,7 +342,7 @@ TCO rules:
 Example:
 
 ```bash
-python scripts/calculate_tco.py assets/tco-example.json --format markdown
+python3 scripts/calculate_tco.py assets/tco-example.json --format markdown
 ```
 
 ## Project BOM

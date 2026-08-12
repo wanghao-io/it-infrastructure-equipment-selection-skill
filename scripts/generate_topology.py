@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from contracts import optional_bool
+
 
 def load_json(path: str) -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
@@ -27,6 +29,10 @@ def validate(data: dict[str, Any]) -> None:
         raise ValueError("Duplicate device id detected.")
 
     known = set(device_ids)
+    known_zones = set(zone_ids)
+    for device in devices:
+        if device.get("zone") is not None and str(device.get("zone")) not in known_zones:
+            raise ValueError(f"Device references unknown zone: {device.get('id')} -> {device.get('zone')}")
     for link in links:
         source = str(link.get("source"))
         target = str(link.get("target"))
@@ -76,7 +82,7 @@ def mermaid(data: dict[str, Any]) -> str:
         source = str(link.get("source"))
         target = str(link.get("target"))
         label = esc_mermaid(link.get("label", ""))
-        arrow = "<-->" if bool(link.get("bidirectional", False)) else "-->"
+        arrow = "<-->" if optional_bool(link.get("bidirectional"), "bidirectional") else "-->"
         if label:
             lines.append(f'  {source} {arrow}|"{label}"| {target}')
         else:
@@ -126,7 +132,7 @@ def dot(data: dict[str, Any]) -> str:
         attrs = []
         if label:
             attrs.append(f'label="{label}"')
-        if bool(link.get("bidirectional", False)):
+        if optional_bool(link.get("bidirectional"), "bidirectional"):
             attrs.append('dir="both"')
         suffix = f" [{', '.join(attrs)}]" if attrs else ""
         lines.append(f"  {source} -> {target}{suffix};")

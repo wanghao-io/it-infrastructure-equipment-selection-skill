@@ -125,6 +125,22 @@ class DecisionSupportTests(unittest.TestCase):
         )
         self.assertEqual(self.compare.overall_gate(gates), "CONDITIONAL")
 
+    def test_unknown_gate_status_never_becomes_pass(self):
+        self.assertEqual(self.compare.overall_gate([{"status": "typo"}]), "CONDITIONAL")
+
+    def test_negative_weight_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "non-negative"):
+            self.compare.score_candidates(
+                {
+                    "criteria": [{"key": "cost", "weight": -1}],
+                    "candidates": [{"name": "A", "scores": {"cost": {"score": 9}}}],
+                }
+            )
+
+    def test_string_false_is_not_treated_as_boolean_false(self):
+        with self.assertRaisesRegex(ValueError, "JSON boolean"):
+            self.compare.compare_value("false", "falsy", False)
+
     def test_tco_calculates_three_and_five_year_costs(self):
         data = {
             "electricity_rate_per_kwh": 0.8,

@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+"""Validate release-version, metadata and runtime manifest consistency."""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def validate(root: Path = ROOT) -> list[str]:
+    errors: list[str] = []
+    version = (root / "VERSION").read_text(encoding="utf-8").strip()
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        errors.append("VERSION must be semantic x.y.z")
+    if f"## v{version}" not in (root / "CHANGELOG.md").read_text(encoding="utf-8"):
+        errors.append("CHANGELOG missing current version")
+    if f"Skill v{version}" not in (root / "RELEASE_NOTES.md").read_text(encoding="utf-8"):
+        errors.append("RELEASE_NOTES missing current version")
+    metadata = (root / "agents/openai.yaml").read_text(encoding="utf-8")
+    top_keys = [line.split(":", 1)[0] for line in metadata.splitlines() if line and not line[0].isspace()]
+    if any(key not in {"interface", "policy", "dependencies"} for key in top_keys):
+        errors.append("agents/openai.yaml contains unsupported top-level metadata")
+    if "  display_name:" not in metadata or "  short_description:" not in metadata:
+        errors.append("agents/openai.yaml missing interface display metadata")
+    if "$it-infrastructure-equipment-selection" not in metadata:
+        errors.append("agents/openai.yaml default_prompt must invoke the skill explicitly")
+    for required in (
+        "SKILL.md", "scripts/contracts.py", "scripts/compare_server_quotes.py",
+        "scripts/calculate_hci_failover.py", "references/server-quotation-workflow.md",
+    ):
+        if not (root / required).is_file():
+            errors.append(f"missing runtime file: {required}")
+    return errors
+
+
+def main() -> None:
+    errors = validate()
+    if errors:
+        raise SystemExit("\n".join(errors))
+    print(f"release metadata valid: v{(ROOT / 'VERSION').read_text(encoding='utf-8').strip()}")
+
+
+if __name__ == "__main__":
+    main()

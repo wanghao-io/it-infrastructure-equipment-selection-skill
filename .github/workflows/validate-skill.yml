@@ -2,127 +2,62 @@ name: Validate Skill
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
+  test:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.10', '3.12']
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile
+        run: python -m compileall scripts tests
+      - name: Release and metadata consistency
+        run: python scripts/validate_release.py
+      - name: Unit and scenario tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Deterministic workflow smoke tests
+        shell: bash
+        run: |
+          python scripts/compare_server_quotes.py assets/server-rfq-example.json --pretty > server-quotes.json
+          python scripts/calculate_hci_failover.py assets/hci-failover-example.json --pretty > hci.json
+          python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary > prices.json
+          python scripts/compare_vendors.py assets/vendor-comparison-example.json > vendor.md
+          grep -q '"status": "ready"' server-quotes.json
+          grep -q '"status": "PASS"' hci.json
+          grep -q 'Market-verified / Exact-config' prices.json
+          grep -q 'Vendor / Model Comparison' vendor.md
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+  package-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.12'
-
-      - name: Check required files
+      - name: Verify runtime and clean copy install
         run: |
+          test -f VERSION
           test -f SKILL.md
-          test -f README.md
-          test -d references
-          test -d scripts
-          test -d assets
-          test -d examples
-          test -d tests/scenarios
-          test -f references/architecture-decision.md
-          test -f references/scada-sizing.md
-          test -f references/ot-control-safety.md
-          test -f references/output-profiles.md
-          test -f references/price-evidence.md
-          test -f references/exact-configuration-pricing.md
-          test -f references/live-price-research.md
-          test -f references/platform-compatibility.md
-          test -f references/vendor-comparison.md
-          test -f references/tender-specification.md
-          test -f references/network-topology.md
-          test -f scripts/install_skill.py
-          test -f tests/test_platform_compatibility.py
-
-      - name: Python syntax check
-        run: |
-          python -m compileall scripts tests
-
-      - name: Engineering and portability regression tests
-        run: |
-          python -m unittest discover -s tests -p 'test_*.py' -v
-
-      - name: Smoke test architecture decisions
-        run: |
-          python - <<'PY'
-          import json, tempfile, subprocess
-          req = {
-            "server_count": 1,
-            "virtualization_required": True,
-            "availability": "standard",
-            "vlan_count": 5,
-            "inter_vlan_communication_required": True
-          }
-          with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as f:
-              json.dump(req, f)
-              name = f.name
-          out = subprocess.check_output(['python', 'scripts/evaluate_architecture.py', name]).decode()
-          assert 'not-required-by-current-requirements' in out
-          assert '"layer3_routing"' in out
-          PY
-
-      - name: Smoke test sizing calculators
-        run: |
-          python scripts/calculate_server_capacity.py --services-json assets/server-workload-example.json > /tmp/server.json
-          python scripts/calculate_historian.py 2000 5 --retention-days 365 > /tmp/historian.json
-          python scripts/calculate_storage.py --drives 4 --drive-tb 4 --raid 10 > /tmp/storage.json
-          python scripts/calculate_network_ports.py 30 --vlan-count 5 --inter-vlan > /tmp/network.json
-          python scripts/calculate_ups.py 600 --runtime-minutes 10 > /tmp/ups.json
-          grep -q 'recommended_memory_gb' /tmp/server.json
-          grep -q 'recommended_online_capacity_tb' /tmp/historian.json
-          grep -q 'usable_capacity_tb' /tmp/storage.json
-          grep -q 'layer3_routing_required' /tmp/network.json
-          grep -q 'minimum_va_with_margin' /tmp/ups.json
-
-      - name: Smoke test live price normalization and anchor selection
-        run: |
-          python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary > /tmp/prices.json
-          grep -q 'normalized_comparable_cost' /tmp/prices.json
-          grep -q 'preferred_evidence_priority' /tmp/prices.json
-          grep -q 'Market-verified / Exact-config' /tmp/prices.json
-          grep -q 'confidence_level' /tmp/prices.json
-          grep -q 'anchor_eligible' /tmp/prices.json
-          grep -q 'anchor_exclusion_reasons' /tmp/prices.json
-          grep -q 'starting-or-base-configuration-price' /tmp/prices.json
-          grep -q '90000.0' /tmp/prices.json
-          grep -q '92000.0' /tmp/prices.json
-
-      - name: Smoke test cross-platform installer
-        run: |
-          rm -rf /tmp/skill-claude /tmp/skill-copilot /tmp/skill-gemini /tmp/skill-codex
-          mkdir -p /tmp/skill-claude /tmp/skill-copilot /tmp/skill-gemini /tmp/skill-codex
-          python scripts/install_skill.py --target claude-code --scope project --project-dir /tmp/skill-claude
-          python scripts/install_skill.py --target copilot --scope project --project-dir /tmp/skill-copilot
-          python scripts/install_skill.py --target gemini --scope project --project-dir /tmp/skill-gemini
-          python scripts/install_skill.py --target codex --scope project --project-dir /tmp/skill-codex
-          test -f /tmp/skill-claude/.claude/skills/it-infrastructure-equipment-selection/SKILL.md
-          test -f /tmp/skill-copilot/.github/skills/it-infrastructure-equipment-selection/SKILL.md
-          test -f /tmp/skill-gemini/.agents/skills/it-infrastructure-equipment-selection/SKILL.md
-          test -f /tmp/skill-codex/.agents/skills/it-infrastructure-equipment-selection/SKILL.md
-
-      - name: Smoke test vendor comparison
-        run: |
-          python scripts/compare_vendors.py assets/vendor-comparison-example.json > /tmp/vendor-comparison.md
-          grep -q "Vendor / Model Comparison" /tmp/vendor-comparison.md
-
-      - name: Smoke test tender specification
-        run: |
-          python scripts/generate_tender_spec.py assets/tender-requirements-example.json > /tmp/tender-spec.md
-          grep -q "Technical Requirements" /tmp/tender-spec.md
-
-      - name: Smoke test Mermaid topology
-        run: |
-          python scripts/generate_topology.py assets/topology-input-example.json --format mermaid > /tmp/topology.mmd
-          grep -q "flowchart" /tmp/topology.mmd
-
-      - name: Smoke test Graphviz topology
-        run: |
-          python scripts/generate_topology.py assets/topology-input-example.json --format dot > /tmp/topology.dot
-          grep -q "digraph topology" /tmp/topology.dot
+          test -f references/server-quotation-workflow.md
+          python scripts/install_skill.py --target codex --scope project --project-dir "$RUNNER_TEMP/install-target"
+          test -f "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/SKILL.md"
+          python "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/scripts/compare_server_quotes.py" assets/server-rfq-example.json

@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.2.0 — 2026-08-12
+
+### Added
+
+- Frozen server RFQ baseline, strict quote validation and independent-quote budget control range.
+- Procurement-grade HCI N+1 validation across CPU, memory, storage, IOPS, network and failure domains.
+- Shared strict input contracts for booleans, finite non-negative numbers, dates and currencies.
+- Cross-platform CI matrix and tag/release validation workflow.
+
+### Fixed
+
+- Copy installations can no longer delete themselves during self-update; unrelated Git repositories are rejected.
+- Unknown mandatory-gate statuses, negative weights and string booleans can no longer produce misleading PASS results.
+- Mixed currencies, duplicate evidence, incomplete commercial scope, expired quotes and failed technical fit are excluded from budget anchors.
+- BOM/TCO unresolved values remain incomplete instead of becoming zero or crashing; tender output is deterministic and topology rejects unknown zones.
+
+### Changed
+
+- Server price reductions require an explicit PASS technical gate plus complete commercial scope.
+- OpenAI metadata now follows the current `interface` schema.
+- Unix documentation consistently uses `python3`.
+
 ## v1.1.2 — 2026-08-12
 
 ### Fixed

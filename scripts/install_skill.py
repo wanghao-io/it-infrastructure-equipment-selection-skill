@@ -120,6 +120,9 @@ def update_git_checkout(path: Path, *, dry_run: bool = False) -> Path:
     """Safely fast-forward an existing Git-installed skill."""
     if not is_git_checkout(path):
         raise ValueError(f"Not a Git checkout: {path}")
+    skill_file = path / "SKILL.md"
+    if not skill_file.is_file() or f"name: {SKILL_NAME}" not in skill_file.read_text(encoding="utf-8"):
+        raise RuntimeError(f"Git checkout is not {SKILL_NAME}: {path}")
     if git_worktree_dirty(path):
         raise RuntimeError(
             f"Git installation has local changes: {path}. "
@@ -169,6 +172,17 @@ def install_skill(
     if mode not in {"copy", "symlink"}:
         raise ValueError(f"Unsupported mode: {mode}")
 
+    # A copied installation cannot safely update itself: managed entries such
+    # as SKILL.md and scripts/ are both the source and destination. Refuse
+    # before any removal so a failed update is always non-destructive.
+    if mode == "copy" and source == destination.resolve(strict=False):
+        if is_git_checkout(source) and update:
+            return update_git_checkout(source, dry_run=dry_run)
+        raise ValueError(
+            "Copy source and destination are the same directory. "
+            "Run updates from an independent clone or release package."
+        )
+
     if update and (destination.exists() or destination.is_symlink()):
         if destination.is_symlink():
             target = destination.resolve()
@@ -192,8 +206,6 @@ def install_skill(
         return destination
 
     if mode == "copy" and _is_relative_to(destination, source):
-        if destination == source and update and is_git_checkout(source):
-            return update_git_checkout(source, dry_run=dry_run)
         raise ValueError(
             "Copy destination is inside the source repository. "
             "Use another --project-dir, --mode symlink, or --update for an existing Git install."

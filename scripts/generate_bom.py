@@ -13,6 +13,8 @@ import json
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence
 
+from calculate_budget import calculate
+
 DEFAULT_CN_FIELDS = [
     "序号",
     "类别",
@@ -40,20 +42,7 @@ def generate(items: Sequence[Mapping], filename: str = "bom.csv", fieldnames: It
 
 
 def add_budget_summary(items: list[dict], contingency_percent: float = 0.0) -> dict:
-    subtotal = 0.0
-    for item in items:
-        value = item.get("估算合计（元）", item.get("total", 0))
-        try:
-            subtotal += float(value or 0)
-        except (TypeError, ValueError):
-            pass
-    contingency = subtotal * contingency_percent / 100.0
-    return {
-        "subtotal": round(subtotal, 2),
-        "contingency_percent": contingency_percent,
-        "contingency": round(contingency, 2),
-        "total_with_contingency": round(subtotal + contingency, 2),
-    }
+    return calculate(items, contingency_percent)
 
 
 def main() -> None:
