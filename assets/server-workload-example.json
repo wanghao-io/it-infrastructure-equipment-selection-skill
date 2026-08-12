@@ -1,0 +1,15 @@
+{
+  "services": [
+    {"name": "data-acquisition", "cpu_cores": 2, "memory_gb": 8},
+    {"name": "scada-runtime", "cpu_cores": 2, "memory_gb": 12},
+    {"name": "historian-database", "cpu_cores": 4, "memory_gb": 32},
+    {"name": "bi-reporting", "cpu_cores": 2, "memory_gb": 16},
+    {"name": "web-dashboard", "cpu_cores": 1, "memory_gb": 8}
+  ],
+  "cpu_headroom": 0.25,
+  "memory_headroom": 0.25,
+  "os_cpu_cores": 1,
+  "os_memory_gb": 4,
+  "minimum_cpu_cores": 12,
+  "minimum_memory_gb": 96
+}
