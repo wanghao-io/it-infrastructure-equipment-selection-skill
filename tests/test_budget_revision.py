@@ -15,6 +15,15 @@ SERVER_CONFIG = "2U; 1x4410Y; 128GB; 2x960GB SSD; 2x1.92TB SSD; 4x4TB HDD; RAID 
 
 
 class BudgetRevisionGuardrailTests(unittest.TestCase):
+    def test_shared_skill_requires_budget_revision_guard(self) -> None:
+        skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("### Mandatory existing-budget revision workflow", skill)
+        self.assertIn("--existing-budget <old-unit-price>", skill)
+        self.assertIn("--product-class configurable-enterprise", skill)
+        self.assertIn("Partial-config + configuration-difference estimate", skill)
+        self.assertIn("hold-existing-provisional", skill)
+        self.assertIn("budget-revision", skill)
+
     def test_partial_public_context_cannot_lower_existing_server_budget(self) -> None:
         items = [
             {
