@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -24,25 +25,26 @@ class WorkflowHardeningTests(unittest.TestCase):
         self.assertEqual(len(cases), 3)
         with tempfile.TemporaryDirectory() as td:
             tmp = Path(td)
+            utf8_env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
 
             scada_input = tmp / "scada.json"
             scada_input.write_text(json.dumps({"scada_io_points": 3000}), encoding="utf-8")
             discovery = json.loads(subprocess.check_output([
                 sys.executable, str(ROOT / "scripts/guide_requirements.py"),
                 "--scenario", "manufacturing-scada-small", "--input", str(scada_input),
-            ]))
+            ], env=utf8_env))
             self.assertFalse(discovery["ready_for_architecture"])
             self.assertIn("historian_points", discovery["missing_required_fields"])
 
             hci = json.loads(subprocess.check_output([
                 sys.executable, str(ROOT / "scripts/calculate_hci_failover.py"),
                 str(ROOT / "assets/hci-failover-example.json"),
-            ]))
+            ], env=utf8_env))
             self.assertEqual(hci["status"], "PASS")
             tco_result = subprocess.check_output([
                 sys.executable, str(ROOT / "scripts/calculate_tco.py"),
                 str(ROOT / "assets/tco-example.json"), "--format", "markdown",
-            ]).decode()
+            ], env=utf8_env).decode("utf-8")
             self.assertIn("Infrastructure TCO", tco_result)
 
             weak = tmp / "weak-prices.json"
@@ -56,7 +58,7 @@ class WorkflowHardeningTests(unittest.TestCase):
             revision = json.loads(subprocess.check_output([
                 sys.executable, str(ROOT / "scripts/normalize_price_evidence.py"), str(weak),
                 "--summary", "--existing-budget", "92000", "--product-class", "configurable-enterprise",
-            ]))
+            ], env=utf8_env))
             self.assertEqual(revision["budget_revision"]["decision"], "hold-existing-provisional")
     def test_tbd_tco_stays_incomplete_without_crashing(self):
         result = tco({"electricity_rate_per_kwh": 0, "candidates": [{"name": "A", "purchase_cost": 1, "one_time_implementation": 0, "annual_support": "TBD", "annual_license": 0, "annual_facility": 0, "annual_other_opex": 0}]})
