@@ -17,6 +17,8 @@
 
 - `references/exact-configuration-pricing.md`
 - `references/live-price-research.md` for quotation-oriented current market research and batch BOM pricing
+- `references/platform-compatibility.md` covering OpenAI Codex, Claude Code, GitHub Copilot, Gemini CLI and other Agent-Skills-compatible hosts
+- `scripts/install_skill.py` for user/project installation into Codex, Claude Code, GitHub Copilot and Gemini CLI discovery locations
 - Product-class-specific price research for `configurable-enterprise`, `fixed-sku` and `commodity-component` items
 - China-market channel guidance covering manufacturer/authorized quotes, JD/Tmall official/enterprise channels, ZOL/market aggregators, price-history tools and government procurement context without hard-coding a single universal source ranking
 - Price-evidence priority tiers for exact current formal quotes, exact current market quotes, highly matched current quotes, historical transactions, component models, generic listings and engineering estimates
@@ -25,6 +27,14 @@
 - `anchor_eligible`, `anchor_exclusion_reasons`, `price_signal_role` and confidence-level outputs in `scripts/normalize_price_evidence.py`
 - `--summary` mode in `scripts/normalize_price_evidence.py` to select the preferred budget anchor without blending weaker evidence tiers
 - Pricing regression tests ensuring exact current quotes cannot be pulled down by cheaper historical, aggregator, bare-chassis or starting-price signals
+- Cross-platform regression tests for portable `SKILL.md` frontmatter, host installation paths and runtime-file copying
+
+### Changed
+
+- Repositioned the project from a Codex-oriented skill to a portable Agent Skill with one shared engineering codebase.
+- `SKILL.md` now includes portable `license: MIT` metadata and explicit host-capability fallback rules.
+- `agents/openai.yaml` is documented as an optional OpenAI/Codex extension rather than a core runtime dependency.
+- README now provides installation and verification guidance for Codex, Claude Code, GitHub Copilot and Gemini CLI.
 
 ## v1.1.0 — 2026-08-12
 
