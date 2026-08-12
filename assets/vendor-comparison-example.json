@@ -1,0 +1,42 @@
+{
+  "criteria": [
+    {"key": "fit", "name": "Requirement fit", "weight": 35},
+    {"key": "lifecycle", "name": "Lifecycle and availability", "weight": 15},
+    {"key": "service", "name": "Reliability and serviceability", "weight": 15},
+    {"key": "expansion", "name": "Expansion capability", "weight": 10},
+    {"key": "cost", "name": "Cost / TCO", "weight": 20},
+    {"key": "evidence", "name": "Evidence confidence", "weight": 5}
+  ],
+  "candidates": [
+    {
+      "name": "Candidate A",
+      "gates": [
+        {"requirement": "Mandatory CPU architecture", "status": "PASS", "note": "Verified by official datasheet"},
+        {"requirement": "Required NIC count", "status": "PASS", "note": "Exact configured option verified"}
+      ],
+      "scores": {
+        "fit": {"score": 9, "evidence": "Verified"},
+        "lifecycle": {"score": 8, "evidence": "Verified"},
+        "service": {"score": 8, "evidence": "Verified"},
+        "expansion": {"score": 8, "evidence": "Verified"},
+        "cost": {"score": 7, "evidence": "Market-verified"},
+        "evidence": {"score": 9, "evidence": "Verified"}
+      }
+    },
+    {
+      "name": "Candidate B",
+      "gates": [
+        {"requirement": "Mandatory CPU architecture", "status": "PASS", "note": "Verified"},
+        {"requirement": "Required NIC count", "status": "CONDITIONAL", "note": "Requires optional NIC; confirm ordering code"}
+      ],
+      "scores": {
+        "fit": {"score": 8, "evidence": "Verified"},
+        "lifecycle": {"score": 9, "evidence": "Verified"},
+        "service": {"score": 8, "evidence": "Verified"},
+        "expansion": {"score": 9, "evidence": "Verified"},
+        "cost": {"score": 8, "evidence": "Estimated"},
+        "evidence": {"score": 7, "evidence": "Needs confirmation"}
+      }
+    }
+  ]
+}
