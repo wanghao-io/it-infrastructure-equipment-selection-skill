@@ -34,15 +34,18 @@ jobs:
           test -f references/price-evidence.md
           test -f references/exact-configuration-pricing.md
           test -f references/live-price-research.md
+          test -f references/platform-compatibility.md
           test -f references/vendor-comparison.md
           test -f references/tender-specification.md
           test -f references/network-topology.md
+          test -f scripts/install_skill.py
+          test -f tests/test_platform_compatibility.py
 
       - name: Python syntax check
         run: |
           python -m compileall scripts tests
 
-      - name: Engineering scenario regression tests
+      - name: Engineering and portability regression tests
         run: |
           python -m unittest discover -s tests -p 'test_*.py' -v
 
@@ -90,6 +93,19 @@ jobs:
           grep -q 'starting-or-base-configuration-price' /tmp/prices.json
           grep -q '90000.0' /tmp/prices.json
           grep -q '92000.0' /tmp/prices.json
+
+      - name: Smoke test cross-platform installer
+        run: |
+          rm -rf /tmp/skill-claude /tmp/skill-copilot /tmp/skill-gemini /tmp/skill-codex
+          mkdir -p /tmp/skill-claude /tmp/skill-copilot /tmp/skill-gemini /tmp/skill-codex
+          python scripts/install_skill.py --target claude-code --scope project --project-dir /tmp/skill-claude
+          python scripts/install_skill.py --target copilot --scope project --project-dir /tmp/skill-copilot
+          python scripts/install_skill.py --target gemini --scope project --project-dir /tmp/skill-gemini
+          python scripts/install_skill.py --target codex --scope project --project-dir /tmp/skill-codex
+          test -f /tmp/skill-claude/.claude/skills/it-infrastructure-equipment-selection/SKILL.md
+          test -f /tmp/skill-copilot/.github/skills/it-infrastructure-equipment-selection/SKILL.md
+          test -f /tmp/skill-gemini/.agents/skills/it-infrastructure-equipment-selection/SKILL.md
+          test -f /tmp/skill-codex/.agents/skills/it-infrastructure-equipment-selection/SKILL.md
 
       - name: Smoke test vendor comparison
         run: |
