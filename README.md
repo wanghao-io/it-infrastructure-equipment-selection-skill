@@ -4,6 +4,8 @@
 
 > Requirements first. Architecture second. Sizing third. Products last.
 
+**Current release: v1.1.0**
+
 ---
 
 # 中文说明
@@ -24,7 +26,7 @@
 - 工业 IT/OT 分区
 - GPU/AI 基础设施
 
-## v1.1.0 开发版重点
+## v1.1.0 正式版重点
 
 ### 1. 架构决策
 
@@ -221,7 +223,7 @@ Examples 是方法模板，不是默认架构。所有容量、冗余和安全�
 
 ## 回归测试
 
-除了脚本 smoke test，v1.1 增加工程判断场景：
+除了脚本 smoke test，v1.1.0 增加工程判断场景：
 
 - 小规模单服务器不应自动推荐 HCI；
 - 多 VLAN 互通必须明确 Layer-3；
@@ -259,7 +261,7 @@ An AI Agent / Codex skill for IT infrastructure solution architects covering equ
 
 The skill deliberately avoids forcing HCI, HA, core switching, firewalls or domestic/Xinchuang platforms into every project.
 
-## v1.1 Development Highlights
+## v1.1.0 Highlights
 
 - Requirement-driven architecture decisions
 - SCADA/historian sizing and licensing breakdown
