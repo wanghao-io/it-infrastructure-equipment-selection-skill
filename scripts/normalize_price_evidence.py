@@ -4,8 +4,11 @@
 Core pricing rules:
 - current exact-configuration quotations outrank lower-match historical/generic prices;
 - search-channel prestige does not override configuration match;
+- user/project-saved human quotations can be strong evidence when source/date/scope are captured;
 - misleading base/start prices and unavailable configurations are excluded from the
-  primary budget anchor but retained as contextual evidence.
+  primary budget anchor but retained as contextual evidence;
+- weak evidence cannot silently justify a downward revision of an existing
+  configurable-enterprise budget.
 """
 
 from __future__ import annotations
@@ -37,6 +40,9 @@ FORMAL_CURRENT_SOURCES = {
     "official-store-quote",
     "authorized-reseller-quote",
     "authorized-channel-quote",
+    "user-provided-current-quote",
+    "project-saved-current-quote",
+    "project-quote-record",
     # legacy names kept for compatibility
     "official-quote",
     "authorized-channel",
@@ -307,6 +313,90 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _infer_product_class(rows: Iterable[Mapping[str, Any]], explicit: Optional[str]) -> str:
+    if explicit:
+        return explicit.strip().lower()
+    for row in rows:
+        value = str(row.get("product_class", "")).strip().lower()
+        if value:
+            return value
+    return ""
+
+
+def assess_budget_revision(
+    existing_budget: float,
+    items: Iterable[Mapping[str, Any]],
+    *,
+    product_class: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Assess whether current evidence can safely revise an existing unit budget.
+
+    For configurable-enterprise equipment, weak/context evidence may inform risk
+    commentary but cannot by itself justify a downward budget revision.
+    """
+    item_list = list(items)
+    rows = normalize(item_list)
+    anchor = select_budget_anchor(item_list)
+    existing = round(_number(existing_budget), 2)
+    inferred_class = _infer_product_class(rows, product_class)
+
+    if existing <= 0:
+        return {
+            "decision": "no-existing-budget",
+            "product_class": inferred_class,
+            "existing_budget": existing,
+            "budget_anchor": anchor,
+        }
+
+    if anchor.get("status") != "ready":
+        return {
+            "decision": "hold-existing-provisional",
+            "product_class": inferred_class,
+            "existing_budget": existing,
+            "recommended_budget_low": existing,
+            "recommended_budget_high": existing,
+            "confidence": "Needs confirmation",
+            "reason": "No strong current anchor is available; keep the prior amount only as a provisional carry-forward.",
+            "budget_anchor": anchor,
+        }
+
+    low = float(anchor["recommended_budget_low"])
+    high = float(anchor["recommended_budget_high"])
+    priority = int(anchor["preferred_evidence_priority"])
+    anchor_count = int(anchor.get("anchor_count", 0))
+
+    strong_for_downward_revision = priority in (1, 2) or (priority == 3 and anchor_count >= 2)
+    proposes_downward_revision = high < existing
+
+    if inferred_class == "configurable-enterprise" and proposes_downward_revision and not strong_for_downward_revision:
+        return {
+            "decision": "hold-existing-provisional",
+            "product_class": inferred_class,
+            "existing_budget": existing,
+            "recommended_budget_low": existing,
+            "recommended_budget_high": existing,
+            "confidence": "Needs confirmation",
+            "reason": (
+                "Weak/partial evidence cannot justify lowering an existing configurable-enterprise budget. "
+                "Require at least one exact-current Tier 1/2 quote or two independent Tier 3 highly matched quotes."
+            ),
+            "rejected_anchor_low": round(low, 2),
+            "rejected_anchor_high": round(high, 2),
+            "budget_anchor": anchor,
+        }
+
+    return {
+        "decision": "revise-to-current-anchor" if (low != existing or high != existing) else "keep-current-anchor",
+        "product_class": inferred_class,
+        "existing_budget": existing,
+        "recommended_budget_low": round(low, 2),
+        "recommended_budget_high": round(high, 2),
+        "confidence": anchor.get("confidence"),
+        "reason": "Current evidence is strong enough for the proposed revision direction.",
+        "budget_anchor": anchor,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize and rank procurement price evidence")
     parser.add_argument("input", type=Path, help="JSON file containing an array or {'items': [...]} object")
@@ -314,6 +404,15 @@ def main() -> None:
         "--summary",
         action="store_true",
         help="Include the preferred budget anchor selected by evidence priority",
+    )
+    parser.add_argument(
+        "--existing-budget",
+        type=float,
+        help="Existing unit budget to evaluate against current evidence",
+    )
+    parser.add_argument(
+        "--product-class",
+        help="Optional product class override, e.g. configurable-enterprise",
     )
     args = parser.parse_args()
 
@@ -323,6 +422,12 @@ def main() -> None:
 
     if args.summary:
         result: Any = {"items": rows, "budget_anchor": select_budget_anchor(items)}
+        if args.existing_budget is not None:
+            result["budget_revision"] = assess_budget_revision(
+                args.existing_budget,
+                items,
+                product_class=args.product_class,
+            )
     else:
         result = rows
     print(json.dumps(result, ensure_ascii=False, indent=2))
