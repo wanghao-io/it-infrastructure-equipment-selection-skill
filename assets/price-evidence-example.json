@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "candidate": "Example 2U Server A",
+      "configuration": "1x 12-core CPU, 128GB ECC, 2x960GB SSD RAID1, 2x1.92TB SSD RAID1, 4x4TB HDD RAID10, RAID cache/PLP, dual PSU, 3-year support",
+      "source_type": "authorized-channel",
+      "source": "example quotation",
+      "source_date": "2026-08-12",
+      "hardware_price": 56000,
+      "mandatory_accessories": 2500,
+      "required_licenses": 0,
+      "warranty_support": 6500,
+      "required_implementation": 0,
+      "tax_amount": 0,
+      "shipping": 0,
+      "currency": "CNY",
+      "tax_included": true,
+      "warranty": "3 years",
+      "comparable": true,
+      "evidence_level": "Market-verified",
+      "notes": "Synthetic example for testing only"
+    },
+    {
+      "candidate": "Example 2U Server B",
+      "configuration": "bare chassis; CPU/memory/storage not fully specified",
+      "source_type": "retail",
+      "source": "example listing",
+      "source_date": "2026-08-12",
+      "price": 28000,
+      "currency": "CNY",
+      "tax_included": false,
+      "comparable": false,
+      "evidence_level": "Needs confirmation",
+      "notes": "Not directly comparable with a fully configured server"
+    }
+  ]
+}
