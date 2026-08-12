@@ -1,58 +1,98 @@
-# IT Infrastructure Equipment Selection Skill v1.1.0
+# IT Infrastructure Equipment Selection Skill v1.1.1
 
-## Requirement-Driven Infrastructure Design
+## Exact-Configuration & Live Pricing Fix
 
-v1.1.0 turns the project from a basic equipment-selection workflow into a more complete engineering decision skill for IT infrastructure and industrial IT/OT projects.
+v1.1.1 is a pricing-accuracy release. It fixes a major weakness in enterprise hardware budgeting: treating prices for the same chassis or model family as if they represented the same procurement configuration.
 
-The guiding principle is:
+The guiding rule is:
 
-> Requirements first. Architecture second. Sizing third. Products last.
+> **Technical facts follow authoritative manufacturer documentation. Price anchors follow configuration match, current orderability and complete commercial scope.**
 
-## Highlights
+## What's Fixed
 
-- Requirement-driven architecture decisions instead of forcing HCI, HA, core switching, firewalls or Xinchuang into every project
-- Standalone server, virtualization, HCI, L2/L3/core and security-boundary decision guidance
-- SCADA and historian sizing/licensing workflow
-- OT remote-control safety rules for authorization, confirmation, PLC/equipment permissives, audit and command feedback
-- Service-based server sizing for SCADA, historian, database, BI, Web and integration workloads
-- Historian retention, RAID-aware storage, network-port and UPS sizing calculators
-- Configuration-level BOM and Chinese project budget template
-- Authoritative procurement research workflow separating technical evidence, current market price and historical comparable transactions
-- Structured price-evidence normalization
-- Project-specific vendor/model comparison with mandatory knockout gates and weighted scoring
-- Vendor-neutral tender/RFQ specification generation
-- Mermaid and Graphviz network topology generation
-- Output profiles for quick selection, internal review, procurement/RFQ, detailed design, compliance and BOM/budget stages
-- Additional anonymized reference designs for industrial SCADA, enterprise campus, healthcare IT and small data-center/server-room projects
-- Engineering regression tests to prevent common architecture mistakes
+- Current exact-configuration quotations now outrank lower-match historical or generic model-family prices when setting budget anchors.
+- Two or more exact current quotes define the primary observed market range without being averaged together with weaker evidence tiers.
+- One exact current quote is used as the primary anchor while explicitly recommending a second quote before fixing a procurement control price.
+- Same-chassis listings are no longer treated as equivalent procurement configurations.
+- Bare-chassis prices, starting/base prices, unavailable offers, low-match configurations and incomplete commercial scope are excluded from the primary budget anchor.
+- Highly configurable enterprise equipment without exact current quotations now returns a range with `Estimated` or `Needs confirmation` instead of false precision.
+- Current-price requests require live research when live research tools are available.
 
-## Engineering Rules Added
+## Live Price Research
 
-- Virtualization does not automatically imply HCI.
-- Multiple VLANs that need to communicate must have an identified Layer-3 routing function.
-- A standalone production server must explicitly evaluate single-point-of-failure risk and compensating controls such as RAID, UPS/graceful shutdown and independent backup.
-- SCADA procurement should separate Runtime, Development, I/O point tiers, clients, Web, historian, alarm, report/API, drivers and maintenance instead of using a single “SCADA software” line item.
-- Remote start/stop and other physical-control commands must not bypass PLC/equipment-side permissive, interlock or protection logic.
-- Firewall sizing must use real protection performance where available, not only raw stateful throughput.
-- Product and price comparisons must normalize exact configurations, licenses, accessories, support and implementation scope.
+A new workflow classifies the procurement object before selecting price channels:
 
-## Validation
+- `configurable-enterprise` — servers, storage, HCI, configured firewalls, modular switches and project UPS systems;
+- `fixed-sku` — fixed switches, APs, displays, Mini PCs, NAS and fixed UPS SKUs;
+- `commodity-component` — CPUs, DIMMs, SSDs/HDDs, optics, cables and standard accessories.
 
-GitHub Actions validates:
+This prevents applying commodity-product shopping logic to highly configurable enterprise systems.
 
-- Python syntax
-- Engineering scenario regression tests
-- Architecture-decision checks
-- Sizing calculators
-- Price-evidence normalization
-- Vendor comparison
-- Tender specification generation
-- Mermaid topology generation
-- Graphviz topology generation
+For China-market research, manufacturer/direct/official/authorized quotations, JD/Tmall official or enterprise channels, ZOL/market aggregators, price-history tools and government-procurement records are used according to the equipment class and evidence role rather than through one universal website ranking.
+
+## Configuration Match Scoring
+
+The default server match model evaluates:
+
+- CPU model and quantity
+- memory capacity/type/layout
+- SSD/NVMe configuration
+- HDD configuration
+- RAID/HBA/cache/PLP
+- NIC/network ports
+- PSU/redundancy
+- warranty/support
+- tax treatment
+- mandatory accessories
+
+Default interpretation:
+
+```text
+>= 0.95      Exact / effectively exact
+0.85–0.949   Highly comparable
+0.70–0.849   Partial comparison only
+< 0.70       Not a direct budget anchor
+```
+
+## Price Evidence Priority
+
+1. Exact current formal quotation
+2. Exact current credible market quotation
+3. Highly matched current quotation
+4. Comparable historical transaction
+5. Component-cost model
+6. Generic model-family listing
+7. Engineering estimate
+
+Lower-priority evidence remains useful as context but does not mechanically pull a stronger exact-current quote range upward or downward.
+
+## Tooling
+
+`normalize_price_evidence.py` now supports configuration-match scoring and preferred budget-anchor selection:
+
+```bash
+python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary
+```
+
+Outputs include fields such as:
+
+- `configuration_match_score`
+- `evidence_priority`
+- `anchor_eligible`
+- `anchor_exclusion_reasons`
+- `price_signal_role`
+- `confidence_level`
+- preferred budget low/high
+
+## Regression Validation
+
+Regression tests now explicitly verify that two current exact server quotations remain the budget anchor even when cheaper historical, aggregator, bare-chassis or starting-price signals are present.
+
+GitHub Actions validates the pricing regression path together with the existing architecture, sizing, vendor-comparison, tender-specification and topology-generation tests.
 
 ## Upgrade Notes
 
-No migration is required from v1.0.0. Existing users can update the skill directory and use the new references, calculators and output modes as needed.
+No migration is required from v1.1.0. Existing users can update the skill directory and immediately use the new price-research and evidence-ranking rules.
 
 ## License
 
