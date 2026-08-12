@@ -12,6 +12,7 @@
 - Mandatory attribute markers such as `unknown` remain `CONDITIONAL`, and fractional HCI node counts are rejected.
 - The three simulated project regressions now execute the actual deterministic requirement, HCI, TCO and budget-revision commands.
 - README release-state wording now matches the published feature set.
+- GitHub Actions now use immutable Node 24-based `checkout` and `setup-python` releases, eliminating Node 20 deprecation warnings.
 
 ## v1.2.0 — 2026-08-12
 
