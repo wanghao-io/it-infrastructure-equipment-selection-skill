@@ -2,11 +2,17 @@
   "items": [
     {
       "candidate": "Example 2U Server - Exact Quote A",
+      "product_class": "configurable-enterprise",
       "configuration": "1x 12-core server CPU, 128GB ECC RDIMM, 2x960GB enterprise SSD RAID1, 2x1.92TB enterprise SSD RAID1, 4x4TB enterprise HDD RAID10, 4GB RAID cache with PLP, 4x1GbE, dual PSU, 3-year support",
-      "source_type": "official-store-quote",
+      "source_type": "official-store-human-quote",
+      "quote_mode": "human-configured",
       "source": "synthetic official customer-service quotation",
       "source_date": "2026-08-12",
       "quote_current": true,
+      "orderability_confirmed": true,
+      "price_scope_complete": true,
+      "starting_price_or_base_config": false,
+      "used_or_refurbished": false,
       "hardware_price": 90000,
       "mandatory_accessories": 0,
       "required_licenses": 0,
@@ -35,11 +41,17 @@
     },
     {
       "candidate": "Example 2U Server - Exact Quote B",
+      "product_class": "configurable-enterprise",
       "configuration": "1x 12-core server CPU, 128GB ECC RDIMM, 2x960GB enterprise SSD RAID1, 2x1.92TB enterprise SSD RAID1, 4x4TB enterprise HDD RAID10, 4GB RAID cache with PLP, 4x1GbE, dual PSU, 3-year support",
-      "source_type": "authorized-channel-quote",
+      "source_type": "authorized-reseller-quote",
+      "quote_mode": "exact-config",
       "source": "synthetic authorized reseller quotation",
       "source_date": "2026-08-12",
       "quote_current": true,
+      "orderability_confirmed": true,
+      "price_scope_complete": true,
+      "starting_price_or_base_config": false,
+      "used_or_refurbished": false,
       "hardware_price": 92000,
       "mandatory_accessories": 0,
       "required_licenses": 0,
@@ -68,8 +80,10 @@
     },
     {
       "candidate": "Example Historical Server Transaction",
+      "product_class": "configurable-enterprise",
       "configuration": "Similar 2U server with broadly comparable CPU/memory but different storage/controller scope",
       "source_type": "government-award",
+      "quote_mode": "historical-transaction",
       "source": "synthetic historical procurement record",
       "source_date": "2025-06-01",
       "quote_current": false,
@@ -82,19 +96,24 @@
       "notes": "Historical context only; must not pull down the exact-current quote range"
     },
     {
-      "candidate": "Example Bare Chassis Listing",
-      "configuration": "bare chassis; CPU/memory/storage/RAID not fully specified",
-      "source_type": "generic-listing",
-      "source": "synthetic public listing",
+      "candidate": "Example Server Starting Price",
+      "product_class": "configurable-enterprise",
+      "configuration": "same chassis family; base configuration only; CPU/memory/storage/RAID not fully specified",
+      "source_type": "market-aggregator",
+      "quote_mode": "starting-price",
+      "source": "synthetic aggregator listing",
       "source_date": "2026-08-12",
       "quote_current": true,
+      "orderability_confirmed": false,
+      "price_scope_complete": false,
+      "starting_price_or_base_config": true,
       "price": 48000,
       "currency": "CNY",
       "tax_included": false,
       "configuration_match_score": 0.42,
       "comparable": false,
       "evidence_level": "Needs confirmation",
-      "notes": "Same model family is not the same procurement configuration"
+      "notes": "Starting/base price is retained as context but excluded from the budget anchor"
     }
   ]
 }
