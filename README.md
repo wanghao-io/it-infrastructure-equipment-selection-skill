@@ -19,10 +19,14 @@
 - 工业 IT/OT 架构设计（按需）
 - 超融合 HCI 架构设计（按需）
 - 国产化/信创适配分析（按需）
+- 厂商/型号比较矩阵（按需）
+- 自动生成招标/RFQ技术参数（按需）
+- 自动生成 Mermaid / Graphviz 网络拓扑图（按需）
 - 招标参数核验
 - BOM 编制
 - 项目预算估算
 - 当前在售型号、生命周期与价格证据调研
+- 多行业脱敏参考设计
 
 核心原则：
 
@@ -51,9 +55,68 @@
     ↓
 市场价格 + 可比采购成交记录调研
     ↓
+按需生成：厂商矩阵 / 招标参数 / 网络拓扑
+    ↓
 BOM 与预算区间
     ↓
 采购决策
+```
+
+---
+
+## 新增能力（v1.1.0 开发中）
+
+### 厂商 / 型号比较矩阵
+
+比较对象是**项目中的具体配置**，不是给品牌打永久分数。
+
+- 先定义强制淘汰条件
+- 再做加权评分
+- 强制项不满足直接 `FAIL`
+- 配置需统一到 CPU、内存、硬盘、网卡、授权、维保、附件等可比口径
+- 分数必须同时显示证据等级
+
+参考：[`references/vendor-comparison.md`](references/vendor-comparison.md)
+
+工具：
+
+```bash
+python scripts/compare_vendors.py assets/vendor-comparison-example.json
+```
+
+### 自动生成招标 / RFQ 参数
+
+从项目需求生成可量化、可验收、尽量厂商中立的技术参数和供应商响应表。
+
+- Mandatory / Recommended / Optional 分级
+- 为关键条款增加验收证据要求
+- 不必要时不锁品牌、型号或专有功能
+- 未确认项保留 `TBD`
+
+参考：[`references/tender-specification.md`](references/tender-specification.md)
+
+工具：
+
+```bash
+python scripts/generate_tender_spec.py assets/tender-requirements-example.json
+```
+
+### 自动生成网络拓扑图
+
+从结构化 JSON 输入生成逻辑拓扑：
+
+- Mermaid：适合 GitHub / Markdown
+- Graphviz DOT：适合后续渲染和程序化处理
+
+不会自动虚构 VLAN、IP、物理端口、冗余链路或安全区域。
+
+参考：[`references/network-topology.md`](references/network-topology.md)
+
+工具：
+
+```bash
+python scripts/generate_topology.py assets/topology-input-example.json --format mermaid --markdown
+python scripts/generate_topology.py assets/topology-input-example.json --format dot
 ```
 
 ---
@@ -70,8 +133,6 @@ BOM 与预算区间
 - **预算输出**：必须核对具体配置、税费、维保、授权、光模块/附件及实施服务，不能只比较裸机型号。
 
 详细方法见：[`references/procurement-research.md`](references/procurement-research.md)
-
-中国政府采购网是财政部指定的国家级政府采购信息发布媒体，其公开中标/成交公告适合用于历史采购价格的可比性参考；当前企业市场价仍需结合实时渠道信息判断。
 
 ---
 
@@ -98,7 +159,10 @@ BOM 与预算区间
 - 网络架构建议
 - 防火墙规格
 - 候选设备与官方证据
+- 厂商/型号比较矩阵
 - 市场价格与可比成交价格
+- 招标技术参数
+- Mermaid / Graphviz 网络拓扑
 - BOM清单
 - 风险分析
 
@@ -117,6 +181,9 @@ BOM 与预算区间
 - 国产化/信创适配（按需）
 - Product lifecycle validation
 - Authoritative procurement research
+- Project-specific vendor/model comparison
+- Tender/RFQ specification generation
+- Mermaid / Graphviz topology generation
 - BOM generation
 - Compliance checking
 - Procurement risk analysis
@@ -126,8 +193,11 @@ BOM 与预算区间
 ## Examples
 
 - [Industrial SCADA + HCI Reference Design](examples/industrial-scada-hci-reference-design.md)
+- [Enterprise Campus IT Infrastructure Reference Design](examples/enterprise-campus-reference-design.md)
+- [Healthcare IT Infrastructure Reference Design](examples/healthcare-it-reference-design.md)
+- [Small Data Center / Server Room Reference Design](examples/small-datacenter-reference-design.md)
 
-案例均应脱敏并聚焦工程方法，不公开客户特定敏感信息。
+案例均应脱敏并聚焦工程方法，不公开客户特定敏感信息。示例中的容量、冗余和架构不是默认配置，必须按新项目重新计算。
 
 ---
 
@@ -137,8 +207,14 @@ BOM 与预算区间
 .
 ├── SKILL.md
 ├── references/
-│   └── procurement-research.md
+│   ├── procurement-research.md
+│   ├── vendor-comparison.md
+│   ├── tender-specification.md
+│   └── network-topology.md
 ├── scripts/
+│   ├── compare_vendors.py
+│   ├── generate_tender_spec.py
+│   └── generate_topology.py
 ├── assets/
 ├── examples/
 ├── tests/
@@ -167,7 +243,7 @@ $it-infrastructure-equipment-selection
 
 AI Agent skill for IT infrastructure solution architects.
 
-This skill helps engineers design, validate and document enterprise infrastructure projects, while keeping architecture choices requirement-driven rather than forcing a predefined pattern.
+This skill helps engineers design, validate and document enterprise infrastructure projects while keeping architecture choices requirement-driven rather than forcing a predefined pattern.
 
 Typical capabilities include:
 
@@ -182,6 +258,10 @@ Typical capabilities include:
 - Domestic/Xinchuang compatibility analysis when required
 - Product lifecycle validation
 - Equipment pricing and comparable procurement research
+- Project-specific vendor/model comparison matrices
+- Vendor-neutral tender/RFQ specification generation
+- Mermaid / Graphviz logical network topology generation
+- Anonymized multi-industry reference designs
 
 ## Design Principle
 
@@ -206,9 +286,19 @@ Official product/lifecycle validation
     ↓
 Market and comparable procurement research
     ↓
+Optional artifacts: comparison matrix / tender spec / topology
+    ↓
 BOM and budget range
     ↓
 Procurement decision
+```
+
+## Optional artifact tools
+
+```bash
+python scripts/compare_vendors.py assets/vendor-comparison-example.json
+python scripts/generate_tender_spec.py assets/tender-requirements-example.json
+python scripts/generate_topology.py assets/topology-input-example.json --format mermaid --markdown
 ```
 
 ## Procurement Research
@@ -220,6 +310,9 @@ See [`references/procurement-research.md`](references/procurement-research.md).
 ## Examples
 
 - [Industrial SCADA + HCI Reference Design](examples/industrial-scada-hci-reference-design.md)
+- [Enterprise Campus IT Infrastructure Reference Design](examples/enterprise-campus-reference-design.md)
+- [Healthcare IT Infrastructure Reference Design](examples/healthcare-it-reference-design.md)
+- [Small Data Center / Server Room Reference Design](examples/small-datacenter-reference-design.md)
 
 ## License
 
