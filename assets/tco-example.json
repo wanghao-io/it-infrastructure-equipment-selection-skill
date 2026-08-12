@@ -1,0 +1,27 @@
+{
+  "electricity_rate_per_kwh": 0.8,
+  "pue": 1.5,
+  "years": [3, 5],
+  "candidates": [
+    {
+      "name": "Option A",
+      "purchase_cost": 90000,
+      "one_time_implementation": 5000,
+      "average_it_power_w": 650,
+      "annual_support": 4000,
+      "annual_license": 0,
+      "annual_facility": 0,
+      "annual_other_opex": 0
+    },
+    {
+      "name": "Option B",
+      "purchase_cost": 78000,
+      "one_time_implementation": 5000,
+      "average_it_power_w": 900,
+      "annual_support": 6500,
+      "annual_license": 2000,
+      "annual_facility": 0,
+      "annual_other_opex": 0
+    }
+  ]
+}
