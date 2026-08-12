@@ -2,11 +2,12 @@
 name: it-infrastructure-equipment-selection
 description: >
   Portable IT infrastructure solution architect skill for selecting, sizing, validating and budgeting
-  physical infrastructure equipment. Use for equipment selection, BOM generation, tender/RFQ
-  compliance and specification generation, project infrastructure planning, alternative model
-  research, vendor/model comparison, price research, network topology generation and industry
-  reference designs. Architecture follows project requirements: HCI, HA, core switching,
-  firewalls, domestic/Xinchuang platforms and industrial IT/OT patterns are optional, not defaults.
+  physical infrastructure equipment. Use for guided requirement discovery, scenario-based planning,
+  equipment selection, BOM generation, tender/RFQ compliance and specification generation, project
+  infrastructure planning, alternative model research, vendor/model comparison, TCO analysis, price
+  research, network topology generation and industry reference designs. Architecture follows project
+  requirements: HCI, HA, core switching, firewalls, domestic/Xinchuang platforms and industrial IT/OT
+  patterns are optional, not defaults.
 license: MIT
 ---
 
@@ -32,16 +33,48 @@ Portability rules:
 
 ## Core Workflow
 
-1. Extract known conditions, assumptions and TBD items.
+1. Extract known conditions, assumptions and TBD items. If the request is broad or under-specified, use guided requirement discovery before architecture decisions.
 2. Identify mandatory requirements, availability/RTO/RPO targets, growth and budget constraints.
 3. Decide the **minimum justified architecture** before selecting products.
 4. Calculate CPU, memory, storage, historian, port and UPS requirements as applicable.
 5. Define minimum and recommended technical specifications.
 6. Research current product families and verify official specifications/lifecycle.
-7. Normalize exact configurations and price evidence.
-8. Compare cost, reliability, lifecycle, operability and expansion capability.
-9. Generate only the artifacts required by the user's project stage.
-10. State risks, exclusions, upgrade triggers and vendor-confirmation items.
+7. Apply Mandatory technical/compatibility constraints before preference scoring.
+8. Normalize exact configurations and price evidence.
+9. Compare cost, TCO where useful, reliability, lifecycle, operability and expansion capability among technically eligible alternatives.
+10. Generate only the artifacts required by the user's project stage.
+11. State risks, exclusions, upgrade triggers and vendor-confirmation items.
+
+## Guided Requirement Discovery and Scenario Templates
+
+When the user gives a broad project description, asks for an end-to-end recommendation, or omits requirements that could materially change architecture/product eligibility, load `references/decision-support.md`.
+
+Structured discovery templates are in:
+
+```text
+assets/scenario-templates.json
+```
+
+Use `scripts/guide_requirements.py` when a concise deterministic checklist is useful:
+
+```bash
+python scripts/guide_requirements.py --list
+python scripts/guide_requirements.py \
+  --scenario manufacturing-scada-small \
+  --input project-known-fields.json \
+  --max-questions 7 \
+  --pretty
+```
+
+Rules:
+
+- Templates are **discovery aids, not predefined architectures**.
+- User/project facts always override template suggestions.
+- Suggested assumptions must remain visibly separate from known facts and TBD items.
+- Do not silently turn a scenario template into HCI, HA, dual-core switching, firewall, Xinchuang, GPU or vendor requirements.
+- Prefer a small set of high-value questions (normally 3–7) over a long questionnaire.
+- Do not ask again for facts already supplied in the current request or accessible project materials.
+- Missing minor details may be carried as explicit assumptions; missing Mandatory facts that change candidate eligibility must remain unresolved before final product recommendation.
 
 ## Requirement-Driven Architecture
 
@@ -91,6 +124,7 @@ scripts/calculate_storage.py
 scripts/calculate_network_ports.py
 scripts/calculate_ups.py
 scripts/calculate_budget.py
+scripts/calculate_tco.py
 ```
 
 Sizing rules:
@@ -280,6 +314,26 @@ For a quotation-oriented BOM, include where material:
 - confidence;
 - exclusion/notes for misleading price signals.
 
+## TCO Analysis
+
+When multiple technically eligible alternatives differ materially in acquisition price, power, support, licenses, facility cost or implementation cost, load `references/tco.md` and use `scripts/calculate_tco.py`.
+
+TCO rules:
+
+- Mandatory technical/compliance fit comes before TCO.
+- Use average IT power, not PSU nameplate wattage.
+- Apply PUE once; do not double-count cooling electricity already represented by PUE.
+- Use comparable tax, support, license and implementation scope across candidates.
+- Report acquisition/CAPEX separately from 3-year/5-year TCO.
+- Unknown material OPEX inputs remain TBD/Needs confirmation; do not silently make them zero in a procurement recommendation.
+- TCO is a preference/cost dimension and cannot rescue a candidate that fails a Mandatory requirement.
+
+Example:
+
+```bash
+python scripts/calculate_tco.py assets/tco-example.json --format markdown
+```
+
 ## Project BOM
 
 Use `references/bom-checklist.md` before finalizing a budget.
@@ -308,11 +362,22 @@ Load these only when requested or directly useful.
 
 ### vendor-compare
 
-Use `references/vendor-comparison.md` and optionally `scripts/compare_vendors.py`.
+Use `references/decision-support.md`, `references/vendor-comparison.md` and optionally `scripts/compare_vendors.py`.
 
 - Compare project-specific configurations, not brand reputation.
-- Apply mandatory knockout gates before weighted scoring.
-- Mandatory failures cannot be rescued by a score.
+- Apply Mandatory constraints/knockout gates **before** weighted preference scoring.
+- A missing Mandatory attribute is `CONDITIONAL`, not a silent PASS.
+- PASS candidates always outrank CONDITIONAL candidates regardless of preference score.
+- FAIL candidates are excluded; Mandatory failures cannot be rescued by a score.
+- Typical scoring dimensions include TCO, lifecycle, operability, expansion, implementation complexity and evidence quality.
+
+### tco-analysis
+
+Use `references/tco.md` and `scripts/calculate_tco.py` when lifecycle operating costs materially change the comparison.
+
+- Prefer 3-year and 5-year views.
+- Keep CAPEX and OPEX visible separately.
+- Do not use TCO as a substitute for current-price research.
 
 ### tender-spec
 
@@ -355,6 +420,7 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 
 ## Task Modes
 
+- guided-requirements
 - single-device
 - project-design
 - compliance-check
@@ -363,6 +429,7 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 - alternative-search
 - price-research
 - vendor-compare
+- tco-analysis
 - tender-spec
 - topology-generation
 - reference-design
@@ -371,10 +438,14 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 
 - Requirements first, products second.
 - Architecture follows requirements.
+- Scenario templates guide discovery; they do not define the architecture.
 - Prefer the simplest architecture that satisfies mandatory requirements with acceptable risk.
 - Do not reverse-engineer requirements from a favorite product.
 - Separate verified specifications from assumptions and estimates.
 - Separate technical evidence from price evidence.
+- Mandatory constraints are evaluated before weighted preference scoring.
+- PASS candidates outrank CONDITIONAL candidates; FAIL candidates are excluded.
+- TCO compares technically eligible alternatives and never overrides Mandatory requirements.
 - Compare exact configurations, not chassis/model family names.
 - Price evidence is selected by configuration match, product class and evidence tier, not by naïvely averaging all observed prices.
 - Current-price requests use live research when available.
@@ -389,13 +460,15 @@ Profiles can be combined, for example `internal-review + bom-budget`.
 For a project-level design, normally include only the relevant sections from:
 
 1. Known conditions / assumptions / TBDs
-2. Architecture decisions and rationale
-3. Capacity calculations and assumptions
-4. Recommended hardware/software configurations
-5. SCADA/OT licensing and control requirements where applicable
-6. Candidate products and evidence
-7. Vendor comparison when requested
-8. Logical topology when useful
-9. BOM and budget range
-10. Compressible/optional items
-11. Risks, exclusions, acceptance and confirmation items
+2. Guided requirement gaps/questions when material
+3. Architecture decisions and rationale
+4. Capacity calculations and assumptions
+5. Recommended hardware/software configurations
+6. SCADA/OT licensing and control requirements where applicable
+7. Candidate products, Mandatory gate results and evidence
+8. Vendor comparison and recommendation order when requested
+9. TCO comparison when useful
+10. Logical topology when useful
+11. BOM and budget range
+12. Compressible/optional items
+13. Risks, exclusions, acceptance and confirmation items
