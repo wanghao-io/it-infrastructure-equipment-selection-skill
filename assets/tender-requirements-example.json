@@ -1,0 +1,38 @@
+{
+  "title": "Server Procurement Technical Specification",
+  "scope": "Example only. Replace all assumptions and thresholds with project-specific values before tender release.",
+  "assumptions": [
+    "CPU architecture requirement is project-specific and currently TBD.",
+    "Warranty target is assumed to be 3 years pending procurement confirmation."
+  ],
+  "requirements": [
+    {
+      "id": "SRV-001",
+      "category": "Compute",
+      "requirement": "The server shall provide not less than 24 physical CPU cores in the offered configuration.",
+      "level": "Mandatory",
+      "evidence": "Official datasheet and configured BOM/ordering information"
+    },
+    {
+      "id": "SRV-002",
+      "category": "Memory",
+      "requirement": "Installed memory shall be at least 128 GB and the platform shall support future memory expansion.",
+      "level": "Mandatory",
+      "evidence": "Official datasheet showing installed and maximum supported memory"
+    },
+    {
+      "id": "SRV-003",
+      "category": "Network",
+      "requirement": "The offered configuration shall include at least two 10GbE data interfaces in addition to management connectivity.",
+      "level": "Mandatory",
+      "evidence": "Configured NIC model/part number and official technical documentation"
+    },
+    {
+      "id": "SRV-004",
+      "category": "Service",
+      "requirement": "The supplier shall provide at least 3 years of manufacturer or manufacturer-authorized support.",
+      "level": "Recommended",
+      "evidence": "Support entitlement or service description"
+    }
+  ]
+}
