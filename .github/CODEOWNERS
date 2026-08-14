@@ -1,0 +1,9 @@
+# Transitional ownership. Add a second qualified maintainer after the
+# GOVERNANCE.md promotion and access process is complete.
+* @wanghao-io
+
+/.github/workflows/ @wanghao-io
+/scripts/install_skill.py @wanghao-io
+/scripts/validate_release.py @wanghao-io
+/GOVERNANCE.md @wanghao-io
+/MAINTAINERS.md @wanghao-io

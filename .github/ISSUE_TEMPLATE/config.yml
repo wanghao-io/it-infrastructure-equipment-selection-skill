@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Usage and design questions / 使用与设计讨论
+    url: https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/discussions
+    about: Ask for help, share a design, or discuss an idea before filing a defect.
+  - name: Private security report / 私密安全报告
+    url: https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/security/advisories/new
+    about: Report vulnerabilities or sensitive-data exposure privately.

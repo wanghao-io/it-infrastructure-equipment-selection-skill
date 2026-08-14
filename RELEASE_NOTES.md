@@ -1,4 +1,10 @@
-# IT Infrastructure Equipment Selection Skill v1.2.2
+# IT Infrastructure Equipment Selection Skill v1.2.3
+
+## 社区入口与维护接班机制
+
+v1.2.3 补齐 Discussions、贡献指南、支持与安全政策、行为准则、PR 模板和结构化 Issue 表单；新增公开治理、维护者空缺与晋升条件，以及任何合格维护者都能从干净 Clone 重复执行的发布/恢复手册。
+
+仓库不再用文档数量掩盖真实风险：当前人类 bus factor 明确为 1。自动化和手册降低知识集中风险，但只有第二位真实维护者获得权限并完成发布演练后，指标才会提升。
 
 ## 询价、预算修订与 HCI 端到端热修
 

@@ -1,0 +1,49 @@
+name: Feature request
+description: Propose a reusable capability, workflow, or engineering rule.
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the user/project decision that is currently difficult or unsafe.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Sanitized example
+      description: Provide a realistic prompt/input and the desired output contract.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Requirements and architecture
+        - Server, storage, or HCI
+        - Network or security
+        - UPS or facilities
+        - SCADA or IT/OT
+        - Pricing, RFQ, BOM, or TCO
+        - Portability or installation
+        - Community or documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and tradeoffs
+      description: Link authoritative sources and explain compatibility or safety risks.
+  - type: checkboxes
+    id: neutrality
+    attributes:
+      label: Contribution checks
+      options:
+        - label: The proposal is vendor-neutral or explains why a named product is necessary.
+          required: true
+        - label: The example contains no sensitive project data.
+          required: true
