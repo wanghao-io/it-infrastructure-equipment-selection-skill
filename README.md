@@ -8,7 +8,7 @@
 
 Supported hosts include OpenAI Codex, Claude Code, GitHub Copilot, Gemini CLI and other compatible Agent Skills hosts.
 
-Current stable version: **v1.4.2**. See the current [Release Notes](RELEASE_NOTES.md) and cumulative [Changelog](CHANGELOG.md).
+Current stable version: **v1.4.3**. See the current [Release Notes](RELEASE_NOTES.md) and cumulative [Changelog](CHANGELOG.md).
 
 [两条使用路径](#两条使用路径) · [任务配方](#可复制任务配方) · [Schema 治理](#schema-v1--v2-治理) · [私有扩展](#私有扩展边界) · [English](#english) · [Release Notes](RELEASE_NOTES.md) · [Contributing](CONTRIBUTING.md)
 

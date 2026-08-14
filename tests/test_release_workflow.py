@@ -166,6 +166,18 @@ class ReleaseWorkflowStructureTests(unittest.TestCase):
         self.assertNotIn("--clobber", self.release)
         self.assertNotIn("actions/checkout", publish)
 
+    def test_release_artifact_actions_use_pinned_node24_versions(self) -> None:
+        self.assertIn(
+            "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1, Node 24",
+            self.release,
+        )
+        self.assertIn(
+            "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1, Node 24",
+            self.release,
+        )
+        self.assertNotIn("actions/upload-artifact@ea165f8d", self.release)
+        self.assertNotIn("actions/download-artifact@d3f86a1", self.release)
+
     def test_release_body_comes_from_single_changelog_section(self) -> None:
         self.assertIn("scripts/extract_release_notes.py", self.release)
         self.assertIn("--notes-file release-notes.md", self.release)

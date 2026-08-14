@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.4.3 — 2026-08-15
+
+### Fixed
+
+- Release artifact transfer now uses immutable `upload-artifact` v7.0.1 and `download-artifact` v8.0.1 commits that run on Node 24, removing the deprecation annotation observed during the first v1.4.2 release-pipeline rehearsal.
+
+### Tests
+
+- Added a release-workflow regression that requires the pinned Node 24 artifact actions and rejects the previous Node 20 commits.
+
 ## v1.4.2 — 2026-08-15
 
 ### Added
