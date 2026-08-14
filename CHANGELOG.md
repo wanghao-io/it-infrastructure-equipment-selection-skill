@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.3.0 — 2026-08-14
+
+### Added
+
+- Versioned Draft 2020-12 JSON Schema contracts for price evidence, server RFQs, TCO, HCI failover and anonymized real-project retrospectives.
+- A dependency-free schema preflight command, catalog validation, strict unknown-field handling and negative regression cases.
+- Two anonymized real design-stage retrospectives covering manufacturing SCADA budget revision and phased smart-factory network design.
+- A field-learning workflow that separates design baselines, current quotations, awards, settlements and operational measurements.
+
+### Changed
+
+- Structured examples now declare `schema_version: 1`, and copied Skill installations include the schema catalog.
+- Real cases must not present design-budget movement as procurement forecast accuracy; public figures are rounded and sensitive identities removed.
+
+### Tests
+
+- Expanded the suite to 91 tests and added schema validation to the cross-platform CI and package smoke path.
+
 ## v1.2.3 — 2026-08-14
 
 ### Added

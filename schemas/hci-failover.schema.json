@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/hci-failover.schema.json",
+  "title": "HCI failover capacity input",
+  "type": "object",
+  "required": ["schema_version", "nodes", "failed_nodes", "per_node_capacity", "workload_demand", "storage_protection_valid", "network_redundancy_valid", "failure_domains_independent"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "nodes": {"type": "integer", "minimum": 3},
+    "failed_nodes": {"type": "integer", "minimum": 1},
+    "per_node_capacity": {"$ref": "#/$defs/dimensions"},
+    "workload_demand": {"$ref": "#/$defs/dimensions"},
+    "reserve_ratio": {"$ref": "#/$defs/reserves"},
+    "storage_protection_valid": {"type": "boolean"},
+    "network_redundancy_valid": {"type": "boolean"},
+    "failure_domains_independent": {"type": "boolean"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "dimensions": {
+      "type": "object",
+      "required": ["cpu_cores", "memory_gb", "usable_storage_tb", "storage_iops", "network_gbps"],
+      "properties": {
+        "cpu_cores": {"type": "number", "minimum": 0},
+        "memory_gb": {"type": "number", "minimum": 0},
+        "usable_storage_tb": {"type": "number", "minimum": 0},
+        "storage_iops": {"type": "number", "minimum": 0},
+        "network_gbps": {"type": "number", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "reserves": {
+      "type": "object",
+      "properties": {
+        "cpu_cores": {"type": "number", "minimum": 0, "maximum": 0.95},
+        "memory_gb": {"type": "number", "minimum": 0, "maximum": 0.95},
+        "usable_storage_tb": {"type": "number", "minimum": 0, "maximum": 0.95},
+        "storage_iops": {"type": "number", "minimum": 0, "maximum": 0.95},
+        "network_gbps": {"type": "number", "minimum": 0, "maximum": 0.95}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/tco.schema.json",
+  "title": "Infrastructure TCO input",
+  "type": "object",
+  "required": ["schema_version", "electricity_rate_per_kwh", "candidates"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "electricity_rate_per_kwh": {"type": "number", "minimum": 0},
+    "pue": {"type": "number", "minimum": 1},
+    "hours_per_year": {"type": "number", "exclusiveMinimum": 0},
+    "years": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+    "candidates": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "purchase_cost", "one_time_implementation", "annual_support", "annual_license", "annual_facility", "annual_other_opex"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "purchase_cost": {"$ref": "#/$defs/cost"},
+          "one_time_implementation": {"$ref": "#/$defs/cost"},
+          "average_it_power_w": {"$ref": "#/$defs/cost"},
+          "annual_support": {"$ref": "#/$defs/cost"},
+          "annual_license": {"$ref": "#/$defs/cost"},
+          "annual_facility": {"$ref": "#/$defs/cost"},
+          "annual_other_opex": {"$ref": "#/$defs/cost"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {"cost": {"anyOf": [{"type": "number", "minimum": 0}, {"type": "string", "enum": ["TBD", "Needs confirmation", "待确认"]}]}}
+}

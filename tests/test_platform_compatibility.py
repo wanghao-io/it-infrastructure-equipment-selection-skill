@@ -111,6 +111,7 @@ class InstallationPathTests(unittest.TestCase):
             self.assertTrue((destination / "scripts").is_dir())
             self.assertTrue((destination / "assets").is_dir())
             self.assertTrue((destination / "examples").is_dir())
+            self.assertTrue((destination / "schemas" / "catalog.json").is_file())
             self.assertTrue((destination / "agents" / "openai.yaml").is_file())
             self.assertFalse((destination / ".git").exists())
             self.assertFalse((destination / "tests").exists())

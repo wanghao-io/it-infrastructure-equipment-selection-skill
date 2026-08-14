@@ -31,6 +31,8 @@ def validate(root: Path = ROOT) -> list[str]:
     for required in (
         "SKILL.md", "scripts/contracts.py", "scripts/compare_server_quotes.py",
         "scripts/calculate_hci_failover.py", "references/server-quotation-workflow.md",
+        "scripts/validate_json_schemas.py", "schemas/catalog.json",
+        "references/real-project-validation.md",
     ):
         if not (root / required).is_file():
             errors.append(f"missing runtime file: {required}")

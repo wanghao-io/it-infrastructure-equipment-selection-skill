@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "mappings": [
+    {"schema": "schemas/price-evidence.schema.json", "examples": ["assets/price-evidence-example.json"]},
+    {"schema": "schemas/server-rfq.schema.json", "examples": ["assets/server-rfq-example.json"]},
+    {"schema": "schemas/tco.schema.json", "examples": ["assets/tco-example.json"]},
+    {"schema": "schemas/hci-failover.schema.json", "examples": ["assets/hci-failover-example.json"]},
+    {"schema": "schemas/project-retrospective.schema.json", "examples": ["examples/real-project-retrospectives/manufacturing-scada-budget-revision.json", "examples/real-project-retrospectives/smart-factory-network-design.json"]}
+  ]
+}

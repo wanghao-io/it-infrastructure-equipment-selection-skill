@@ -1,4 +1,5 @@
 {
+  "schema_version": 1,
   "requirement": {
     "as_of_date": "2026-08-12",
     "risk_reserve_percent": 5,

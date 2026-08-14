@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/server-rfq.schema.json",
+  "title": "Server RFQ and quotations",
+  "type": "object",
+  "required": ["schema_version", "requirement", "quotes"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "requirement": {
+      "type": "object",
+      "required": ["as_of_date", "required_configuration"],
+      "properties": {
+        "as_of_date": {"type": "string", "format": "date"},
+        "risk_reserve_percent": {"type": "number", "minimum": 0, "maximum": 100},
+        "required_configuration": {"$ref": "#/$defs/configuration"}
+      },
+      "additionalProperties": false
+    },
+    "quotes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/quote"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "configuration": {
+      "type": "object",
+      "required": ["cpu_cores", "memory_gb", "usable_storage_tb", "raid_cache_with_plp", "network_ports_10gbe", "redundant_power", "warranty_years"],
+      "properties": {
+        "cpu_cores": {"type": "integer", "minimum": 1},
+        "memory_gb": {"type": "number", "exclusiveMinimum": 0},
+        "usable_storage_tb": {"type": "number", "minimum": 0},
+        "raid_cache_with_plp": {"type": "boolean"},
+        "network_ports_10gbe": {"type": "integer", "minimum": 0},
+        "redundant_power": {"type": "boolean"},
+        "warranty_years": {"type": "number", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "cost": {"anyOf": [{"type": "number", "minimum": 0}, {"type": "string", "enum": ["TBD", "Needs confirmation", "待确认"]}]},
+    "quote": {
+      "type": "object",
+      "required": ["quote_id", "supplier", "sales_channel", "configuration", "hardware_price", "mandatory_accessories", "required_licenses", "warranty_support", "required_implementation", "tax_amount", "shipping", "currency", "tax_included", "orderability_confirmed", "source_date", "quote_valid_until"],
+      "properties": {
+        "quote_id": {"type": "string", "minLength": 1},
+        "supplier": {"type": "string", "minLength": 1},
+        "sales_channel": {"type": "string", "minLength": 1},
+        "configuration": {"$ref": "#/$defs/configuration"},
+        "hardware_price": {"$ref": "#/$defs/cost"},
+        "mandatory_accessories": {"$ref": "#/$defs/cost"},
+        "required_licenses": {"$ref": "#/$defs/cost"},
+        "warranty_support": {"$ref": "#/$defs/cost"},
+        "required_implementation": {"$ref": "#/$defs/cost"},
+        "tax_amount": {"$ref": "#/$defs/cost"},
+        "shipping": {"$ref": "#/$defs/cost"},
+        "currency": {"type": "string", "pattern": "^[A-Za-z]{3}$"},
+        "tax_included": {"type": "boolean"},
+        "orderability_confirmed": {"type": "boolean"},
+        "source_date": {"type": "string", "format": "date"},
+        "quote_valid_until": {"type": "string", "format": "date"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

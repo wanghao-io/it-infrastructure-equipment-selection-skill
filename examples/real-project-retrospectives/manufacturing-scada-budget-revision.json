@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "case_id": "manufacturing-scada-budget-revision",
+  "project_stage": "design",
+  "anonymization": {"customer_removed": true, "supplier_removed": true, "sensitive_locations_removed": true},
+  "facts": [
+    "A real manufacturing project required two domestic-platform servers, SCADA/historian, OT networking, UPS, displays and implementation services.",
+    "The design source included an equipment schedule, a physical connection diagram, a converted workshop plan and several prior budget versions.",
+    "The project required remote start/stop of a utility subsystem while keeping PLC interlocks authoritative."
+  ],
+  "evidence_status": "design-baseline-only",
+  "budget": {"initial": 670000, "revised": 790000, "currency": "CNY"},
+  "findings": [
+    "The approximately 18 percent revision was mainly caused by under-scoped SCADA licensing, display installation, industrial switching and backup—not by server price alone.",
+    "Public partial server configurations were too weak to justify reducing the saved configured-server baseline.",
+    "Separating Runtime, Development, I/O points, Web, historian, alarm, API and drivers exposed a material software-budget gap.",
+    "A nominal UPS VA label was insufficient until W rating, runtime curve and shutdown integration were checked."
+  ],
+  "rule_changes": [
+    "Preserve existing configurable-enterprise prices unless stronger current evidence passes the revision gate.",
+    "Break SCADA licensing into independently quoted components.",
+    "Require explicit OT remote-control FAT/SAT tests and positive equipment feedback."
+  ],
+  "limitations": [
+    "The revised amount is a design-stage budget, not an awarded or settled contract value.",
+    "Supplier quotations and final implementation quantities were still pending, so this case does not measure final forecast accuracy.",
+    "Budget values are rounded to the nearest CNY 10000; customer, supplier and location identifiers are removed."
+  ],
+  "source_artifacts": ["equipment schedule", "connection diagram", "converted workshop plan", "prior budget versions", "structured server price evidence"]
+}

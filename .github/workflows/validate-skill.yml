@@ -31,6 +31,8 @@ jobs:
         run: python -m compileall scripts tests
       - name: Release and metadata consistency
         run: python scripts/validate_release.py
+      - name: JSON Schema contracts
+        run: python scripts/validate_json_schemas.py --catalog
       - name: Unit and scenario tests
         run: python -m unittest discover -s tests -p "test_*.py" -v
       - name: Deterministic workflow smoke tests
@@ -58,6 +60,8 @@ jobs:
           test -f VERSION
           test -f SKILL.md
           test -f references/server-quotation-workflow.md
+          test -f schemas/server-rfq.schema.json
+          test -f examples/real-project-retrospectives/manufacturing-scada-budget-revision.json
           python scripts/install_skill.py --target codex --scope project --project-dir "$RUNNER_TEMP/install-target"
           test -f "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/SKILL.md"
           python "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/scripts/compare_server_quotes.py" assets/server-rfq-example.json

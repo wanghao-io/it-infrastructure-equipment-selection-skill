@@ -184,6 +184,25 @@ Separate four questions:
 3. **Current market price** — what is a realistic purchasing range now for the required configuration?
 4. **Comparable transaction evidence** — what did sufficiently similar configurations actually transact for historically?
 
+### Structured input contracts
+
+For price evidence, server RFQs, TCO, HCI failover and real-project retrospectives, use the versioned Draft 2020-12 contracts under `schemas/`. Validate bundled or project inputs before calculation when Shell/Python is available:
+
+```bash
+python3 scripts/validate_json_schemas.py <input.json> --schema schemas/<name>.schema.json
+```
+
+Schema validation is a preflight contract, not a replacement for technical-fit, lifecycle, quotation or engineering checks. Reject unknown fields and invalid types instead of guessing their meaning.
+
+### Real-project learning
+
+When real project artifacts, quotations, awards, settlements or operational measurements are available, load `references/real-project-validation.md` and create an anonymized retrospective where useful.
+
+- Keep `design-baseline-only`, quote, award, settlement and operational evidence stages distinct.
+- Do not present a design budget revision as final procurement forecast accuracy.
+- Record material error sources and convert transferable findings into workflow rules or regression tests.
+- Remove customer, contact, supplier-sensitive, credential, network-address and location identifiers before publication.
+
 ### Current-price rule
 
 When the user asks for **current price, real-time price, market price, quotation, inquiry budget, or a current BOM budget** and live research tools are available, perform live research before returning the budget.
@@ -485,3 +504,4 @@ For a project-level design, normally include only the relevant sections from:
 11. BOM and budget range
 12. Compressible/optional items
 13. Risks, exclusions, acceptance and confirmation items
+14. An anonymized real-project retrospective when field evidence is available and publication is appropriate

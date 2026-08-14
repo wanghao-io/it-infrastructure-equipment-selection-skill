@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/project-retrospective.schema.json",
+  "title": "Anonymized real-project retrospective",
+  "type": "object",
+  "required": ["schema_version", "case_id", "project_stage", "anonymization", "facts", "evidence_status", "findings", "limitations"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "case_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "project_stage": {"enum": ["requirements", "design", "rfq", "awarded", "implemented", "operational"]},
+    "anonymization": {"type": "object", "required": ["customer_removed", "supplier_removed", "sensitive_locations_removed"], "properties": {"customer_removed": {"const": true}, "supplier_removed": {"type": "boolean"}, "sensitive_locations_removed": {"const": true}}, "additionalProperties": false},
+    "facts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "evidence_status": {"enum": ["design-baseline-only", "current-quotes", "award-record", "settlement-record", "operational-measurement"]},
+    "budget": {"type": "object", "properties": {"initial": {"type": "number", "minimum": 0}, "revised": {"type": "number", "minimum": 0}, "awarded": {"type": "number", "minimum": 0}, "settled": {"type": "number", "minimum": 0}, "currency": {"type": "string", "pattern": "^[A-Za-z]{3}$"}}, "additionalProperties": false},
+    "findings": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "rule_changes": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "source_artifacts": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

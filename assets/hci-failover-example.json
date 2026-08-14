@@ -1,4 +1,5 @@
 {
+  "schema_version": 1,
   "nodes": 4,
   "failed_nodes": 1,
   "per_node_capacity": {"cpu_cores": 32, "memory_gb": 256, "usable_storage_tb": 8, "storage_iops": 40000, "network_gbps": 20},

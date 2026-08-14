@@ -1,4 +1,14 @@
-# IT Infrastructure Equipment Selection Skill v1.2.3
+# IT Infrastructure Equipment Selection Skill v1.3.0
+
+## 真实项目复盘与结构化输入契约
+
+v1.3.0 将真实项目经验与机器可校验输入同时纳入核心工作流。价格证据、服务器 RFQ、TCO、HCI N+1 和匿名复盘均提供 Draft 2020-12 JSON Schema，并由无第三方依赖的校验命令、正反例测试及跨平台 CI 持续检查。
+
+新增两份真实但已脱敏的设计阶段案例。它们明确标记为 `design-baseline-only`：可以验证复杂需求、预算修订和 TBD 处理方法，但在没有合同、结算和运行数据时绝不声称验证了最终采购价格准确率。公开预算已取整，客户、供应商和敏感位置均不进入仓库。
+
+```bash
+python3 scripts/validate_json_schemas.py --catalog
+```
 
 ## 社区入口与维护接班机制
 

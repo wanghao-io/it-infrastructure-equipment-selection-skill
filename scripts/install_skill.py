@@ -27,6 +27,7 @@ RUNTIME_ENTRIES = (
     "scripts",
     "assets",
     "examples",
+    "schemas",
     "agents",
     "LICENSE",
 )

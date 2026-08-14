@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "case_id": "smart-factory-network-design",
+  "project_stage": "requirements",
+  "anonymization": {"customer_removed": true, "supplier_removed": true, "sensitive_locations_removed": true},
+  "facts": [
+    "A real two-floor smart-factory project planned phased use from roughly 5000 square metres to 10000-15000 square metres.",
+    "The mandated architecture used dual carrier links, HA perimeter firewalls, dual core switches and a separate IT/OT firewall boundary.",
+    "The request required configuration-level switching, wireless, security, cabling and operations BOMs with current manufacturer evidence."
+  ],
+  "evidence_status": "design-baseline-only",
+  "findings": [
+    "Area alone cannot determine AP quantity; wall materials, ceiling height, machinery, interference, client density and roaming paths require an active survey.",
+    "Access-switch and cabling quantities cannot be fixed before CAD drawings and the information-point schedule are reconciled.",
+    "Firewall selection must use threat-protection throughput with IPS, antimalware and application identification enabled, not stateful throughput.",
+    "Buying final-scale core, firewall and controller capacity while phasing AP, access-port and endpoint licenses avoids replacing phase-one platforms."
+  ],
+  "rule_changes": [
+    "Require official lifecycle/orderability evidence for every named model.",
+    "Require AP PoE calculations using maximum device draw plus 20 percent reserve.",
+    "Separate confirmed platform choices from survey-dependent quantities."
+  ],
+  "limitations": [
+    "No supplier quotations, award value, settlement value or operational measurements were available at the time of review.",
+    "This case validates requirements handling and uncertainty disclosure; it does not validate final market-price accuracy.",
+    "Factory identity, exact process names and location details are removed or generalized."
+  ],
+  "source_artifacts": ["requirements brief", "confirmed logical architecture", "expansion principles", "requested deliverables"]
+}

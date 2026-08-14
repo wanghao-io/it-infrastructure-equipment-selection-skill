@@ -36,6 +36,7 @@
 | **SCADA / OT** | I/O points, Historian, clients/Web, OPC UA/drivers, alarms, reports/API, remote-control safety |
 | **Procurement** | hardware selection, live/current pricing, exact-configuration evidence, BOM, budget revision guardrails |
 | **Delivery** | vendor comparison, tender/RFQ specs, compliance checks, Mermaid/Graphviz topology, project BOM |
+| **Validation** | Draft 2020-12 input schemas, anonymized real-project retrospectives, evidence-stage and field-learning discipline |
 
 ## Quick Start
 
@@ -448,11 +449,30 @@ references/                      # engineering, decision-support and procurement
 scripts/                         # deterministic calculators / generators / installer
 assets/                          # scenario templates and structured examples
 examples/                        # reference designs and full-feature input example
+schemas/                         # Draft 2020-12 structured input contracts
 agents/openai.yaml               # optional OpenAI/Codex metadata
 .github/workflows/               # CI validation
 ```
 
 ## 回归测试
+
+核心结构化输入提供 Draft 2020-12 JSON Schema：
+
+```text
+schemas/price-evidence.schema.json
+schemas/server-rfq.schema.json
+schemas/tco.schema.json
+schemas/hci-failover.schema.json
+schemas/project-retrospective.schema.json
+```
+
+验证全部内置示例：
+
+```bash
+python3 scripts/validate_json_schemas.py --catalog
+```
+
+真实项目经验采用分阶段证据口径，详见 [`references/real-project-validation.md`](references/real-project-validation.md)。当前公开的两份脱敏案例均明确标为 `design-baseline-only`，不会把设计预算修订冒充最终成交或结算准确率。
 
 ```bash
 python3 -m unittest discover -s tests -p 'test_*.py' -v
