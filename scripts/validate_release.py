@@ -6,6 +6,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from extract_release_notes import ReleaseNotesError, extract_release_notes
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -16,10 +18,27 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.append("VERSION must be semantic x.y.z")
     changelog = root / "CHANGELOG.md"
     release_notes = root / "RELEASE_NOTES.md"
-    if changelog.exists() and f"## v{version}" not in changelog.read_text(encoding="utf-8"):
-        errors.append("CHANGELOG missing current version")
-    if release_notes.exists() and f"Skill v{version}" not in release_notes.read_text(encoding="utf-8"):
-        errors.append("RELEASE_NOTES missing current version")
+    if changelog.exists():
+        try:
+            extract_release_notes(changelog.read_text(encoding="utf-8"), version)
+        except ReleaseNotesError as exc:
+            errors.append(f"CHANGELOG current release section invalid: {exc}")
+    else:
+        errors.append("CHANGELOG missing")
+    if release_notes.exists():
+        release_text = release_notes.read_text(encoding="utf-8")
+        lines = release_text.splitlines()
+        if not lines or lines[0] != f"# IT Infrastructure Equipment Selection Skill v{version}":
+            errors.append("RELEASE_NOTES first heading must match current version")
+        release_versions = re.findall(
+            r"^# IT Infrastructure Equipment Selection Skill v(\d+\.\d+\.\d+)$",
+            release_text,
+            flags=re.MULTILINE,
+        )
+        if release_versions != [version] or re.search(r"^## v\d+\.\d+\.\d+\b", release_text, re.MULTILINE):
+            errors.append("RELEASE_NOTES must contain only the current release")
+    else:
+        errors.append("RELEASE_NOTES missing")
     metadata = (root / "agents/openai.yaml").read_text(encoding="utf-8")
     top_keys = [line.split(":", 1)[0] for line in metadata.splitlines() if line and not line[0].isspace()]
     if any(key not in {"interface", "policy", "dependencies"} for key in top_keys):
@@ -35,7 +54,7 @@ def validate(root: Path = ROOT) -> list[str]:
         "references/real-project-validation.md",
         "scripts/infra_cli.py", "assets/tool-catalog.json",
         "references/schema-governance.md", "references/private-extensions.md",
-        "schemas/v2/price-evidence.schema.json",
+        "schemas/v2/price-evidence.schema.json", "scripts/extract_release_notes.py",
     ):
         if not (root / required).is_file():
             errors.append(f"missing runtime file: {required}")

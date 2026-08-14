@@ -1,35 +1,255 @@
 {
-  "catalog_version": 1,
+  "catalog_version": 2,
   "tools": {
-    "storage": {
-      "script": "scripts/calculate_storage.py",
-      "description": "RAID usable capacity and retention sizing",
-      "example": ["--drives", "6", "--drive-tb", "4", "--raid", "10"]
+    "budget-sum": {
+      "script": "scripts/calculate_budget.py",
+      "description": "CSV subtotal and contingency arithmetic",
+      "exposure": "deferred",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "Arithmetic checks on an existing BOM CSV with understood headers and commercial scope.",
+      "limitations": ["Does not validate price evidence, tax, warranty, delivery or implementation completeness."],
+      "excluded_reason": "The CSV header contract and arithmetic-only meaning must be explicit before this can be a public budget command."
     },
-    "ups": {
-      "script": "scripts/calculate_ups.py",
-      "description": "UPS W/VA target and candidate technical gate",
-      "example": ["800", "--runtime-minutes", "10"]
+    "hci-failover": {
+      "script": "scripts/calculate_hci_failover.py",
+      "description": "HCI N+1 capacity and failure-domain validation",
+      "exposure": "public-run",
+      "side_effects": "stdout-only",
+      "input_contract": "hci-failover-v1",
+      "input_path_position": 0,
+      "option_value_flags": [],
+      "applicability": "Only after project requirements independently justify evaluating HCI.",
+      "limitations": ["Does not decide whether HCI is required or validate vendor-specific implementation details."],
+      "excluded_reason": null,
+      "example": ["assets/hci-failover-example.json", "--pretty"]
     },
     "historian": {
       "script": "scripts/calculate_historian.py",
       "description": "SCADA historian storage from measured point/sample assumptions",
+      "exposure": "public-run",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "Historian sizing from historical point count, effective sample period and explicit retention assumptions.",
+      "limitations": ["Compression and record-size assumptions require vendor validation or field measurement."],
+      "excluded_reason": null,
       "example": ["5000", "5", "--retention-days", "365"]
     },
     "network-ports": {
       "script": "scripts/calculate_network_ports.py",
       "description": "Access ports, uplinks, management ports and spare capacity",
+      "exposure": "public-run",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "Access-port quantity and basic Layer-3 ownership checks from explicit endpoint assumptions.",
+      "limitations": ["Does not size switching throughput, PoE budget, optics or physical redundancy."],
+      "excluded_reason": null,
       "example": ["80", "--uplinks", "2", "--spare-ratio", "0.25"]
+    },
+    "server-capacity": {
+      "script": "scripts/calculate_server_capacity.py",
+      "description": "CPU and memory estimate for service or virtualization workloads",
+      "exposure": "deferred",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "Transparent estimates after the physical-server or virtualization mode is already known.",
+      "limitations": ["Mixed service and VM modes currently lack a versioned input contract and an explicit mode gate."],
+      "excluded_reason": "Expose only after mode selection and structured service inputs can be validated without encouraging VM formulas for standalone servers."
+    },
+    "storage": {
+      "script": "scripts/calculate_storage.py",
+      "description": "RAID usable capacity and retention sizing",
+      "exposure": "public-run",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "RAID arithmetic and retention headroom from explicit drive and growth assumptions.",
+      "limitations": ["Does not model performance, rebuild risk, filesystem overhead or independent backup."],
+      "excluded_reason": null,
+      "example": ["--drives", "6", "--drive-tb", "4", "--raid", "10"]
     },
     "tco": {
       "script": "scripts/calculate_tco.py",
       "description": "Three-year and five-year infrastructure TCO",
+      "exposure": "public-run",
+      "side_effects": "stdout-only",
+      "input_contract": "tco-v1",
+      "input_path_position": 0,
+      "option_value_flags": ["--format"],
+      "applicability": "Cost comparison among candidates that have already passed mandatory technical and compliance gates.",
+      "limitations": ["Does not establish technical eligibility or replace current-price evidence."],
+      "excluded_reason": null,
       "example": ["assets/tco-example.json", "--format", "markdown"]
     },
-    "hci-failover": {
-      "script": "scripts/calculate_hci_failover.py",
-      "description": "HCI N+1 capacity and failure-domain validation",
-      "example": ["assets/hci-failover-example.json", "--pretty"]
+    "ups": {
+      "script": "scripts/calculate_ups.py",
+      "description": "UPS W/VA target and candidate technical gate",
+      "exposure": "public-run",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "UPS capacity target and candidate eligibility from an explicit protected load and runtime objective.",
+      "limitations": ["Actual runtime must be verified against the manufacturer curve at the protected load."],
+      "excluded_reason": null,
+      "example": ["800", "--runtime-minutes", "10"]
+    },
+    "server-quotes-compare": {
+      "script": "scripts/compare_server_quotes.py",
+      "description": "Budget control range from validated independent server quotes",
+      "exposure": "public-gated",
+      "side_effects": "stdout-only",
+      "input_contract": "server-rfq-v1",
+      "applicability": "Comparison of exact server quotations against a frozen RFQ baseline.",
+      "limitations": ["A generic run must not bypass the server RFQ contract or supplier-independence checks."],
+      "excluded_reason": "Requires a dedicated server-quotes command that always performs server-rfq-v1 preflight."
+    },
+    "vendor-compare": {
+      "script": "scripts/compare_vendors.py",
+      "description": "Mandatory-gated vendor/model comparison report",
+      "exposure": "deferred",
+      "side_effects": "stdout-or-overwrite-output-file",
+      "input_contract": null,
+      "applicability": "Project-specific comparison after mandatory requirements and evidence-backed scores are supplied.",
+      "limitations": ["User-supplied scores and evidence currently have no versioned input contract."],
+      "excluded_reason": "Keep outside generic run until its decision inputs are contract-validated and output writes are non-overwriting."
+    },
+    "contracts-library": {
+      "script": "scripts/contracts.py",
+      "description": "Shared validation helpers for risk-sensitive workflows",
+      "exposure": "internal",
+      "side_effects": "library-only",
+      "input_contract": null,
+      "applicability": "Imported by deterministic scripts.",
+      "limitations": ["It has no user-facing command contract."],
+      "excluded_reason": "Internal library module; executing it directly performs no supported workflow."
+    },
+    "architecture-evaluation": {
+      "script": "scripts/evaluate_architecture.py",
+      "description": "Requirement-driven architecture decision helper",
+      "exposure": "deferred",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "Architecture checks after availability, connectivity and workload requirements are explicit.",
+      "limitations": ["Several absent fields currently default to false and may look stronger than unresolved requirements."],
+      "excluded_reason": "Do not expose until missing mandatory facts remain explicitly unresolved under a versioned contract."
+    },
+    "release-notes-extractor": {
+      "script": "scripts/extract_release_notes.py",
+      "description": "Extract one version section from the changelog for release automation",
+      "exposure": "internal",
+      "side_effects": "stdout-or-overwrite-output-file",
+      "input_contract": null,
+      "applicability": "Maintainer release-note assembly from repository changelog content.",
+      "limitations": ["It is a release-maintenance utility and an explicit output path may be overwritten."],
+      "excluded_reason": "Maintainer-only release command; it is unrelated to project infrastructure calculations."
+    },
+    "bom-generator": {
+      "script": "scripts/generate_bom.py",
+      "description": "Excel-friendly BOM CSV generator",
+      "exposure": "deferred",
+      "side_effects": "writes-or-overwrites-output-file",
+      "input_contract": null,
+      "applicability": "Rendering a reviewed structured BOM into CSV.",
+      "limitations": ["The current command writes its required output path without a common non-overwrite policy."],
+      "excluded_reason": "Generic run is read-only/stdout-oriented; add an input contract and non-overwrite output policy first."
+    },
+    "tender-spec-generator": {
+      "script": "scripts/generate_tender_spec.py",
+      "description": "Vendor-neutral tender/RFQ specification generator",
+      "exposure": "deferred",
+      "side_effects": "stdout-or-overwrite-output-file",
+      "input_contract": null,
+      "applicability": "Rendering reviewed mandatory, recommended and optional requirements.",
+      "limitations": ["Input structure is unversioned and an explicit output path may be overwritten."],
+      "excluded_reason": "Keep outside generic run until input validation and non-overwrite output semantics are enforced."
+    },
+    "topology-generator": {
+      "script": "scripts/generate_topology.py",
+      "description": "Mermaid or Graphviz logical topology generator",
+      "exposure": "deferred",
+      "side_effects": "stdout-or-overwrite-output-file",
+      "input_contract": null,
+      "applicability": "Rendering an already-decided logical topology from explicit zones, devices and links.",
+      "limitations": ["Does not decide architecture and may overwrite an explicit output path."],
+      "excluded_reason": "Keep outside generic run until its input contract and non-overwrite output policy are explicit."
+    },
+    "requirements-guide": {
+      "script": "scripts/guide_requirements.py",
+      "description": "Non-prescriptive guided requirement discovery",
+      "exposure": "public-gated",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "Finding high-value missing requirements before architecture or product decisions.",
+      "limitations": ["Scenario suggestions are assumptions, not project facts or predefined architectures."],
+      "excluded_reason": "Use a dedicated guide command so the discovery-only boundary and template handling remain explicit."
+    },
+    "infra-cli": {
+      "script": "scripts/infra_cli.py",
+      "description": "Public dispatcher and tool-boundary enforcement",
+      "exposure": "lifecycle",
+      "side_effects": "delegates-according-to-catalog",
+      "input_contract": null,
+      "applicability": "Discovering, validating and running explicitly exposed deterministic tools.",
+      "limitations": ["It is an entry point, not a calculator and not an Agent research substitute."],
+      "excluded_reason": "The dispatcher cannot invoke itself through run."
+    },
+    "skill-installer": {
+      "script": "scripts/install_skill.py",
+      "description": "Cross-platform Skill installation and update utility",
+      "exposure": "lifecycle",
+      "side_effects": "host-install-copy-symlink-or-git-update",
+      "input_contract": null,
+      "applicability": "Explicit user-authorized installation or update of the Skill.",
+      "limitations": ["May modify host discovery directories and update a Git checkout."],
+      "excluded_reason": "Host-mutating lifecycle operations must remain an explicit standalone command."
+    },
+    "schema-migration": {
+      "script": "scripts/migrate_schema.py",
+      "description": "Auditable non-destructive schema migration",
+      "exposure": "public-gated",
+      "side_effects": "stdout-or-new-file-without-overwrite",
+      "input_contract": null,
+      "applicability": "Supported v1-to-v2 price-evidence and retrospective migrations.",
+      "limitations": ["Migration must not invent decision scope, PASS, Verified, zero or current dates."],
+      "excluded_reason": "Use a dedicated migration command that preserves source files and refuses output overwrite."
+    },
+    "price-evidence": {
+      "script": "scripts/normalize_price_evidence.py",
+      "description": "Price-evidence normalization and guarded budget revision",
+      "exposure": "public-gated",
+      "side_effects": "stdout-only",
+      "input_contract": "price-evidence-v2",
+      "applicability": "Evidence normalization after technical fit, decision scope and commercial facts are explicit.",
+      "limitations": ["Legacy or unversioned inputs can bypass schema preflight when the direct script is explicitly invoked."],
+      "excluded_reason": "A public wrapper must force strict versioned contracts and must not expose legacy-input bypass."
+    },
+    "schema-validator": {
+      "script": "scripts/validate_json_schemas.py",
+      "description": "Named JSON Schema contract validator",
+      "exposure": "public-gated",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "Preflight validation against bundled named contracts.",
+      "limitations": ["Schema validity does not prove engineering suitability or evidence truth."],
+      "excluded_reason": "Already exposed through the named validate command; arbitrary validator execution is unnecessary."
+    },
+    "release-validator": {
+      "script": "scripts/validate_release.py",
+      "description": "Release metadata and runtime manifest validator",
+      "exposure": "internal",
+      "side_effects": "stdout-only",
+      "input_contract": null,
+      "applicability": "Maintainer and CI release checks.",
+      "limitations": ["It validates repository packaging metadata, not project infrastructure inputs."],
+      "excluded_reason": "Maintainer-only CI command."
+    },
+    "server-quote-validator": {
+      "script": "scripts/validate_server_quote.py",
+      "description": "Server quotation validation against a frozen RFQ baseline",
+      "exposure": "public-gated",
+      "side_effects": "stdout-only",
+      "input_contract": "server-rfq-v1",
+      "applicability": "Technical and commercial validation of server quotations before price comparison.",
+      "limitations": ["Structure must pass the server RFQ contract before quote eligibility is evaluated."],
+      "excluded_reason": "Requires a dedicated server-quotes command that always performs server-rfq-v1 preflight."
     }
   },
   "contracts": {

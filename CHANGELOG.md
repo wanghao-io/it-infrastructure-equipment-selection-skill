@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.4.2 — 2026-08-15
+
+### Added
+
+- A complete Router/invariant regression suite that checks all references, user-facing scripts, high-risk modes, portable paths and minimum output profiles.
+- A catalog classification for every bundled script, including public calculators, guarded commands, lifecycle tools, deferred interfaces and internal maintenance utilities.
+- A current-version release-note extractor, reusable full-validation workflow and staged `gh skill publish --dry-run` compatibility gate.
+- Four independent simulated forward validations covering a small office, SCADA/OT remote control, an existing server-budget challenge and HCI N+1/TCO, plus an evidence-gated v1.5 proposal.
+
+### Changed
+
+- `SKILL.md` is now a 196-line Router with twelve stable engineering invariants; detailed budget-revision and price-evidence procedures are loaded progressively from focused references.
+- README now presents current capabilities, separate Agent and deterministic-CLI paths, copyable task recipes, v1/v2 Schema governance, private-extension boundaries and community entry points instead of historical version prose.
+- `infra_cli.py list --all` explains why non-calculator scripts are guarded, deferred, lifecycle-only or internal without exposing them through the generic `run` command.
+- GitHub Releases now publish only the requested `CHANGELOG.md` version section; `RELEASE_NOTES.md` contains only the current release while the changelog remains the cumulative history.
+
+### Fixed
+
+- Structured TCO and HCI inputs passed to `infra_cli.py` now resolve relative to the caller's working directory and receive automatic named-Schema preflight before calculation.
+- Normal CLI input failures no longer expose Python tracebacks; `--debug` retains diagnostic behavior for maintainers.
+- Tag releases can no longer publish before the complete Linux/macOS/Windows and Python 3.10/3.12 validation finishes, and the tag must remain the exact current `main` head at both metadata and publish gates.
+
+### Validation
+
+- Expanded the local suite to 137 tests, including CLI parity/preflight, Router reachability, release-note isolation and release-workflow structure.
+- The four fresh-agent scenarios triggered no blocking violation; the record is explicitly a simulated workflow evaluation, not external adoption, current-price, procurement, settlement or operational evidence.
+
 ## v1.4.1 — 2026-08-14
 
 ### Fixed

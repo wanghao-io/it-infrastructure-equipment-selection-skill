@@ -164,14 +164,17 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         self.assertEqual(result["budget_anchor"]["anchor_count"], 1)
         self.assertEqual(result["budget_anchor"]["excluded_signal_count"], 1)
 
-    def test_shared_skill_requires_budget_revision_guard(self) -> None:
+    def test_router_preserves_budget_revision_invariant_and_reference(self) -> None:
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("### Mandatory existing-budget revision workflow", skill)
-        self.assertIn("--existing-budget <old-unit-price>", skill)
-        self.assertIn("--product-class configurable-enterprise", skill)
-        self.assertIn("Partial-config + configuration-difference estimate", skill)
-        self.assertIn("hold-existing-provisional", skill)
+        reference = (ROOT / "references" / "budget-revision.md").read_text(encoding="utf-8")
+        self.assertIn("INV-BUDGET-REVISION", skill)
         self.assertIn("budget-revision", skill)
+        self.assertIn("references/budget-revision.md", skill)
+        self.assertIn("--existing-budget <old-unit-price>", reference)
+        self.assertIn("--product-class configurable-enterprise", reference)
+        self.assertIn("Partial-config + configuration-difference estimate", reference)
+        self.assertIn("hold-existing-provisional", reference)
+        self.assertIn("revise-to-current-anchor", reference)
 
     def test_partial_public_context_cannot_lower_existing_server_budget(self) -> None:
         items = [

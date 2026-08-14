@@ -4,43 +4,47 @@
 [![CI](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/actions/workflows/validate-skill.yml/badge.svg)](../../actions/workflows/validate-skill.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Cross-platform Agent Skill for guided IT infrastructure requirements, architecture, server/storage/network/UPS sizing, SCADA / industrial IT/OT planning, hardware selection, current price research, TCO, BOM budgeting, vendor comparison, RFQ/tender specifications, compliance checks and network topology generation.**
+面向企业 IT 基础设施与工业 IT/OT 项目的跨平台 Agent Skill：从需求发现、最简合理架构和确定性容量计算，一直到设备选型、实时价格证据、TCO、BOM、RFQ/招标、合规检查与网络拓扑。
 
-面向企业 IT 基础设施与工业 IT/OT 项目的**需求梳理、设备选型、容量规划、实时询价、TCO、采购预算和技术方案设计**，支持 OpenAI Codex、Claude Code、GitHub Copilot、Gemini CLI 及其他兼容 Agent Skills 的 Host。
+Supported hosts include OpenAI Codex, Claude Code, GitHub Copilot, Gemini CLI and other compatible Agent Skills hosts.
 
-[中文说明](#中文说明) · [English](#english) · [完整输入示例](examples/full-feature-input.md) · [Release Notes](RELEASE_NOTES.md) · [Contributing](CONTRIBUTING.md) · [Discussions](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/discussions)
+Current stable version: **v1.4.2**. See the current [Release Notes](RELEASE_NOTES.md) and cumulative [Changelog](CHANGELOG.md).
 
-> **Requirements first. Architecture second. Sizing third. Products last.**
+[两条使用路径](#两条使用路径) · [任务配方](#可复制任务配方) · [Schema 治理](#schema-v1--v2-治理) · [私有扩展](#私有扩展边界) · [English](#english) · [Release Notes](RELEASE_NOTES.md) · [Contributing](CONTRIBUTING.md)
+
+> **Requirements first → architecture → sizing → Mandatory fit → evidence → price.**
 >
-> 需求 → Mandatory 技术适配 → 推荐排序 → 证据质量 → 价格。便宜 SKU 不能反向定义项目需求。
+> 便宜 SKU 不能反向定义需求；HCI、HA、双核心、防火墙、信创和 GPU 都不是默认架构。
 
-## Community and maintenance
+## 当前能力
 
-- 使用与设计问题：[GitHub Discussions](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/discussions)
-- 缺陷、功能和文档问题：[GitHub Issues](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/issues)
-- 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
-- 支持与安全：[SUPPORT.md](SUPPORT.md) · [SECURITY.md](SECURITY.md)
-- 治理与维护者：[GOVERNANCE.md](GOVERNANCE.md) · [MAINTAINERS.md](MAINTAINERS.md)
-
-项目当前公开披露的人类 bus factor 为 **1**。文档、CI 和发布手册已经降低知识集中风险；只有第二位真实维护者完成贡献、权限晋升和发布演练后，该指标才会更新。
-
-## What this Skill covers
-
-| Area | Capabilities |
+| 领域 | 能力 |
 |---|---|
-| **Decision Support** | scenario templates, guided requirement discovery, Mandatory PASS/CONDITIONAL/FAIL gates, preference ranking, 3/5-year TCO |
-| **Architecture** | standalone server, virtualization, HCI/HA, L2/L3/core switching, firewall/security boundary, industrial IT/OT |
-| **Server & Storage** | CPU/memory sizing, RAID, SSD/HDD tiers, historian retention, usable capacity, backup risk |
-| **Network** | port sizing, VLAN/L3 ownership, switching architecture, expansion headroom, topology generation |
-| **UPS** | W + VA sizing, runtime target, graceful shutdown, candidate technical-fit gate |
-| **SCADA / OT** | I/O points, Historian, clients/Web, OPC UA/drivers, alarms, reports/API, remote-control safety |
-| **Procurement** | hardware selection, live/current pricing, exact-configuration evidence, BOM, budget revision guardrails |
-| **Delivery** | vendor comparison, tender/RFQ specs, compliance checks, Mermaid/Graphviz topology, project BOM |
-| **Validation** | Draft 2020-12 input schemas, anonymized real-project retrospectives, evidence-stage and field-learning discipline |
+| 需求与决策 | 场景化需求向导、事实/假设/TBD 分离、Mandatory PASS/CONDITIONAL/FAIL、最简合理架构 |
+| 计算与容量 | Server、RAID/存储、Historian、网络端口、UPS W/VA、HCI N+1、3/5 年 TCO |
+| IT/OT | SCADA License 拆分、Historian、VLAN/L3 归属、OT 远程控制安全、单点风险 |
+| 采购与价格 | 当前价格研究、精确配置证据、供应商独立性、商业范围归一、已有预算下调保护 |
+| 交付物 | BOM、预算、服务器 RFQ、厂商比较、招标参数、合规矩阵、Mermaid/Graphviz 拓扑 |
+| 数据契约 | Draft 2020-12 Schema v1/v2、严格预检、非破坏迁移、真实项目复盘阶段门禁 |
+| 企业扩展 | 公共核心、私有适配器与受控原始数据的明确边界；不自动发现私有数据 |
+| 可移植性 | Codex、Claude Code、Copilot、Gemini CLI；Git/copy/symlink 安全安装与更新 |
 
-## Quick Start
+关键安全行为：
 
-### OpenAI Codex
+- 缺失 Mandatory 证据保持 `CONDITIONAL`，不会被评分或 TCO “救回”；
+- 所有品类先通过技术适配，价格才可进入预算锚点；
+- 当前价格请求在工具可用时必须做实时研究，否则标记 `Needs confirmation`；
+- 一个供应商的多个报价号只算一个独立来源；同供应商报价修订按最新有效记录稳定选择；
+- 不同 BOM 行、产品或项目的证据不能混入同一 `decision_scope_id`；
+- 设计基线、当前报价、成交、结算和运行测量保持不同证据阶段。
+
+## 两条使用路径
+
+### 路径 A：Agent 完整工作流
+
+适用于需求不完整、架构设计、产品选型、当前询价、预算修订和交付物生成。Agent 从 `SKILL.md` 的 Router 选择必要 reference，并按项目阶段组合模式。
+
+安装到 OpenAI Codex：
 
 ```bash
 git clone https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill.git \
@@ -53,29 +57,25 @@ git clone https://github.com/wanghao-io/it-infrastructure-equipment-selection-sk
 $it-infrastructure-equipment-selection
 ```
 
-### Claude Code
+Claude Code：
 
 ```bash
 git clone https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill.git \
   ~/.claude/skills/it-infrastructure-equipment-selection
 ```
 
-调用：
-
 ```text
 /it-infrastructure-equipment-selection
 ```
 
-### GitHub Copilot / `gh skill`
-
-可使用 GitHub CLI 发现、预览和安装 Agent Skills：
+GitHub Copilot / `gh skill`：
 
 ```bash
 gh skill preview wanghao-io/it-infrastructure-equipment-selection-skill it-infrastructure-equipment-selection
 gh skill install wanghao-io/it-infrastructure-equipment-selection-skill
 ```
 
-### Cross-platform installer
+跨平台安装器：
 
 ```bash
 python3 scripts/install_skill.py --target codex --scope user
@@ -84,356 +84,196 @@ python3 scripts/install_skill.py --target copilot --scope user
 python3 scripts/install_skill.py --target gemini --scope user
 ```
 
-完整平台路径和安装说明见 [`references/platform-compatibility.md`](references/platform-compatibility.md)。
+完整路径、项目级安装和发现验证见 [`references/platform-compatibility.md`](references/platform-compatibility.md)。
 
-### Deterministic tools and contracts
+### 路径 B：确定性 CLI 与 Schema
+
+适合已经有明确输入，只需要可复现计算、契约校验或迁移报告的场景。该路径不执行实时研究，也不替代 Agent 的架构、兼容性和采购判断。
+
+发现可用工具与契约：
 
 ```bash
 python3 scripts/infra_cli.py list
+python3 scripts/infra_cli.py list --json
 python3 scripts/infra_cli.py example ups
-python3 scripts/infra_cli.py run storage -- --drives 6 --drive-tb 4 --raid 10
-python3 scripts/infra_cli.py validate price-evidence-v2 assets/price-evidence-v2-example.json
 ```
 
-This thin wrapper only exposes deterministic calculators and validators. Agent research and equipment recommendations still follow the requirement, technical-fit and evidence workflow. See [`references/schema-governance.md`](references/schema-governance.md) for version migration and [`references/private-extensions.md`](references/private-extensions.md) for the public/private boundary.
-
----
-
-# 中文说明
-
-## 为什么做这个 Skill
-
-很多 IT 基础设施选型任务的问题并不是“找不到设备”，而是顺序反了：先看到某个型号或低价，再倒推需求。
-
-这个 Skill 强制采用工程顺序：
-
-```text
-已知条件 / 假设 / TBD
-        ↓
-场景化需求补全（必要时）
-        ↓
-Mandatory / SLA / RTO/RPO / 增长 / 预算
-        ↓
-最简合理架构
-        ↓
-CPU / 内存 / 存储 / Historian / 网络 / UPS sizing
-        ↓
-Mandatory 技术/兼容性过滤
-        ↓
-PASS 方案的偏好排序 / TCO
-        ↓
-厂商规格 / 生命周期 / 当前可采购性
-        ↓
-配置匹配 + 当前价格证据
-        ↓
-BOM / 预算 / RFQ / 拓扑 / 风险
-```
-
-不会因为“看起来更专业”就自动堆：
-
-- HCI / 超融合；
-- 双机 HA；
-- 双核心交换机；
-- 防火墙；
-- 国产化/信创；
-- GPU/AI 基础设施。
-
-这些架构只有在项目要求、风险或 SLA 真正需要时才加入。
-
-## 核心能力
-
-### 1. 场景模板与交互式需求向导
-
-内置非强制性的场景模板：
-
-```text
-generic-infrastructure
-manufacturing-scada-small
-smb-erp
-virtualization-small
-vdi-small
-edge-computing
-backup-storage
-```
-
-查看模板：
+运行计算器：
 
 ```bash
-python3 scripts/guide_requirements.py --list
+python3 scripts/infra_cli.py run storage -- --drives 6 --drive-tb 4 --raid 10
+python3 scripts/infra_cli.py run historian -- 5000 5 --retention-days 365
+python3 scripts/infra_cli.py run hci-failover -- assets/hci-failover-example.json --pretty
 ```
 
-根据已知项目条件生成下一轮关键问题：
+校验结构化输入：
+
+```bash
+python3 scripts/infra_cli.py validate price-evidence-v2 assets/price-evidence-v2-example.json
+python3 scripts/validate_json_schemas.py --catalog
+```
+
+`assets/tool-catalog.json` 是确定性 CLI 的白名单；Agent 仍可按 Router 使用其他专用脚本。
+
+## 可复制任务配方
+
+### 需求发现
+
+```text
+$it-infrastructure-equipment-selection
+按 guided-requirements 模式分析这个小型制造业 SCADA 项目。
+先列已知事实、假设和 TBD，只追问最影响架构的 5 个问题，不预设 HCI/HA。
+```
+
+确定性需求清单：
 
 ```bash
 python3 scripts/guide_requirements.py \
   --scenario manufacturing-scada-small \
   --input project-known-fields.json \
-  --max-questions 7 \
+  --max-questions 5 \
   --pretty
 ```
 
-原则：
-
-- 场景模板只帮助**补需求**，不直接决定架构；
-- 用户/项目事实优先于模板；
-- 推荐的增长率、规划周期等必须保持为显式 assumption；
-- 默认只追问 3–7 个最影响架构/选型的问题；
-- 不会因为选择了某个场景就自动加入 HCI、HA、双核心、防火墙或信创。
-
-详见 [`references/decision-support.md`](references/decision-support.md)。
-
-### 2. IT 基础设施架构与容量规划
-
-支持：
-
-- 物理服务器、传统虚拟化、HCI/HA 的适用性判断；
-- Server CPU / memory sizing；
-- SSD / HDD / RAID1/5/6/10 容量与可用空间计算；
-- Historian 点数、采样周期、保留周期和增长容量；
-- 网络端口与增长余量；
-- VLAN 与 Layer-3 路由归属；
-- UPS W / VA / runtime / graceful shutdown；
-- 单点故障与补偿措施。
-
-工程计算器：
+### 项目方案与容量
 
 ```text
-scripts/calculate_server_capacity.py
-scripts/calculate_historian.py
-scripts/calculate_storage.py
-scripts/calculate_network_ports.py
-scripts/calculate_ups.py
-scripts/calculate_budget.py
-scripts/calculate_tco.py
+$it-infrastructure-equipment-selection
+按 project-design + internal-review 输出最简合理架构。
+分别计算服务器、Historian、存储、交换机端口和 UPS，并列出单点风险与升级触发条件。
 ```
 
-### 3. SCADA / Historian / Industrial IT/OT
-
-适用于制造业、工业自动化和集中监控项目，可分析：
-
-- Runtime / Development；
-- I/O 点数授权；
-- Operator / Client；
-- Web publishing / users；
-- Historian / historical trend；
-- Alarm / event；
-- Report / API / ODBC / SDK；
-- PLC drivers / OPC UA；
-- redundancy；
-- implementation / training / maintenance。
-
-涉及远程启停、设定值或其他物理控制时，要求 PLC/设备侧安全逻辑保持权威，并考虑权限、二次确认、操作审计、命令反馈和拒绝原因。
-
-### 4. 网络设计与拓扑
-
-支持：
-
-- access / aggregation / core 是否真正需要；
-- L2 / light-L3 / core routing；
-- VLAN / inter-VLAN routing；
-- 网络端口和扩展余量；
-- firewall/security boundary 触发条件；
-- Mermaid 网络拓扑；
-- Graphviz DOT 网络拓扑。
-
-不会仅因为“有多个 VLAN”就自动增加核心交换机。
-
-### 5. 实时价格研究与采购证据
-
-先区分采购对象：
-
-- `configurable-enterprise`：服务器、存储、HCI、配置型防火墙、项目型 UPS 等；
-- `fixed-sku`：固定端口交换机、AP、大屏、Mini PC、固定型号 UPS 等；
-- `commodity-component`：CPU、DIMM、SSD/HDD、光模块、线缆等。
-
-技术参数与价格证据分开：
-
-- **技术参数**优先厂商官网、Datasheet、配置/订购指南、兼容性矩阵和生命周期资料；
-- **价格**按配置匹配度、当前可采购性和商业范围判断；
-- 政采/公共资源交易记录属于历史可比证据，不自动等于当前市场价；
-- ZOL/PConline 等同系列行情可以做市场背景，但不会自动成为完整企业配置的采购锚点。
-
-价格证据等级：
+### 当前设备选型与价格
 
 ```text
-Verified
-Market-verified
-Comparable-transaction
-Estimated
-Needs confirmation
+$it-infrastructure-equipment-selection
+按 single-device + price-research 比较这些候选。
+先做 Mandatory 技术适配，再核对生命周期与精确配置，最后用当前价格证据给出区间；弱价格只作背景。
 ```
 
-### 6. 已有预算 Revision Guard
+### 更新已有预算
 
-当用户要求更新已有 BOM / CSV / XLSX 价格时，旧单价会先作为 revision baseline。
+```text
+$it-infrastructure-equipment-selection
+按 budget-revision 更新这个 BOM。先保留每行旧单价，恢复项目内已有报价，所有降价先过技术门禁；
+配置型企业设备必须运行严格价格证据 guard，并逐行报告 old/new/evidence/decision。
+```
 
-对 `configurable-enterprise` 设备，弱证据不能静默压低旧预算：
-
-- Partial-config；
-- 同系列/泛型号公开价；
-- 起售价/裸机价；
-- 历史成交；
-- 组件模型；
-- 工程估算。
-
-如果要下调，执行：
+确定性 guard：
 
 ```bash
-python3 scripts/normalize_price_evidence.py <evidence.json> \
+python3 scripts/normalize_price_evidence.py evidence.json \
   --summary \
   --strict-contract \
-  --existing-budget <old-unit-price> \
+  --existing-budget 92000 \
   --product-class configurable-enterprise
 ```
 
-只有：
+只有 `budget_revision.decision = revise-to-current-anchor` 才允许相应下调。完整规则见 [`references/budget-revision.md`](references/budget-revision.md)。
+
+### 服务器询价
 
 ```text
-budget_revision.decision = revise-to-current-anchor
+$it-infrastructure-equipment-selection
+冻结服务器技术与商业 RFQ 基线，校验每份报价的配置、税费、License、维保、实施、有效期和可订购性，
+再按供应商独立性给出询价区间和控制上限。
 ```
-
-才允许执行对应下调。
-
-项目内保存的厂家客服、官方店或授权渠道**人工当前报价**也可以成为强证据，不要求必须有公开 URL，但需要记录渠道、日期、配置匹配和商业范围。
-
-### 7. Specification-first pricing
-
-任何低价候选都必须先满足技术要求，才有资格进入价格比较。
-
-UPS 例如不能只看 `VA`：
 
 ```bash
-python3 scripts/calculate_ups.py 800 \
-  --runtime-minutes 10 \
-  --candidate-w 1500 \
-  --candidate-va 2000 \
-  --runtime-curve-verified \
-  --shutdown-interface-verified
+python3 scripts/compare_server_quotes.py assets/server-rfq-example.json --pretty
 ```
 
-只有返回：
+### 厂商比较与 TCO
 
 ```text
-status = eligible-for-pricing
+$it-infrastructure-equipment-selection
+按 vendor-compare + tco-analysis 比较候选。FAIL 淘汰，CONDITIONAL 不得排在 PASS 前；
+对合格方案分别展示 CAPEX、3 年和 5 年 TCO。
 ```
-
-该 UPS 才能作为较低预算的有效价格候选。
-
-大屏同理：如果项目要求浏览器/BI 能力，无系统、无网络的显示设备必须把 OPS 或等效播放设备纳入完整商业范围后再比较。
-
-### 8. Mandatory 约束 + 推荐排序
-
-厂商/型号比较现在可以使用结构化 Mandatory constraints：
-
-```text
-候选事实
-   ↓
-Mandatory gate
-   ↓
-PASS / CONDITIONAL / FAIL
-   ↓
-仅在技术合格基础上做 preference scoring
-```
-
-规则：
-
-- `PASS`：满足已知 Mandatory 条件，可以进入最终推荐排序；
-- `CONDITIONAL`：缺少关键 Mandatory 证据，不能因为评分高就排到 PASS 前面；
-- `FAIL`：不满足 Mandatory，直接淘汰；
-- weighted score 永远不能“救回” FAIL；
-- 评分维度可使用 TCO、生命周期、运维复杂度、扩展性、实施复杂度和证据质量。
-
-`compare_vendors.py` 支持 `eq / ne / min / max / in / contains / truthy / falsy` 等通用约束操作符，不内置永久厂商排名。
-
-### 9. 3 / 5 年 TCO
-
-当多个方案都满足 Mandatory，但采购价、电力、维保、License 或实施成本差异明显时，可以计算 3 年/5 年总拥有成本：
 
 ```bash
 python3 scripts/calculate_tco.py assets/tco-example.json --format markdown
 ```
 
-模型包括：
-
-- Purchase CAPEX；
-- 一次性实施；
-- 平均 IT 功耗 × PUE × 电价；
-- 年度维保；
-- 年度 License / subscription；
-- 显式的机架/设施/其他 OPEX。
-
-TCO 使用**平均 IT 功耗**，不是电源铭牌功率；使用 PUE 时不会重复计算同一份制冷电耗。
-
-TCO 只比较技术合格方案，不会覆盖 Mandatory、安全、合规和兼容性要求。详见 [`references/tco.md`](references/tco.md)。
-
-### 10. Tender / RFQ / Compliance
-
-可生成：
-
-- 厂商中立的招标/RFQ 技术参数；
-- Mandatory / Recommended / Optional 分类；
-- 合规检查；
-- BOM 防漏项；
-- 风险、TBD、升级触发条件。
-
-## 完整输入示例
-
-如果想一次性测试主要能力，直接使用：
-
-**[`examples/full-feature-input.md`](examples/full-feature-input.md)**
-
-实际项目不需要每次输出全部内容，可以组合使用，例如：
+### 招标、合规与拓扑
 
 ```text
-guided-requirements
-price-research + bom-budget
-internal-review + bom-budget
-vendor-compare + tco-analysis
-tender-spec
-detailed-design + topology-generation
-compliance-check
+$it-infrastructure-equipment-selection
+按 tender-spec + compliance-check + topology-generation 输出厂商中立的技术参数、证据/验收要求和逻辑拓扑。
+不要发明 VLAN ID、IP、端口、冗余链路或安全区域。
 ```
 
-## v1.2.2 — Executable Procurement Workflow Hotfix
+### 真实项目复盘
 
-- Overlapping budget ranges cannot bypass the downward-revision technical-fit gate
-- Strict textual identity validation and normalized supplier-independence checks
-- Real CLI end-to-end regression: server inquiry → budget revision → five-dimensional HCI N+1 output
+```text
+$it-infrastructure-equipment-selection
+按 real-project retrospective 整理这些设计、报价和运行材料。先标证据阶段并做范围归一；
+没有成交、结算或运行记录时，不声称验证了最终准确率。发布前匿名化。
+```
 
-## v1.2.1 — Pricing and Quote Integrity Hotfix
+## Schema v1 / v2 治理
 
-- Universal technical-fit gate for every downward budget revision
-- Strict rejection of TBD/invalid commercial costs and stale quotes
-- Supplier-level quote independence and complete server RFQ baseline checks
-- Validated risk reserve, Mandatory unknown handling and integer HCI nodes
-- Executable end-to-end workflow regressions for all three simulated projects
+所有契约采用 Draft 2020-12。权威版本状态在 [`schemas/catalog.json`](schemas/catalog.json)，使用 `python3 scripts/infra_cli.py list` 可发现命名契约。
 
-## v1.2.0 — Strict Quote, Capacity and Release Gates
+- 未版本化路径及 `schema_version: 1` 是冻结的 v1 契约，继续兼容；
+- 破坏性增强放在 `schemas/v2/`，使用独立 `$id`；
+- 未知或未来版本明确拒绝，不猜测兼容性；
+- Schema 是结构预检，不证明技术适配、证据真实性或当前可订购性；
+- 迁移可以搬移已知字段，但不能自动补造 `PASS`、`Verified`、零、供应商身份、决策作用域或当前日期。
 
-- Server RFQ validation and independent quote comparison
-- Full-dimensional HCI N+1 failover validation
-- Strict shared input contracts, BOM/TCO unknown handling and safe installer updates
-- Linux/macOS/Windows CI plus tag-release gates
+当前 v2 重点：
 
-## v1.1.2 — Budget Revision Guardrails & Specification-First Pricing
+- Price evidence：一个显式 `decision_scope_id`，每条记录明确技术门禁，声明证据等级与系统派生等级分离；
+- Project retrospective：运行测量结构化，并在预算预测与成交/结算比较前要求技术和商业范围归一。
 
-v1.1.2 的历史发布重点：
+非破坏迁移报告：
 
-- 修复弱价格证据错误压低已有服务器/企业设备预算；
-- 人工精确当前报价可作为强价格证据；
-- 一个 Tier-3 高匹配报价不足以单独压低已有企业设备预算；
-- UPS 增加 W / VA / runtime / shutdown technical-fit gate；
-- 固定 SKU 同样遵循“规格先于价格”；
-- 安装器支持 Git / copy / symlink 安全更新；
-- Codex / Claude Code / Copilot / Gemini CLI 跨平台兼容。
+```bash
+python3 scripts/migrate_schema.py price-evidence price-evidence-v1.json \
+  --decision-scope-id project:bom-line-server-01
+```
 
-这些 decision-support、guided requirements、Mandatory constraint ranking 和 TCO 能力已包含在 v1.2.0 及后续版本中。
+默认只输出报告且不修改源文件；`--output` 只能写入尚不存在的新路径。详见 [`references/schema-governance.md`](references/schema-governance.md)。
 
-详见 [`RELEASE_NOTES.md`](RELEASE_NOTES.md)。
+## 私有扩展边界
 
-## 安装与更新
+企业私有模板、产品事实和报价采用：
 
-Git Clone 安装最适合持续更新：
+```text
+公共 Skill（规则、Schema、确定性门禁）
+                  ↑ 显式的最小化结构化输入
+私有适配器（校验、脱敏、决策字段剥离）
+                  ↑
+受控数据源（原始报价、联系人、客户/合同数据）
+```
+
+边界规则：
+
+- 公共 Skill checkout 保持干净、可 `git pull --ff-only`；
+- 私有模板和适配器使用独立私有仓库；原始报价和联系人进入有权限控制的数据源，不进入代码仓库；
+- 只从当前任务明确给出的路径加载扩展，不扫描 Home、环境变量或邻接目录；
+- 私有模板 ID 使用命名空间并拒绝冲突，不能弱化 Mandatory、证据或 TBD 规则；
+- 供应商文件中的 `technical_fit_status`、`eligible_for_pricing`、`comparable` 和证据等级必须剥离后独立派生；
+- 临时导出限制权限并在任务结束后清理，公开日志不回显敏感内容。
+
+Manifest 示例和契约：
+
+```bash
+python3 scripts/infra_cli.py validate private-extension-manifest-v1 \
+  assets/private-extension-manifest-example.json
+```
+
+详见 [`references/private-extensions.md`](references/private-extensions.md)。公共项目提供边界和契约，不提供自动私有数据加载器。
+
+## BOM 与商业口径
+
+最终 BOM 必须检查隐藏配件、License、维保、实施、税费、运输、备份和交付范围。中文 CSV 使用 UTF-8 with BOM。
+
+如果任一重要行的税、维保、License、实施或交付仍未知，不得把整个项目描述为“含税到货”“完整范围”或“All licenses included”。列出受影响行并使用 `TBD` / `Needs confirmation`。详见 [`references/bom-checklist.md`](references/bom-checklist.md)。
+
+## 安装、更新与仓库结构
+
+Git Clone 安装适合持续更新：
 
 ```bash
 git -C ~/.agents/skills/it-infrastructure-equipment-selection pull --ff-only
@@ -445,120 +285,69 @@ git -C ~/.agents/skills/it-infrastructure-equipment-selection pull --ff-only
 python3 scripts/install_skill.py --target codex --scope user --update
 ```
 
-安全规则包括：
-
-- Git 更新使用 `pull --ff-only`；
-- 工作区有本地修改时拒绝自动覆盖；
-- `--force` 不删除 `.git`；
-- copy 更新只同步 Skill 管理文件；
-- symlink 安装可安全更新其 Git 源仓库。
-
-## Repository Structure
+更新器拒绝 dirty Git checkout，`--force` 不删除 `.git`，copy 更新只同步受管运行文件。
 
 ```text
-SKILL.md                         # portable core workflow
-references/                      # engineering, decision-support and procurement references
-scripts/                         # deterministic calculators / generators / installer
-assets/                          # scenario templates and structured examples
-examples/                        # reference designs and full-feature input example
-schemas/                         # Draft 2020-12 structured input contracts
-agents/openai.yaml               # optional OpenAI/Codex metadata
-.github/workflows/               # CI validation
+SKILL.md                         # invariant + workflow router
+references/                      # 按任务渐进加载的工程与采购方法
+scripts/                         # 确定性计算、校验、生成、迁移和安装工具
+assets/tool-catalog.json         # CLI 工具/契约白名单
+assets/                          # 模板与结构化示例
+schemas/                         # 冻结 v1 契约
+schemas/v2/                      # 破坏性增强契约
+examples/                        # 方法示例与匿名复盘；不是默认架构
+agents/openai.yaml               # 可选 OpenAI/Codex metadata
 ```
 
-## 回归测试
+## 测试与社区
 
-核心结构化输入提供 Draft 2020-12 JSON Schema：
-
-```text
-schemas/price-evidence.schema.json
-schemas/server-rfq.schema.json
-schemas/tco.schema.json
-schemas/hci-failover.schema.json
-schemas/project-retrospective.schema.json
-```
-
-验证全部内置示例：
-
-```bash
-python3 scripts/validate_json_schemas.py --catalog
-```
-
-真实项目经验采用分阶段证据口径，详见 [`references/real-project-validation.md`](references/real-project-validation.md)。当前公开的两份脱敏案例均明确标为 `design-baseline-only`，不会把设计预算修订冒充最终成交或结算准确率。
+运行完整测试与发布校验：
 
 ```bash
 python3 -m unittest discover -s tests -p 'test_*.py' -v
+python3 scripts/validate_release.py
 ```
 
-覆盖包括：
+回归范围包括 Router/不可违反原则、场景模板、Mandatory 排序、全品类价格门禁、供应商独立性与顺序稳定性、决策作用域、服务器 RFQ、HCI N+1、UPS、TCO、Schema v1/v2、非破坏迁移、私有边界、安装器和跨平台兼容性。
 
-- 场景模板不会自动定义 HCI/HA 等架构；
-- guided requirements 跳过已知字段并限制追问数量；
-- Mandatory PASS > CONDITIONAL > FAIL；
-- 小型项目不自动推荐 HCI；
-- VLAN 互通必须明确 L3 owner；
-- OT 控制权限/联锁/审计；
-- exact-current quote 不被弱低价拉偏；
-- existing-budget revision guard；
-- human exact quote priority；
-- UPS technical-fit gate；
-- 3/5 年 TCO 计算；
-- Git/copy/symlink installer safety；
-- Codex / Claude Code / Copilot / Gemini CLI portability。
+项目中的真实复盘示例均以文件自身的 `evidence_stage` 和 Schema 为准；不要根据示例数量或设计预算变化推断成交、结算或运行准确率。
 
----
+- 使用与设计问题：[GitHub Discussions](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/discussions)
+- 缺陷、功能和文档：[GitHub Issues](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/issues)
+- 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
+- 支持与安全：[SUPPORT.md](SUPPORT.md) · [SECURITY.md](SECURITY.md)
+- 治理与维护者：[GOVERNANCE.md](GOVERNANCE.md) · [MAINTAINERS.md](MAINTAINERS.md)
+- 独立模拟前向验证与 v1.5 门禁方案：[docs/forward-validation-v1.4.2.md](docs/forward-validation-v1.4.2.md)
+- 发布历史：[CHANGELOG.md](CHANGELOG.md) · [RELEASE_NOTES.md](RELEASE_NOTES.md)
 
-# English
+项目当前公开披露的人类 bus factor 为 **1**。文档、测试和发布手册降低知识集中风险，但不会把自动化等同于第二位真实维护者。
 
-A portable **Agent Skill for IT infrastructure solution architecture, decision support and physical infrastructure procurement**.
+## English
 
-It helps AI coding/engineering agents reason about and produce practical deliverables for:
+This repository provides two complementary entry points:
 
-- guided requirement discovery and non-prescriptive scenario templates;
-- mandatory constraint filtering and preference-based recommendation ranking;
-- server sizing and storage sizing;
-- network architecture, VLAN/L3 ownership and topology;
-- UPS sizing, runtime and graceful shutdown;
-- SCADA, Historian and industrial IT/OT infrastructure;
-- hardware/equipment selection and current price research;
-- exact-configuration procurement evidence;
-- 3/5-year TCO analysis;
-- BOM and budget revision guardrails;
-- vendor/model comparison;
-- tender and RFQ specifications;
-- compliance/risk checks;
-- Mermaid and Graphviz network topology.
+1. **Agent workflow** — route from requirements to the minimum justified architecture, sizing, Mandatory technical gates, current evidence and project artifacts.
+2. **Deterministic CLI/contracts** — discover and run whitelisted calculators, validate v1/v2 JSON contracts and produce conservative migration reports without pretending that calculation replaces engineering research.
 
-## Supported Agent Hosts
+Core guarantees:
 
-- OpenAI Codex
-- Claude Code
-- GitHub Copilot
-- Gemini CLI
-- other Agent-Skills-compatible hosts
+- scenario templates guide discovery and never force HCI, HA, core switching, firewalls, Xinchuang or GPU;
+- PASS/CONDITIONAL/FAIL gates precede scoring and TCO;
+- every product class must pass technical fit before price anchoring;
+- current-price work uses live research when available;
+- exact configurations, supplier independence, decision scope and commercial completeness control price evidence;
+- existing-budget reductions use the deterministic revision guard;
+- OT safety logic remains authoritative in the PLC/equipment layer;
+- v1 contracts remain supported, breaking changes use versioned v2 paths, and migrations never invent decision facts;
+- private extensions are explicit and separate from the public checkout and raw confidential data.
 
-Host-specific metadata is optional. The shared engineering logic remains in `SKILL.md`, `references/`, `scripts/`, `assets/` and `examples/`.
+Start with:
 
-## Core Principle
-
-```text
-Known facts / TBD
-→ guided discovery when needed
-→ minimum justified architecture
-→ sizing
-→ Mandatory PASS / CONDITIONAL / FAIL
-→ preference ranking / TCO
-→ technical fit
-→ evidence quality
-→ current price
+```bash
+python3 scripts/infra_cli.py list
+python3 scripts/infra_cli.py validate price-evidence-v2 assets/price-evidence-v2-example.json
 ```
 
-Scenario templates guide discovery but never define the architecture. A cheaper product cannot silently redefine the technical requirement, and weak/partial price evidence cannot silently lower an existing configurable-enterprise budget.
+See [`SKILL.md`](SKILL.md) for routing, [`references/schema-governance.md`](references/schema-governance.md) for contract compatibility, [`references/private-extensions.md`](references/private-extensions.md) for private-data boundaries and [`examples/full-feature-input.md`](examples/full-feature-input.md) for a full project prompt.
 
-## Full-Feature Example
-
-See [`examples/full-feature-input.md`](examples/full-feature-input.md).
-
-## License
-
-MIT License
+MIT License.

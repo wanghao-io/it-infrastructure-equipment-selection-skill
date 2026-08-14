@@ -50,11 +50,14 @@ class SpecificationFirstPricingTests(unittest.TestCase):
         self.assertTrue(result["eligible_for_pricing"])
         self.assertEqual(result["reasons"], [])
 
-    def test_shared_skill_contains_mandatory_technical_fit_gate(self) -> None:
+    def test_router_preserves_technical_fit_and_bom_claim_routes(self) -> None:
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("Mandatory technical-fit gate before price reduction", skill)
-        self.assertIn("eligible-for-pricing", skill)
-        self.assertIn("Budget-summary wording rule", skill)
+        self.assertIn("INV-TECH-BEFORE-PRICE", skill)
+        self.assertIn("eligible_for_pricing=true", skill)
+        self.assertIn("references/ups-sizing.md", skill)
+        self.assertIn("references/bom-checklist.md", skill)
+        bom = (ROOT / "references" / "bom-checklist.md").read_text(encoding="utf-8")
+        self.assertIn("## Commercial Claim Boundary", bom)
 
     def test_ups_reference_forbids_price_driven_resizing(self) -> None:
         ref = (ROOT / "references" / "ups-sizing.md").read_text(encoding="utf-8")

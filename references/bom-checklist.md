@@ -167,4 +167,25 @@ Before issuing the budget confirm:
 - optional/compressible items
 - explicit excluded scope
 
+## Commercial Claim Boundary
+
+Do not describe the overall BOM or project total as `tax included`, `delivered`, `fully scoped`, `all licenses included` or equivalent unless those commercial attributes are confirmed for every material line relevant to the statement.
+
+If any material line still has unknown tax, warranty, support, license, implementation, freight or delivery scope:
+
+- state that the total is based on currently available evidence;
+- identify the affected lines and the remaining confirmation items;
+- keep unresolved amounts as `TBD` or `Needs confirmation` rather than silently treating them as zero;
+- distinguish included, excluded and optional scope;
+- do not let one fully scoped line imply that the whole project is fully scoped.
+
+Recommended wording:
+
+```text
+Estimated from currently available evidence; identified tax, warranty, license,
+implementation and/or delivery scope remains to be confirmed.
+```
+
+For an existing-budget update, also load `references/budget-revision.md` and preserve the old line prices as the revision baseline before recalculating totals.
+
 For Chinese CSV output, prefer UTF-8 with BOM so Excel opens Chinese fields correctly.

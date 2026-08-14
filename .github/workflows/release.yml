@@ -5,33 +5,152 @@ on:
     tags: ['v*']
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-publish
+  cancel-in-progress: false
 
 jobs:
-  release-gate:
+  metadata-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
-      - name: Verify version and test
+      - name: Verify tag, version, main head, and release notes
         env:
           TAG: ${{ github.ref_name }}
         run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
           test "$TAG" = "v$(cat VERSION)"
-          grep -q "## $TAG" CHANGELOG.md
-          grep -q "Skill $TAG" RELEASE_NOTES.md
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
-          python -m unittest discover -s tests -p 'test_*.py' -v
-      - name: Build release archive
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          test "$GITHUB_SHA" = "$(git rev-parse origin/main)"
+          python scripts/validate_release.py
+          python scripts/extract_release_notes.py "$TAG" --output "$RUNNER_TEMP/release-notes.md"
+          test -s "$RUNNER_TEMP/release-notes.md"
+
+  full-validation:
+    needs: metadata-gate
+    permissions:
+      contents: read
+    uses: ./.github/workflows/validate-skill.yml
+
+  gh-skill-dry-run:
+    needs: [metadata-gate, full-validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify runner gh skill publish compatibility
         run: |
-          git archive --format=tar.gz --prefix=it-infrastructure-equipment-selection/ -o skill.tar.gz "$GITHUB_SHA"
+          HELP_FILE="$RUNNER_TEMP/gh-skill-publish-help.txt"
+          gh --version
+          if ! gh skill publish --help > "$HELP_FILE"; then
+            echo "runner gh does not provide the required 'skill publish' command" >&2
+            exit 1
+          fi
+          if ! grep -q -- '--dry-run' "$HELP_FILE"; then
+            echo "runner gh skill publish does not provide the required --dry-run flag" >&2
+            exit 1
+          fi
+      - name: Validate standard Agent Skills publish layout
+        run: |
+          PUBLISH_ROOT="$RUNNER_TEMP/gh-skill-publish"
+          SKILL_ROOT="$PUBLISH_ROOT/it-infrastructure-equipment-selection"
+          mkdir -p "$SKILL_ROOT"
+          git archive "$GITHUB_SHA" | tar -x -C "$SKILL_ROOT"
+          gh skill publish "$PUBLISH_ROOT" --dry-run
+          test -z "$(git status --porcelain)"
+
+  build-release:
+    needs: [metadata-gate, full-validation, gh-skill-dry-run]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+      - name: Build release archive and current-version notes
+        run: |
+          python scripts/extract_release_notes.py "$GITHUB_REF_NAME" --output "$RUNNER_TEMP/release-notes.md"
+          git archive --format=tar.gz --prefix=it-infrastructure-equipment-selection/ -o "$RUNNER_TEMP/skill.tar.gz" "$GITHUB_SHA"
+          cd "$RUNNER_TEMP"
           sha256sum skill.tar.gz > SHA256SUMS
-      - name: Publish GitHub release
+          sha256sum -c SHA256SUMS
+      - name: Smoke test the clean release archive
+        run: |
+          ARCHIVE_ROOT="$RUNNER_TEMP/archive-root"
+          INSTALL_TARGET="$RUNNER_TEMP/archive-install"
+          mkdir -p "$ARCHIVE_ROOT"
+          tar -xzf "$RUNNER_TEMP/skill.tar.gz" -C "$ARCHIVE_ROOT"
+          SOURCE_ROOT="$ARCHIVE_ROOT/it-infrastructure-equipment-selection"
+          python "$SOURCE_ROOT/scripts/install_skill.py" --target codex --scope project --project-dir "$INSTALL_TARGET"
+          INSTALLED_ROOT="$INSTALL_TARGET/.agents/skills/it-infrastructure-equipment-selection"
+          test -f "$INSTALLED_ROOT/SKILL.md"
+          test "$(cat "$INSTALLED_ROOT/VERSION")" = "${GITHUB_REF_NAME#v}"
+          python "$INSTALLED_ROOT/scripts/compare_server_quotes.py" "$INSTALLED_ROOT/assets/server-rfq-example.json"
+          python "$INSTALLED_ROOT/scripts/calculate_hci_failover.py" "$INSTALLED_ROOT/assets/hci-failover-example.json"
+      - name: Stage immutable release inputs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-inputs-${{ github.ref_name }}
+          path: |
+            ${{ runner.temp }}/skill.tar.gz
+            ${{ runner.temp }}/SHA256SUMS
+            ${{ runner.temp }}/release-notes.md
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  publish-release:
+    needs: build-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified release inputs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-inputs-${{ github.ref_name }}
+          path: release-inputs
+      - name: Verify and publish once
+        working-directory: release-inputs
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" skill.tar.gz SHA256SUMS --title "$GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
+        run: |
+          sha256sum -c SHA256SUMS
+          CURRENT_MAIN_SHA="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)"
+          if [ "$GITHUB_SHA" != "$CURRENT_MAIN_SHA" ]; then
+            echo "tag SHA $GITHUB_SHA is no longer the current main HEAD $CURRENT_MAIN_SHA" >&2
+            exit 1
+          fi
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release $GITHUB_REF_NAME already exists; refusing to overwrite it" >&2
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" skill.tar.gz SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md \
+            --verify-tag
