@@ -8,11 +8,21 @@
 
 面向企业 IT 基础设施与工业 IT/OT 项目的**需求梳理、设备选型、容量规划、实时询价、TCO、采购预算和技术方案设计**，支持 OpenAI Codex、Claude Code、GitHub Copilot、Gemini CLI 及其他兼容 Agent Skills 的 Host。
 
-[中文说明](#中文说明) · [English](#english) · [完整输入示例](examples/full-feature-input.md) · [Release Notes](RELEASE_NOTES.md)
+[中文说明](#中文说明) · [English](#english) · [完整输入示例](examples/full-feature-input.md) · [Release Notes](RELEASE_NOTES.md) · [Contributing](CONTRIBUTING.md) · [Discussions](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/discussions)
 
 > **Requirements first. Architecture second. Sizing third. Products last.**
 >
 > 需求 → Mandatory 技术适配 → 推荐排序 → 证据质量 → 价格。便宜 SKU 不能反向定义项目需求。
+
+## Community and maintenance
+
+- 使用与设计问题：[GitHub Discussions](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/discussions)
+- 缺陷、功能和文档问题：[GitHub Issues](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/issues)
+- 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
+- 支持与安全：[SUPPORT.md](SUPPORT.md) · [SECURITY.md](SECURITY.md)
+- 治理与维护者：[GOVERNANCE.md](GOVERNANCE.md) · [MAINTAINERS.md](MAINTAINERS.md)
+
+项目当前公开披露的人类 bus factor 为 **1**。文档、CI 和发布手册已经降低知识集中风险；只有第二位真实维护者完成贡献、权限晋升和发布演练后，该指标才会更新。
 
 ## What this Skill covers
 

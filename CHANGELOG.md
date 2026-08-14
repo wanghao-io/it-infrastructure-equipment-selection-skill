@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.2.3 — 2026-08-14
+
+### Added
+
+- Complete community entry points: Discussions routing, actionable contribution guide, support policy, Code of Conduct, private security reporting, PR template and structured Issue forms.
+- Transparent governance, maintainer roles/vacancies, promotion criteria, succession rules and a reproducible release/recovery runbook.
+- Transitional CODEOWNERS routing and automated community-health regression tests.
+
+### Changed
+
+- The repository now explicitly reports its current human bus factor as 1 instead of implying that documentation alone solves the ownership risk.
+- README links directly to support, contribution, governance, maintainer and community channels.
+
 ## v1.2.2 — 2026-08-12
 
 ### Fixed

@@ -1,32 +1,81 @@
 # Contributing
 
-感谢参与 IT Infrastructure Equipment Selection Skill 开源项目。
+Thank you for helping make infrastructure selection safer, more reproducible, and easier to review. 中文贡献同样欢迎；Issue、Discussion 和 PR 可以使用中文或英文。
 
-## Contribution Areas
+## Choose the right community channel
 
-欢迎贡献：
+- Ask usage and design questions in [GitHub Discussions](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/discussions).
+- Report reproducible defects with the [bug form](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/issues/new?template=bug.yml).
+- Propose capabilities with the [feature form](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/issues/new?template=feature.yml).
+- Report documentation gaps with the [documentation form](https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/issues/new?template=documentation.yml).
+- Report security or sensitive-data problems privately as described in [SECURITY.md](SECURITY.md).
+- Read [SUPPORT.md](SUPPORT.md) when unsure where a request belongs.
 
-- 新的设备选型经验
-- 服务器/HCI sizing 方法
-- 网络设计规则
-- 国产化兼容信息
-- BOM模板优化
-- 脚本改进
+Small documentation fixes may go directly to a pull request. For behavior, schema, or workflow changes, open an issue or Discussion first so the intended contract is clear.
 
-## Guidelines
+## What to contribute
 
-请确保：
+Useful contributions include:
 
-- 技术参数来源可靠
-- 标明厂商和版本
-- 区分事实、经验和假设
-- 不提交敏感项目数据
+- requirement discovery and architecture decision rules;
+- server, storage, HCI, network, UPS, SCADA, IT/OT, and TCO methods;
+- deterministic validators, calculators, and regression cases;
+- current vendor-neutral specification or lifecycle evidence;
+- price-evidence and RFQ normalization improvements;
+- portability fixes for Codex, Claude Code, Copilot, Gemini CLI, and compatible hosts;
+- documentation, examples, translations, and accessibility improvements.
 
-## Pull Request
+Do not submit confidential project names, credentials, private quotations, network addresses, customer configurations, personal data, or material you cannot license to the project. Anonymize examples and use synthetic suppliers/prices in public tests.
 
-PR 请说明：
+## Development setup
 
-- 修改内容
-- 修改原因
-- 测试方式
-- 是否影响已有流程
+The project uses the Python standard library for its deterministic tools.
+
+```bash
+git clone https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill.git
+cd it-infrastructure-equipment-selection-skill
+python3 -m compileall scripts tests
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+python3 scripts/validate_release.py
+```
+
+Run the relevant workflow command as well, for example:
+
+```bash
+python3 scripts/compare_server_quotes.py assets/server-rfq-example.json --pretty
+python3 scripts/calculate_hci_failover.py assets/hci-failover-example.json --pretty
+```
+
+## Engineering contribution rules
+
+1. Preserve the order: requirements → architecture → sizing → technical eligibility → evidence quality → price.
+2. Never let a cheaper product redefine a mandatory requirement.
+3. Keep verified facts, assumptions, estimates, and unresolved items distinguishable.
+4. Use deterministic scripts for fragile calculations or gates and add regression coverage.
+5. Keep examples vendor-neutral unless a named product is required to demonstrate compatibility or lifecycle evidence.
+6. Do not present live-price claims without dated, configuration-matched evidence.
+7. Keep `SKILL.md` concise; place detailed domain guidance under `references/`.
+8. Preserve cross-platform behavior and avoid host-specific requirements in the shared runtime.
+
+## Pull requests
+
+Create a focused branch and keep unrelated changes out of the same PR. Complete the pull request template, including:
+
+- problem and root cause;
+- behavior or documentation changed;
+- user/developer impact;
+- tests and deterministic commands run;
+- compatibility, privacy, security, and release impact;
+- before/after examples for output contract changes.
+
+PRs must pass the full CI matrix. Maintainers may request a smaller change, additional tests, source evidence, or migration notes. Reviews should discuss the work, not the contributor, and follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Reviews and maintainer path
+
+Anyone may review a PR. Useful reviews reproduce the behavior, identify an engineering risk, or suggest a concrete improvement.
+
+Regular contributors can become reviewers or maintainers through the transparent criteria in [GOVERNANCE.md](GOVERNANCE.md). Current roles and vacancies are listed in [MAINTAINERS.md](MAINTAINERS.md). The goal is to distribute domain knowledge, triage, CI, and release capability instead of depending on one account.
+
+## Release process
+
+Only release maintainers create version tags. The repeatable process and recovery checks are documented in [docs/maintainer-release-runbook.md](docs/maintainer-release-runbook.md).

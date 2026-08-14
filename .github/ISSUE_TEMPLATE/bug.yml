@@ -1,0 +1,55 @@
+name: Bug report
+description: Report reproducible incorrect behavior or a failed deterministic gate.
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, customer identities, private quotations, network addresses, or confidential configurations.
+  - type: input
+    id: version
+    attributes:
+      label: Skill version or commit
+      placeholder: v1.2.3 or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host and platform
+      placeholder: Codex on macOS, Claude Code on Linux, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Sanitized reproduction
+      description: Include the smallest safe input and exact command or prompt.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs or evidence
+      description: Paste sanitized output. Use private security reporting for sensitive content.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed sensitive project and personal data.
+          required: true
+        - label: I searched existing Issues and Discussions.
+          required: true
