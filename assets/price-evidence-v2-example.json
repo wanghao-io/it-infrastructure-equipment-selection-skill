@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "decision_scope_id": "example:bom-server-01",
+  "items": [
+    {
+      "candidate": "Synthetic exact server quote",
+      "product_class": "configurable-enterprise",
+      "configuration": "Required project configuration with complete commercial scope",
+      "source_type": "authorized-reseller-quote",
+      "source": "synthetic authorized supplier",
+      "source_date": "2026-08-14",
+      "as_of_date": "2026-08-14",
+      "quote_current": true,
+      "technical_fit_status": "PASS",
+      "eligible_for_pricing": true,
+      "orderability_confirmed": true,
+      "price_scope_complete": true,
+      "hardware_price": 100000,
+      "mandatory_accessories": 0,
+      "required_licenses": 0,
+      "warranty_support": 0,
+      "required_implementation": 0,
+      "tax_amount": 0,
+      "shipping": 0,
+      "currency": "CNY",
+      "tax_included": true,
+      "exact_configuration_match": true,
+      "comparable": true,
+      "supplier": "Synthetic supplier",
+      "sales_channel": "authorized"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/private-extension-manifest.schema.json",
+  "title": "Explicit private extension manifest v1",
+  "type": "object",
+  "required": ["schema_version", "extension_id", "core_compatibility", "template_files"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "extension_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$"},
+    "core_compatibility": {"type": "string", "pattern": "^>=\\d+\\.\\d+\\.\\d+,<\\d+\\.\\d+\\.\\d+$"},
+    "template_files": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "price_adapter": {"type": "string", "minLength": 1},
+    "notes": {"type": "string"}
+  },
+  "additionalProperties": false
+}

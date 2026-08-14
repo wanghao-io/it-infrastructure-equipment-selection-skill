@@ -161,6 +161,13 @@ def validate_retrospective_semantics(instance: Any) -> list[str]:
             errors.append("$.budget.settled: required for settlement-record")
         if not isinstance(budget, dict) or "currency" not in budget:
             errors.append("$.budget.currency: required for settlement-record")
+    if instance.get("schema_version") == 2 and evidence in {"award-record", "settlement-record"}:
+        final_key = "awarded" if evidence == "award-record" else "settled"
+        if isinstance(budget, dict) and final_key in budget and any(key in budget for key in ("initial", "revised")):
+            if budget.get("technical_scope_normalized") is not True:
+                errors.append("$.budget.technical_scope_normalized: true required for forecast comparison")
+            if budget.get("commercial_scope_normalized") is not True:
+                errors.append("$.budget.commercial_scope_normalized: true required for forecast comparison")
     if evidence == "operational-measurement":
         measurements = instance.get("operational_measurements")
         if not isinstance(measurements, list) or not measurements:
@@ -171,8 +178,22 @@ def validate_retrospective_semantics(instance: Any) -> list[str]:
 def validate_catalog(root: Path = ROOT) -> list[str]:
     catalog = json.loads((root / "schemas/catalog.json").read_text(encoding="utf-8"))
     errors: list[str] = []
+    for name, current in catalog.get("current_contracts", {}).items():
+        supported = catalog.get("supported_contracts", {}).get(name, [])
+        if current not in supported:
+            errors.append(f"schemas/catalog.json: current {name} v{current} is not supported")
+    seen_ids: set[str] = set()
     for mapping in catalog["mappings"]:
         schema_path = root / mapping["schema"]
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        schema_id = schema.get("$id", "")
+        if not schema_id:
+            errors.append(f"{mapping['schema']}: missing $id")
+        elif schema_id in seen_ids:
+            errors.append(f"{mapping['schema']}: duplicate $id {schema_id}")
+        seen_ids.add(schema_id)
+        if "/v2/" in mapping["schema"] and "/v2/" not in schema_id:
+            errors.append(f"{mapping['schema']}: v2 schema must have a versioned $id")
         for example in mapping["examples"]:
             instance_path = root / example
             errors.extend(f"{example}: {error}" for error in validate_file(schema_path, instance_path))

@@ -268,6 +268,8 @@ def normalize(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
     output: List[Dict[str, Any]] = []
     for item in items:
         row = dict(item)
+        if "evidence_level" in row:
+            row["declared_evidence_level"] = row.pop("evidence_level")
         score = configuration_match_score(item)
         priority = evidence_priority(item, score)
         try:
@@ -292,6 +294,14 @@ def normalize(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
         exclusions = anchor_exclusion_reasons(item, score)
         row["anchor_exclusion_reasons"] = exclusions
         row["anchor_eligible"] = bool(row["comparison_ready"] and not exclusions)
+        if not row["anchor_eligible"]:
+            row["derived_evidence_level"] = "Needs confirmation"
+        elif priority in (1, 2, 3):
+            row["derived_evidence_level"] = "Market-verified"
+        elif priority == 4:
+            row["derived_evidence_level"] = "Comparable-transaction"
+        else:
+            row["derived_evidence_level"] = "Estimated"
         row["match_assessment_missing"] = score is None
         row["missing_fields"] = missing
         output.append(row)
@@ -571,7 +581,14 @@ def main() -> None:
     if args.strict_contract:
         if not isinstance(data, dict) or "schema_version" not in data:
             raise SystemExit("$: strict contract requires a versioned object envelope")
-        schema_path = Path(__file__).resolve().parents[1] / "schemas/price-evidence.schema.json"
+        version = data.get("schema_version")
+        schema_path = Path(__file__).resolve().parents[1] / (
+            "schemas/price-evidence.schema.json" if version == 1
+            else "schemas/v2/price-evidence.schema.json" if version == 2
+            else f"schemas/unsupported-price-evidence-v{version}.schema.json"
+        )
+        if not schema_path.is_file():
+            raise SystemExit(f"$.schema_version: unsupported price-evidence version {version!r}")
         errors = validate_file(schema_path, args.input)
         if errors:
             raise SystemExit("\n".join(errors))
@@ -583,6 +600,8 @@ def main() -> None:
             )
         print("WARNING: legacy unversioned price input; no schema preflight was performed", file=__import__("sys").stderr)
     items = data["items"] if isinstance(data, dict) else data
+    if isinstance(data, dict) and data.get("decision_scope_id"):
+        items = [{**item, "decision_scope_id": data["decision_scope_id"]} for item in items]
     rows = normalize(items)
 
     if args.summary:

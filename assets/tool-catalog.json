@@ -1,0 +1,46 @@
+{
+  "catalog_version": 1,
+  "tools": {
+    "storage": {
+      "script": "scripts/calculate_storage.py",
+      "description": "RAID usable capacity and retention sizing",
+      "example": ["--drives", "6", "--drive-tb", "4", "--raid", "10"]
+    },
+    "ups": {
+      "script": "scripts/calculate_ups.py",
+      "description": "UPS W/VA target and candidate technical gate",
+      "example": ["800", "--runtime-minutes", "10"]
+    },
+    "historian": {
+      "script": "scripts/calculate_historian.py",
+      "description": "SCADA historian storage from measured point/sample assumptions",
+      "example": ["5000", "5", "--retention-days", "365"]
+    },
+    "network-ports": {
+      "script": "scripts/calculate_network_ports.py",
+      "description": "Access ports, uplinks, management ports and spare capacity",
+      "example": ["80", "--uplinks", "2", "--spare-ratio", "0.25"]
+    },
+    "tco": {
+      "script": "scripts/calculate_tco.py",
+      "description": "Three-year and five-year infrastructure TCO",
+      "example": ["assets/tco-example.json", "--format", "markdown"]
+    },
+    "hci-failover": {
+      "script": "scripts/calculate_hci_failover.py",
+      "description": "HCI N+1 capacity and failure-domain validation",
+      "example": ["assets/hci-failover-example.json", "--pretty"]
+    }
+  },
+  "contracts": {
+    "price-evidence-v1": "schemas/price-evidence.schema.json",
+    "price-evidence-v2": "schemas/v2/price-evidence.schema.json",
+    "server-rfq-v1": "schemas/server-rfq.schema.json",
+    "tco-v1": "schemas/tco.schema.json",
+    "hci-failover-v1": "schemas/hci-failover.schema.json",
+    "project-retrospective-v1": "schemas/project-retrospective.schema.json",
+    "project-retrospective-v2": "schemas/v2/project-retrospective.schema.json",
+    "scenario-template-v1": "schemas/scenario-template.schema.json",
+    "private-extension-manifest-v1": "schemas/private-extension-manifest.schema.json"
+  }
+}

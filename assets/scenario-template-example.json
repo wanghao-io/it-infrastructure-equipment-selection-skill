@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "template_id": "example:industrial-edge",
+  "display_name": "Industrial edge site",
+  "description": "Adds requirement questions without forcing an architecture.",
+  "questions": [
+    {
+      "id": "control_criticality",
+      "prompt": "Does loss of this edge node stop or endanger production?",
+      "answer_type": "choice",
+      "mandatory": true,
+      "choices": ["yes", "no", "TBD"]
+    }
+  ],
+  "assumptions": ["Unknown answers remain TBD and do not trigger HA automatically."]
+}

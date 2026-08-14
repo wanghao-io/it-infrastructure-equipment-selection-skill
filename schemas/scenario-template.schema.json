@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/scenario-template.schema.json",
+  "title": "Requirement-guidance scenario template v1",
+  "type": "object",
+  "required": ["schema_version", "template_id", "display_name", "questions"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "template_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*:[a-z0-9][a-z0-9-]*$"},
+    "display_name": {"type": "string", "minLength": 1},
+    "description": {"type": "string"},
+    "questions": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "prompt", "answer_type"], "properties": {"id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}, "prompt": {"type": "string", "minLength": 1}, "answer_type": {"enum": ["string", "integer", "number", "boolean", "choice", "list"]}, "mandatory": {"type": "boolean"}, "choices": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "unit": {"type": "string"}}, "additionalProperties": false}},
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": "string"}
+  },
+  "additionalProperties": false
+}

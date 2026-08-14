@@ -194,6 +194,11 @@ python3 scripts/validate_json_schemas.py <input.json> --schema schemas/<name>.sc
 
 Schema validation is a preflight contract, not a replacement for technical-fit, lifecycle, quotation or engineering checks. Reject unknown fields and invalid types instead of guessing their meaning.
 
+Use `scripts/infra_cli.py list` to discover deterministic calculators and named contracts. Use
+`scripts/infra_cli.py run <tool> -- <args>` only for deterministic calculation; do not treat the CLI
+as a substitute for Agent research or selection judgment. For schema versions and migration load
+`references/schema-governance.md`; for explicit private overlays load `references/private-extensions.md`.
+
 ### Real-project learning
 
 When real project artifacts, quotations, awards, settlements or operational measurements are available, load `references/real-project-validation.md` and create an anonymized retrospective where useful.
@@ -264,7 +269,7 @@ python3 scripts/calculate_ups.py <protected-load-W> \
 
 ### Mandatory existing-budget revision workflow
 
-This workflow is **mandatory** whenever the user asks to update, refresh, reprice, revise or optimize prices in an existing BOM, CSV, XLSX or budget file. It applies even when the user gives only a short instruction such as “更新一下价格”.
+Treat this as `budget-revision` mode. It is **mandatory** whenever the user asks to update, refresh, reprice, revise or optimize prices in an existing BOM, CSV, XLSX or budget file, even with only “更新一下价格”.
 
 1. Read the source artifact first and preserve each existing line-item unit price as the **revision baseline**. A previous budget is not automatically current-price evidence, but it must not be silently overwritten by weaker evidence.
 2. Before broad web research, inspect accessible project evidence for current quotations: the source file, adjacent/previous budget versions, quote records, notes, screenshots, user-provided figures and prior project artifacts. Do not discard a human quotation merely because it has no public URL.
@@ -287,19 +292,6 @@ python3 scripts/normalize_price_evidence.py <evidence.json> \
 10. If strong current evidence is **higher** than the existing budget, revise upward or report the verified range; the guard is not a reason to preserve an obviously under-budgeted amount.
 11. Recalculate line totals, contingency and project totals only **after** every relevant line passes the technical-fit gate and every configurable-enterprise line passes the price-evidence revision gate.
 12. In the final response, explicitly list every configurable-enterprise line whose price changed, its old price, new price/range, evidence tier and revision decision. If none passed the gate, say that no such line was lowered.
-
-A failure example that must be rejected:
-
-```text
-Existing configured-server budget: CNY 92,000
-Public same-family partial config: CNY 47,000
-Public low config: CNY 16,600
-Engineering adjusted estimate: CNY 60,000
-Decision: HOLD existing CNY 92,000 provisionally; Needs confirmation
-Reason: weak/partial public evidence cannot justify a downward revision
-```
-
-If two current exact configuration quotes of CNY 89,000 and CNY 91,500 are available instead, they become the primary current range and lower generic listings remain context only.
 
 Default server configuration-match guidance:
 
@@ -450,22 +442,6 @@ Load `references/output-profiles.md` and choose the profile matching the project
 - `bom-budget`
 
 Profiles can be combined, for example `internal-review + bom-budget`.
-
-## Task Modes
-
-- guided-requirements
-- single-device
-- project-design
-- compliance-check
-- bom-budget
-- budget-revision
-- alternative-search
-- price-research
-- vendor-compare
-- tco-analysis
-- tender-spec
-- topology-generation
-- reference-design
 
 ## Principles
 

@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "case_id": "v2-design-baseline-example",
+  "project_stage": "design",
+  "anonymization": {
+    "customer_removed": true,
+    "supplier_removed": true,
+    "sensitive_locations_removed": true
+  },
+  "facts": ["Requirements and design assumptions were reviewed against source artifacts."],
+  "evidence_status": "design-baseline-only",
+  "findings": ["Design-stage evidence supports workflow validation, not procurement forecast accuracy."],
+  "limitations": ["No award, settlement or operational measurement is available."],
+  "source_artifacts": ["anonymized design baseline"]
+}

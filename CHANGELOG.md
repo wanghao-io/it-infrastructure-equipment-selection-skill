@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.4.0 — 2026-08-14
+
+### Added
+
+- A thin `infra_cli.py` discovery/dispatch layer for whitelisted deterministic calculators and named JSON contracts, with copyable examples and concise errors.
+- Frozen v1 contract support plus versioned v2 price-evidence and project-retrospective schemas, a schema catalog compatibility policy and a non-destructive migration command.
+- A scenario-template contract and an explicit private-extension manifest contract.
+- A documented public-core/private-adapter/private-data boundary that forbids automatic private-data discovery and supplier-controlled decision fields.
+
+### Changed
+
+- Price-evidence v2 requires one decision scope and explicit technical-fit fields; caller-declared evidence levels are separated from system-derived evidence levels.
+- Project-retrospective v2 requires structured operational measurements and scope normalization before forecast-versus-award/settlement comparisons.
+- `SKILL.md` was reduced below the progressive-disclosure limit while routing schema governance and private extension details to focused references.
+- Existing calculator scripts and formulas remain compatible; the unified CLI is an optional wrapper, not a replacement for Agent research or engineering judgment.
+
+### Tests
+
+- Added CLI parity/error tests, v1-to-v2 non-destructive migration checks, v2 golden examples, schema catalog governance checks and public/private boundary regressions.
+
 ## v1.3.1 — 2026-08-14
 
 ### Fixed

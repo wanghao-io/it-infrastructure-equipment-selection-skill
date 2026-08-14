@@ -57,6 +57,15 @@ class JsonSchemaContractTests(unittest.TestCase):
         case["evidence_status"] = "operational-measurement"
         self.assertTrue(any("operational_measurements" in error for error in validate_retrospective_semantics(case)))
 
+    def test_v2_forecast_comparison_requires_scope_normalization(self) -> None:
+        case = json.loads((ROOT / "examples/real-project-retrospectives/v2-design-baseline-example.json").read_text(encoding="utf-8"))
+        case.update({"project_stage": "awarded", "evidence_status": "award-record", "budget": {
+            "revised": 100, "awarded": 90, "currency": "CNY"
+        }})
+        errors = validate_retrospective_semantics(case)
+        self.assertTrue(any("technical_scope_normalized" in error for error in errors))
+        self.assertTrue(any("commercial_scope_normalized" in error for error in errors))
+
     def test_price_decision_strict_contract_fails_before_normalization(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bad.json"

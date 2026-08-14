@@ -46,6 +46,10 @@ jobs:
           grep -q '"status": "PASS"' hci.json
           grep -q 'Market-verified / Exact-config' prices.json
           grep -q 'Vendor / Model Comparison' vendor.md
+          python scripts/infra_cli.py list
+          python scripts/infra_cli.py validate price-evidence-v2 assets/price-evidence-v2-example.json
+          python scripts/normalize_price_evidence.py assets/price-evidence-v2-example.json --summary --strict-contract > prices-v2.json
+          grep -q 'Market-verified / Exact-config' prices-v2.json
 
   package-smoke:
     runs-on: ubuntu-latest
@@ -62,6 +66,8 @@ jobs:
           test -f references/server-quotation-workflow.md
           test -f schemas/server-rfq.schema.json
           test -f examples/real-project-retrospectives/manufacturing-scada-budget-revision.json
+          test -f scripts/infra_cli.py
+          test -f schemas/v2/price-evidence.schema.json
           python scripts/install_skill.py --target codex --scope project --project-dir "$RUNNER_TEMP/install-target"
           test -f "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/SKILL.md"
           python "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/scripts/compare_server_quotes.py" assets/server-rfq-example.json

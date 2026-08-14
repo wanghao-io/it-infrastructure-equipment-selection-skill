@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "extension_id": "example-industrial-private",
+  "core_compatibility": ">=1.4.0,<2.0.0",
+  "template_files": ["templates/industrial-edge.json"],
+  "price_adapter": "adapters/export_price_facts.py",
+  "notes": "Synthetic manifest only; no private paths, prices or identities are included."
+}

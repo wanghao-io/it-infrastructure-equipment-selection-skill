@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/v2/price-evidence.schema.json",
+  "title": "Price evidence collection v2",
+  "type": "object",
+  "required": ["schema_version", "decision_scope_id", "items"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "decision_scope_id": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9._:-]+$"},
+    "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evidence"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "required": ["candidate", "product_class", "configuration", "source_type", "source_date", "as_of_date", "quote_current", "currency", "comparable", "technical_fit_status", "eligible_for_pricing"],
+      "properties": {
+        "candidate": {"type": "string", "minLength": 1},
+        "product_class": {"enum": ["configurable-enterprise", "fixed-sku", "commodity-component"]},
+        "configuration": {"type": ["string", "object"]},
+        "source_type": {"type": "string", "minLength": 1},
+        "quote_mode": {"type": "string"},
+        "source": {"type": "string"},
+        "source_date": {"type": "string", "format": "date"},
+        "as_of_date": {"type": "string", "format": "date"},
+        "quote_current": {"type": "boolean"},
+        "technical_fit_status": {"enum": ["PASS", "CONDITIONAL", "FAIL"]},
+        "eligible_for_pricing": {"type": "boolean"},
+        "orderability_confirmed": {"type": "boolean"},
+        "price_scope_complete": {"type": "boolean"},
+        "starting_price_or_base_config": {"type": "boolean"},
+        "used_or_refurbished": {"type": "boolean"},
+        "used_allowed": {"type": "boolean"},
+        "price": {"$ref": "#/$defs/cost"},
+        "hardware_price": {"$ref": "#/$defs/cost"},
+        "mandatory_accessories": {"$ref": "#/$defs/cost"},
+        "required_licenses": {"$ref": "#/$defs/cost"},
+        "warranty_support": {"$ref": "#/$defs/cost"},
+        "required_implementation": {"$ref": "#/$defs/cost"},
+        "tax_amount": {"$ref": "#/$defs/cost"},
+        "shipping": {"$ref": "#/$defs/cost"},
+        "currency": {"type": "string", "pattern": "^[A-Za-z]{3}$"},
+        "tax_included": {"type": "boolean"},
+        "warranty": {"type": "string"},
+        "configuration_match": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}},
+        "configuration_match_score": {"type": "number", "minimum": 0, "maximum": 1},
+        "exact_configuration_match": {"type": "boolean"},
+        "comparable": {"type": "boolean"},
+        "declared_evidence_level": {"enum": ["Verified", "Market-verified", "Comparable-transaction", "Estimated", "Needs confirmation"]},
+        "notes": {"type": "string"},
+        "quote_id": {"type": "string"},
+        "supplier": {"type": "string"},
+        "sales_channel": {"type": "string"},
+        "quote_valid_until": {"type": "string", "format": "date"},
+        "max_quote_age_days": {"type": "number", "minimum": 0}
+      },
+      "additionalProperties": false,
+      "anyOf": [{"required": ["price"]}, {"required": ["hardware_price"]}]
+    },
+    "cost": {"anyOf": [{"type": "number", "minimum": 0}, {"type": "string", "enum": ["TBD", "Needs confirmation", "待确认"]}]}
+  }
+}

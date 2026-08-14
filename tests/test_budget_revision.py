@@ -74,6 +74,19 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         self.assertEqual(anchor["status"], "needs-confirmation")
         self.assertIn("different decision_scope_id", anchor["reason"])
 
+    def test_declared_evidence_level_cannot_override_derived_result(self) -> None:
+        item = {
+            "candidate": "Self-declared", "product_class": "fixed-sku",
+            "configuration": "SKU", "source_type": "retail-exact-sku",
+            "source_date": "2026-08-12", "as_of_date": "2026-08-12",
+            "quote_current": True, "comparable": True, "exact_configuration_match": True,
+            "currency": "CNY", "price": 100, "evidence_level": "Verified",
+        }
+        row = normalize([item])[0]
+        self.assertNotIn("evidence_level", row)
+        self.assertEqual(row["declared_evidence_level"], "Verified")
+        self.assertEqual(row["derived_evidence_level"], "Needs confirmation")
+
     def test_overlapping_lower_range_still_requires_technical_fit(self) -> None:
         base = {
             "product_class": "fixed-sku", "configuration": "exact SKU",

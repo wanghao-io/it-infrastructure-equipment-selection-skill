@@ -86,6 +86,17 @@ python3 scripts/install_skill.py --target gemini --scope user
 
 完整平台路径和安装说明见 [`references/platform-compatibility.md`](references/platform-compatibility.md)。
 
+### Deterministic tools and contracts
+
+```bash
+python3 scripts/infra_cli.py list
+python3 scripts/infra_cli.py example ups
+python3 scripts/infra_cli.py run storage -- --drives 6 --drive-tb 4 --raid 10
+python3 scripts/infra_cli.py validate price-evidence-v2 assets/price-evidence-v2-example.json
+```
+
+This thin wrapper only exposes deterministic calculators and validators. Agent research and equipment recommendations still follow the requirement, technical-fit and evidence workflow. See [`references/schema-governance.md`](references/schema-governance.md) for version migration and [`references/private-extensions.md`](references/private-extensions.md) for the public/private boundary.
+
 ---
 
 # 中文说明
