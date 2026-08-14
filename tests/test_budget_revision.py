@@ -57,6 +57,27 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         self.assertEqual(anchor["anchor_count"], 1)
         self.assertEqual(anchor["confidence_level"], "Medium")
         self.assertTrue(anchor["needs_second_quote"])
+        self.assertEqual(anchor["recommended_budget_low"], 92.0)
+        reversed_anchor = select_budget_anchor([
+            {**base, "candidate": "q2", "supplier": "supplier a", "quote_id": "q2", "price": 92},
+            {**base, "candidate": "q1", "supplier": " Supplier A ", "quote_id": "q1", "price": 90},
+        ])
+        self.assertEqual(reversed_anchor["recommended_budget_low"], 92.0)
+        self.assertEqual(anchor["recommended_budget_high"], reversed_anchor["recommended_budget_high"])
+
+    def test_newer_supplier_quote_outranks_older_higher_quote(self) -> None:
+        base = {
+            "product_class": "fixed-sku", "configuration": "exact SKU",
+            "source_type": "authorized-reseller-quote", "as_of_date": "2026-08-14",
+            "quote_current": True, "comparable": True, "exact_configuration_match": True,
+            "technical_fit_status": "PASS", "eligible_for_pricing": True,
+            "currency": "CNY", "supplier": "Supplier A", "sales_channel": "authorized",
+        }
+        anchor = select_budget_anchor([
+            {**base, "candidate": "old", "source_date": "2026-08-12", "price": 100},
+            {**base, "candidate": "new", "source_date": "2026-08-14", "price": 95},
+        ])
+        self.assertEqual(anchor["recommended_budget_low"], 95.0)
 
     def test_different_decision_scopes_are_rejected(self) -> None:
         base = {

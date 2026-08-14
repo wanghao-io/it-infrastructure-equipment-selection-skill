@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.4.1 — 2026-08-14
+
+### Fixed
+
+- Multiple eligible quotations from one normalized supplier/channel no longer make the budget anchor depend on input order.
+- Supplier quote revisions now select the newest eligible record; same-date records prefer complete commercial scope and then the conservative higher comparable cost.
+
+### Tests
+
+- Added forward/reverse ordering and newer-quote precedence regressions for supplier-level evidence deduplication.
+
 ## v1.4.0 — 2026-08-14
 
 ### Added

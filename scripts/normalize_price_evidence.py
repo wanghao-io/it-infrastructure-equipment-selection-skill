@@ -355,8 +355,7 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
             "currencies": sorted(currencies),
         }
 
-    anchors = []
-    seen_evidence = set()
+    anchors_by_source: Dict[str, Dict[str, Any]] = {}
     for row in candidate_anchors:
         supplier = " ".join(str(row.get("supplier", "")).split()).casefold()
         channel = " ".join(str(row.get("sales_channel", "")).split()).casefold()
@@ -367,9 +366,25 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
             "source", source, channel, str(row.get("source_type", "")).casefold()
         )
         identity_key = json.dumps(identity, ensure_ascii=False, sort_keys=True, default=str)
-        if identity_key not in seen_evidence:
-            seen_evidence.add(identity_key)
-            anchors.append(row)
+        current = anchors_by_source.get(identity_key)
+        # A supplier may issue revisions under different quote IDs.  Select the
+        # newest eligible record; when dates tie, prefer complete commercial
+        # scope and then the conservative higher comparable cost.  The final
+        # anchor must not depend on input ordering.
+        selection_key = (
+            str(row.get("source_date", "")),
+            bool(row.get("price_scope_complete") is True),
+            float(row["normalized_comparable_cost"]),
+            json.dumps(
+                (row.get("candidate"), row.get("quote_id"), row.get("source")),
+                ensure_ascii=False,
+                sort_keys=True,
+                default=str,
+            ),
+        )
+        if current is None or selection_key > current["selection_key"]:
+            anchors_by_source[identity_key] = {"selection_key": selection_key, "row": row}
+    anchors = [anchors_by_source[key]["row"] for key in sorted(anchors_by_source)]
     costs = sorted(float(row["normalized_comparable_cost"]) for row in anchors)
 
     exact_current = best_priority in (1, 2)

@@ -1,4 +1,8 @@
-# IT Infrastructure Equipment Selection Skill v1.4.0
+# IT Infrastructure Equipment Selection Skill v1.4.1
+
+## 同供应商报价顺序稳定性热修
+
+v1.4.1 修复通用价格归一器中同一供应商多份报价的输入顺序依赖。系统现在优先采用最新有效报价；日期相同时优先商业范围完整的记录，再采用更保守的较高可比成本。正序、倒序输入会得到相同预算锚点，同时仍只计为一个独立市场来源。
 
 ## 确定性工具入口、Schema 版本治理与私有扩展边界
 
