@@ -27,6 +27,53 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         self.assertEqual(result["decision"], "hold-existing-provisional")
         self.assertIn("technical fit", result["reason"])
 
+    def test_fixed_sku_without_gate_cannot_be_any_budget_anchor(self) -> None:
+        item = {
+            "candidate": "Ungated fixed SKU", "product_class": "fixed-sku",
+            "configuration": "exact SKU", "source_type": "retail-exact-sku",
+            "source_date": "2026-08-12", "as_of_date": "2026-08-12",
+            "quote_current": True, "comparable": True,
+            "exact_configuration_match": True, "currency": "CNY", "price": 100,
+        }
+        row = normalize([item])[0]
+        self.assertFalse(row["anchor_eligible"])
+        self.assertIn("technical-fit-not-pass", row["anchor_exclusion_reasons"])
+        self.assertIn("technical-fit-not-eligible-for-pricing", row["anchor_exclusion_reasons"])
+        self.assertEqual(select_budget_anchor([item])["status"], "needs-confirmation")
+
+    def test_same_supplier_multiple_quote_ids_count_once(self) -> None:
+        base = {
+            "product_class": "fixed-sku", "configuration": "exact SKU",
+            "source_type": "authorized-reseller-quote", "source_date": "2026-08-12",
+            "as_of_date": "2026-08-12", "quote_current": True,
+            "comparable": True, "exact_configuration_match": True,
+            "technical_fit_status": "PASS", "eligible_for_pricing": True,
+            "currency": "CNY", "sales_channel": "Authorized",
+        }
+        anchor = select_budget_anchor([
+            {**base, "candidate": "q1", "supplier": " Supplier A ", "quote_id": "q1", "price": 90},
+            {**base, "candidate": "q2", "supplier": "supplier a", "quote_id": "q2", "price": 92},
+        ])
+        self.assertEqual(anchor["anchor_count"], 1)
+        self.assertEqual(anchor["confidence_level"], "Medium")
+        self.assertTrue(anchor["needs_second_quote"])
+
+    def test_different_decision_scopes_are_rejected(self) -> None:
+        base = {
+            "product_class": "fixed-sku", "configuration": "exact SKU",
+            "source_type": "retail-exact-sku", "source_date": "2026-08-12",
+            "as_of_date": "2026-08-12", "quote_current": True,
+            "comparable": True, "exact_configuration_match": True,
+            "technical_fit_status": "PASS", "eligible_for_pricing": True,
+            "currency": "CNY", "price": 100,
+        }
+        anchor = select_budget_anchor([
+            {**base, "candidate": "switch", "decision_scope_id": "bom-switch-1", "source": "A"},
+            {**base, "candidate": "ap", "decision_scope_id": "bom-ap-1", "source": "B"},
+        ])
+        self.assertEqual(anchor["status"], "needs-confirmation")
+        self.assertIn("different decision_scope_id", anchor["reason"])
+
     def test_overlapping_lower_range_still_requires_technical_fit(self) -> None:
         base = {
             "product_class": "fixed-sku", "configuration": "exact SKU",
@@ -79,7 +126,9 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         verified = {**base, "technical_fit_status": "PASS", "eligible_for_pricing": True, "source": "A"}
         unverified = {**base, "source": "B"}
         result = assess_budget_revision(100, [verified, unverified])
-        self.assertEqual(result["decision"], "hold-existing-provisional")
+        self.assertEqual(result["decision"], "revise-to-current-anchor")
+        self.assertEqual(result["budget_anchor"]["anchor_count"], 1)
+        self.assertEqual(result["budget_anchor"]["excluded_signal_count"], 1)
 
     def test_shared_skill_requires_budget_revision_guard(self) -> None:
         skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")

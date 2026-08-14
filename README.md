@@ -270,6 +270,7 @@ Needs confirmation
 ```bash
 python3 scripts/normalize_price_evidence.py <evidence.json> \
   --summary \
+  --strict-contract \
   --existing-budget <old-unit-price> \
   --product-class configurable-enterprise
 ```

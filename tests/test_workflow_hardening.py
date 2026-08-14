@@ -48,7 +48,7 @@ class WorkflowHardeningTests(unittest.TestCase):
             self.assertIn("Infrastructure TCO", tco_result)
 
             weak = tmp / "weak-prices.json"
-            weak.write_text(json.dumps({"items": [{
+            weak.write_text(json.dumps({"schema_version": 1, "items": [{
                 "candidate": "same-family starting price", "product_class": "configurable-enterprise",
                 "configuration": "partial configuration", "source_type": "market-aggregator",
                 "source_date": "2026-08-12", "as_of_date": "2026-08-12", "quote_current": True,
@@ -57,7 +57,7 @@ class WorkflowHardeningTests(unittest.TestCase):
             }]}), encoding="utf-8")
             revision = json.loads(subprocess.check_output([
                 sys.executable, str(ROOT / "scripts/normalize_price_evidence.py"), str(weak),
-                "--summary", "--existing-budget", "92000", "--product-class", "configurable-enterprise",
+                "--summary", "--strict-contract", "--existing-budget", "92000", "--product-class", "configurable-enterprise",
             ], env=utf8_env))
             self.assertEqual(revision["budget_revision"]["decision"], "hold-existing-provisional")
     def test_tbd_tco_stays_incomplete_without_crashing(self):

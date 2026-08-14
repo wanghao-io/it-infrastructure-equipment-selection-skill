@@ -122,7 +122,50 @@ def validate_file(schema_path: Path, instance_path: Path) -> list[str]:
     if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         return [f"{schema_path}: must declare Draft 2020-12"]
     instance = json.loads(instance_path.read_text(encoding="utf-8"))
-    return validate(instance, schema)
+    errors = validate(instance, schema)
+    if schema_path.name == "project-retrospective.schema.json":
+        errors.extend(validate_retrospective_semantics(instance))
+    return errors
+
+
+def validate_retrospective_semantics(instance: Any) -> list[str]:
+    """Reject evidence claims that exceed the documented project stage."""
+    if not isinstance(instance, dict):
+        return []
+    stage_order = {
+        "requirements": 0, "design": 1, "rfq": 2,
+        "awarded": 3, "implemented": 4, "operational": 5,
+    }
+    evidence_minimum = {
+        "design-baseline-only": "requirements",
+        "current-quotes": "rfq",
+        "award-record": "awarded",
+        "settlement-record": "implemented",
+        "operational-measurement": "operational",
+    }
+    errors: list[str] = []
+    stage = instance.get("project_stage")
+    evidence = instance.get("evidence_status")
+    minimum = evidence_minimum.get(evidence)
+    if stage in stage_order and minimum and stage_order[stage] < stage_order[minimum]:
+        errors.append(f"$.evidence_status: {evidence} exceeds project_stage {stage}")
+
+    budget = instance.get("budget")
+    if evidence == "award-record":
+        if not isinstance(budget, dict) or "awarded" not in budget:
+            errors.append("$.budget.awarded: required for award-record")
+        if not isinstance(budget, dict) or "currency" not in budget:
+            errors.append("$.budget.currency: required for award-record")
+    if evidence == "settlement-record":
+        if not isinstance(budget, dict) or "settled" not in budget:
+            errors.append("$.budget.settled: required for settlement-record")
+        if not isinstance(budget, dict) or "currency" not in budget:
+            errors.append("$.budget.currency: required for settlement-record")
+    if evidence == "operational-measurement":
+        measurements = instance.get("operational_measurements")
+        if not isinstance(measurements, list) or not measurements:
+            errors.append("$.operational_measurements: structured records required for operational-measurement")
+    return errors
 
 
 def validate_catalog(root: Path = ROOT) -> list[str]:

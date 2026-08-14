@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 from contracts import is_unresolved, require_bool, require_currency, require_float, require_iso_date
+from validate_json_schemas import validate_file
 
 
 DEFAULT_MATCH_WEIGHTS: Dict[str, float] = {
@@ -202,11 +203,11 @@ def anchor_exclusion_reasons(item: Mapping[str, Any], match_score: Optional[floa
         reasons.append(f"quote-mode:{quote_mode}")
     if product_class == "configurable-enterprise" and quote_mode in MISLEADING_QUOTE_MODES:
         reasons.append("configurable-enterprise-requires-config-level-price")
-    if item.get("technical_fit_status") not in (None, "PASS"):
+    # Fail closed for every product class.  A price is never an anchor until a
+    # separate technical assessment explicitly passes it for pricing.
+    if item.get("technical_fit_status") != "PASS":
         reasons.append("technical-fit-not-pass")
-    if item.get("eligible_for_pricing") is not None and not require_bool(
-        item.get("eligible_for_pricing"), "eligible_for_pricing"
-    ):
+    if item.get("eligible_for_pricing") is not True:
         reasons.append("technical-fit-not-eligible-for-pricing")
     if item.get("orderability_confirmed") is False:
         reasons.append("orderability-not-confirmed")
@@ -300,6 +301,17 @@ def normalize(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
 def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
     """Select the strongest eligible evidence tier without blending weaker prices."""
     rows = normalize(items)
+    scopes = {str(row.get("decision_scope_id", "")).strip() for row in rows}
+    if len(scopes) > 1:
+        return {
+            "status": "needs-confirmation",
+            "reason": "Price evidence from different decision_scope_id values must not be aggregated.",
+            "recommended_budget_low": None,
+            "recommended_budget_high": None,
+            "confidence": "Needs confirmation",
+            "confidence_level": "Low",
+            "decision_scopes": sorted(scopes),
+        }
     eligible = [
         row
         for row in rows
@@ -336,8 +348,13 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
     anchors = []
     seen_evidence = set()
     for row in candidate_anchors:
-        identity = row.get("evidence_id") or row.get("quote_id") or (
-            row.get("source"), row.get("source_type"), row.get("source_date"), row.get("candidate")
+        supplier = " ".join(str(row.get("supplier", "")).split()).casefold()
+        channel = " ".join(str(row.get("sales_channel", "")).split()).casefold()
+        source = " ".join(str(row.get("source", "")).split()).casefold()
+        # Quote numbers are records, not independent market sources.  Count a
+        # supplier/channel once; for web evidence use seller/source identity.
+        identity = ("supplier", supplier, channel) if supplier else (
+            "source", source, channel, str(row.get("source_type", "")).casefold()
         )
         identity_key = json.dumps(identity, ensure_ascii=False, sort_keys=True, default=str)
         if identity_key not in seen_evidence:
@@ -351,7 +368,7 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
         confidence_level = "High"
         needs_second_quote = False
     elif exact_current:
-        confidence = "Verified current quote / Exact-config"
+        confidence = "Market-verified / Exact-config"
         confidence_level = "Medium"
         needs_second_quote = True
     elif best_priority == 3:
@@ -391,7 +408,10 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
         "confidence": confidence,
         "confidence_level": confidence_level,
         "needs_second_quote": needs_second_quote,
-        "lower_priority_evidence_excluded_from_anchor": len(eligible) - len(anchors),
+        "lower_priority_evidence_excluded_from_anchor": len([
+            row for row in rows
+            if row.get("comparison_ready") and int(row.get("evidence_priority", 99)) > best_priority
+        ]),
         "excluded_signal_count": len([row for row in rows if row["anchor_exclusion_reasons"]]),
         "historical_context_low": round(historical_context[0], 2) if historical_context else None,
         "historical_context_high": round(historical_context[-1], 2) if historical_context else None,
@@ -435,7 +455,10 @@ def assess_budget_revision(
         }
 
     if anchor.get("status") != "ready":
-        reason = "No strong current anchor is available; keep the prior amount only as a provisional carry-forward."
+        reason = (
+            "No strong current anchor with explicit PASS technical fit and eligible_for_pricing=true is available; "
+            "keep the prior amount only as a provisional carry-forward."
+        )
         if inferred_class == "configurable-enterprise":
             reason += " Incomplete or unverified evidence cannot justify lowering this configurable-enterprise budget."
         return {
@@ -531,9 +554,34 @@ def main() -> None:
         "--product-class",
         help="Optional product class override, e.g. configurable-enterprise",
     )
+    contract_group = parser.add_mutually_exclusive_group()
+    contract_group.add_argument(
+        "--strict-contract",
+        action="store_true",
+        help="Validate the versioned JSON envelope before making a pricing decision",
+    )
+    contract_group.add_argument(
+        "--legacy-input",
+        action="store_true",
+        help="Explicitly allow an unversioned object or bare array (deprecated)",
+    )
     args = parser.parse_args()
 
     data = json.loads(args.input.read_text(encoding="utf-8"))
+    if args.strict_contract:
+        if not isinstance(data, dict) or "schema_version" not in data:
+            raise SystemExit("$: strict contract requires a versioned object envelope")
+        schema_path = Path(__file__).resolve().parents[1] / "schemas/price-evidence.schema.json"
+        errors = validate_file(schema_path, args.input)
+        if errors:
+            raise SystemExit("\n".join(errors))
+    elif not isinstance(data, dict) or "schema_version" not in data:
+        if not args.legacy_input:
+            raise SystemExit(
+                "$: unversioned price input is deprecated; use --strict-contract with a versioned envelope "
+                "or explicitly pass --legacy-input"
+            )
+        print("WARNING: legacy unversioned price input; no schema preflight was performed", file=__import__("sys").stderr)
     items = data["items"] if isinstance(data, dict) else data
     rows = normalize(items)
 

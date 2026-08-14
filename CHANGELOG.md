@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.3.1 — 2026-08-14
+
+### Fixed
+
+- Price anchors now fail closed for every product class unless technical fit is explicitly `PASS` and `eligible_for_pricing=true`.
+- Multiple quote numbers from the same normalized supplier/channel count as one independent market source.
+- Evidence carrying different decision-scope identifiers is rejected instead of being merged across BOM lines, products or projects.
+- Price decisions support schema-first strict contract validation; unversioned input requires explicit legacy mode and emits a warning.
+- Real-project retrospectives reject award, settlement or operational evidence claims that exceed the documented project stage or omit the corresponding structured record.
+
+### Tests
+
+- Added regressions for fixed-SKU fail-closed anchoring, supplier independence, decision-scope isolation, strict/legacy contract behavior and retrospective semantic evidence gates.
+- The procurement workflow test now executes strict schema preflight before inquiry-derived budget revision and HCI output validation.
+
 ## v1.3.0 — 2026-08-14
 
 ### Added

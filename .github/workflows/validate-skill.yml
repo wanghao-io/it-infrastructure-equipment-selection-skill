@@ -40,7 +40,7 @@ jobs:
         run: |
           python scripts/compare_server_quotes.py assets/server-rfq-example.json --pretty > server-quotes.json
           python scripts/calculate_hci_failover.py assets/hci-failover-example.json --pretty > hci.json
-          python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary > prices.json
+          python scripts/normalize_price_evidence.py assets/price-evidence-example.json --summary --strict-contract > prices.json
           python scripts/compare_vendors.py assets/vendor-comparison-example.json > vendor.md
           grep -q '"status": "ready"' server-quotes.json
           grep -q '"status": "PASS"' hci.json

@@ -100,7 +100,10 @@ hardware
 + shipping
 ```
 
-Use `scripts/normalize_price_evidence.py`.
+Use `scripts/normalize_price_evidence.py --strict-contract`. Every product class must have explicit
+`technical_fit_status=PASS` and `eligible_for_pricing=true` before its price can become a budget
+anchor. Quote numbers from one normalized supplier/channel count as one independent source, and
+evidence from different decision scopes must never be aggregated into one range.
 
 ## Price Evidence Priority
 

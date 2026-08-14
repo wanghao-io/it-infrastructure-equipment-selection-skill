@@ -275,6 +275,7 @@ This workflow is **mandatory** whenever the user asks to update, refresh, repric
 ```bash
 python3 scripts/normalize_price_evidence.py <evidence.json> \
   --summary \
+  --strict-contract \
   --existing-budget <old-unit-price> \
   --product-class configurable-enterprise
 ```

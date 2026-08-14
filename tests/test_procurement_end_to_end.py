@@ -64,11 +64,12 @@ class ProcurementWorkflowEndToEndTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             evidence_file = Path(directory) / "validated-quotes.json"
-            evidence_file.write_text(json.dumps({"items": evidence}), encoding="utf-8")
+            evidence_file.write_text(json.dumps({"schema_version": 1, "items": evidence}), encoding="utf-8")
             revision = run_json(
                 str(ROOT / "scripts/normalize_price_evidence.py"),
                 str(evidence_file),
                 "--summary",
+                "--strict-contract",
                 "--existing-budget", "130000",
                 "--product-class", "configurable-enterprise",
             )["budget_revision"]
