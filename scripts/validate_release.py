@@ -55,6 +55,8 @@ def validate(root: Path = ROOT) -> list[str]:
         "scripts/infra_cli.py", "assets/tool-catalog.json",
         "references/schema-governance.md", "references/private-extensions.md",
         "schemas/v2/price-evidence.schema.json", "scripts/extract_release_notes.py",
+        "schemas/v2/server-rfq.schema.json", "assets/server-rfq-v2-example.json",
+        "examples/decision-summary-demo.md", "tests/scenarios/v15-evaluations.json",
     ):
         if not (root / required).is_file():
             errors.append(f"missing runtime file: {required}")

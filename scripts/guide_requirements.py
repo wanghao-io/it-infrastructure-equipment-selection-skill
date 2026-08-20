@@ -12,6 +12,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from contracts import strict_json_dumps, strict_json_loads
+
 DEFAULT_TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "assets" / "scenario-templates.json"
 
 UNRESOLVED_MARKERS = (
@@ -27,7 +29,31 @@ UNRESOLVED_MARKERS = (
 
 
 def load_templates(path: Path = DEFAULT_TEMPLATE_PATH) -> dict[str, Any]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = strict_json_loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, dict) and "template_id" in data and "questions" in data:
+        # Adapt the frozen public single-template v1 contract to the internal
+        # bundle representation. No answer or architecture fact is invented.
+        data = {
+            "schema_version": data.get("schema_version", 1),
+            "templates": [
+                {
+                    "id": data["template_id"],
+                    "name": data.get("display_name", data["template_id"]),
+                    "description": data.get("description", ""),
+                    "required_fields": [
+                        {
+                            "key": question["id"],
+                            "question": question["prompt"],
+                            "priority": index + 1,
+                        }
+                        for index, question in enumerate(data["questions"])
+                        if question.get("mandatory", False)
+                    ],
+                    "suggested_assumptions": {},
+                    "guardrails": list(data.get("assumptions", [])),
+                }
+            ],
+        }
     templates = data.get("templates", [])
     if not isinstance(templates, list) or not templates:
         raise ValueError("Scenario template file must contain a non-empty 'templates' list.")
@@ -168,7 +194,7 @@ def main() -> None:
 
     supplied: dict[str, Any] = {}
     if args.input:
-        supplied = json.loads(args.input.read_text(encoding="utf-8"))
+        supplied = strict_json_loads(args.input.read_text(encoding="utf-8"))
         if not isinstance(supplied, dict):
             raise ValueError("Requirement input must be a JSON object.")
 
@@ -178,7 +204,7 @@ def main() -> None:
         max_questions=max(1, args.max_questions),
         template_data=data,
     )
-    print(json.dumps(result, ensure_ascii=False, indent=2 if args.pretty else None))
+    print(strict_json_dumps(result, ensure_ascii=False, indent=2 if args.pretty else None))
 
 
 if __name__ == "__main__":

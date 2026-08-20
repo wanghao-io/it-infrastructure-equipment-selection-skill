@@ -57,7 +57,7 @@ class WorkflowHardeningTests(unittest.TestCase):
             }]}), encoding="utf-8")
             revision = json.loads(subprocess.check_output([
                 sys.executable, str(ROOT / "scripts/normalize_price_evidence.py"), str(weak),
-                "--summary", "--strict-contract", "--existing-budget", "92000", "--product-class", "configurable-enterprise",
+                "--summary", "--strict-contract", "--existing-budget", "92000", "--existing-currency", "CNY", "--product-class", "configurable-enterprise",
             ], env=utf8_env))
             self.assertEqual(revision["budget_revision"]["decision"], "hold-existing-provisional")
     def test_tbd_tco_stays_incomplete_without_crashing(self):

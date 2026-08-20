@@ -14,6 +14,8 @@ import json
 import math
 from typing import Any
 
+from contracts import require_bool, require_float, strict_json_dumps
+
 
 def calculate(
     load_w: float,
@@ -22,16 +24,11 @@ def calculate(
     runtime_minutes: float = 10.0,
     inverter_efficiency: float = 0.85,
 ) -> dict:
-    if load_w <= 0:
-        raise ValueError("load_w must be > 0")
-    if not 0 < power_factor <= 1:
-        raise ValueError("power_factor must be in (0, 1]")
-    if capacity_margin < 1:
-        raise ValueError("capacity_margin must be >= 1")
-    if runtime_minutes < 0:
-        raise ValueError("runtime_minutes must be >= 0")
-    if not 0 < inverter_efficiency <= 1:
-        raise ValueError("inverter_efficiency must be in (0, 1]")
+    load_w = require_float(load_w, "load_w", minimum=0.000001)
+    power_factor = require_float(power_factor, "power_factor", minimum=0.000001, maximum=1)
+    capacity_margin = require_float(capacity_margin, "capacity_margin", minimum=1)
+    runtime_minutes = require_float(runtime_minutes, "runtime_minutes", minimum=0)
+    inverter_efficiency = require_float(inverter_efficiency, "inverter_efficiency", minimum=0.000001, maximum=1)
 
     required_w = load_w * capacity_margin
     required_va = required_w / power_factor
@@ -82,10 +79,11 @@ def assess_candidate(
     integration. A candidate that fails any mandatory requirement must not be
     used as a cheaper price anchor for the project BOM.
     """
-    if candidate_output_w <= 0:
-        raise ValueError("candidate_output_w must be > 0")
-    if candidate_va <= 0:
-        raise ValueError("candidate_va must be > 0")
+    candidate_output_w = require_float(candidate_output_w, "candidate_output_w", minimum=0.000001)
+    candidate_va = require_float(candidate_va, "candidate_va", minimum=0.000001)
+    runtime_curve_verified = require_bool(runtime_curve_verified, "runtime_curve_verified")
+    graceful_shutdown_required = require_bool(graceful_shutdown_required, "graceful_shutdown_required")
+    shutdown_interface_verified = require_bool(shutdown_interface_verified, "shutdown_interface_verified")
 
     sizing = calculate(
         load_w,
@@ -131,8 +129,8 @@ def assess_candidate(
 
 def ups_rating(load_kw: float, margin: float = 1.3) -> float:
     """Backward-compatible W/kW margin helper."""
-    if load_kw <= 0 or margin < 1:
-        raise ValueError("load_kw must be > 0 and margin >= 1")
+    load_kw = require_float(load_kw, "load_kw", minimum=0.000001)
+    margin = require_float(margin, "margin", minimum=1)
     return load_kw * margin
 
 
@@ -187,7 +185,7 @@ def main() -> None:
             args.efficiency,
         )
 
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(strict_json_dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

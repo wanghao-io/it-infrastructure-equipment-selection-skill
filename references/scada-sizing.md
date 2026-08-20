@@ -62,6 +62,14 @@ Approximate uncompressed record count:
 records_per_day = historical_points × 86400 / effective_sample_seconds
 ```
 
+For mixed sampling classes, calculate each class independently and sum the results:
+
+```text
+records_per_day = Σ(points_i × 86400 / interval_seconds_i)
+```
+
+Do not use the arithmetic mean of sampling intervals. A small set of one-second points can dominate the total and be hidden by many slow points. Run `calculate_historian.py` once per class and sum pre-overhead retained capacity, then apply documented shared database/index, temporary/import, growth and free-space reserves once.
+
 Approximate storage:
 
 ```text

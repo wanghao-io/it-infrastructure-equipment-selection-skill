@@ -23,7 +23,7 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
             "comparable": True, "exact_configuration_match": True,
             "currency": "CNY", "price": 50,
         }
-        result = assess_budget_revision(100, [item])
+        result = assess_budget_revision(100, [item], existing_currency="CNY")
         self.assertEqual(result["decision"], "hold-existing-provisional")
         self.assertIn("technical fit", result["reason"])
 
@@ -119,7 +119,7 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         result = assess_budget_revision(100, [
             {**base, "candidate": "lower", "price": 90},
             {**base, "candidate": "higher", "price": 110},
-        ])
+        ], existing_currency="CNY")
         self.assertEqual(result["decision"], "hold-existing-provisional")
         self.assertEqual(result["recommended_budget_low"], 100.0)
 
@@ -159,7 +159,7 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         }
         verified = {**base, "technical_fit_status": "PASS", "eligible_for_pricing": True, "source": "A"}
         unverified = {**base, "source": "B"}
-        result = assess_budget_revision(100, [verified, unverified])
+        result = assess_budget_revision(100, [verified, unverified], existing_currency="CNY")
         self.assertEqual(result["decision"], "revise-to-current-anchor")
         self.assertEqual(result["budget_anchor"]["anchor_count"], 1)
         self.assertEqual(result["budget_anchor"]["excluded_signal_count"], 1)
@@ -218,7 +218,7 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
             },
         ]
 
-        revision = assess_budget_revision(65000, items)
+        revision = assess_budget_revision(65000, items, existing_currency="CNY")
         self.assertEqual(revision["decision"], "hold-existing-provisional")
         self.assertEqual(revision["recommended_budget_low"], 65000.0)
         self.assertEqual(revision["recommended_budget_high"], 65000.0)
@@ -292,7 +292,7 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
         self.assertEqual(anchor["recommended_budget_high"], 91500.0)
         self.assertEqual(anchor["confidence"], "Market-verified / Exact-config")
 
-        revision = assess_budget_revision(65000, items)
+        revision = assess_budget_revision(65000, items, existing_currency="CNY")
         self.assertEqual(revision["decision"], "revise-to-current-anchor")
         self.assertEqual(revision["recommended_budget_low"], 89000.0)
         self.assertEqual(revision["recommended_budget_high"], 91500.0)
@@ -312,7 +312,7 @@ class BudgetRevisionGuardrailTests(unittest.TestCase):
             }
         ]
 
-        revision = assess_budget_revision(65000, items)
+        revision = assess_budget_revision(65000, items, existing_currency="CNY")
         self.assertEqual(revision["decision"], "hold-existing-provisional")
         self.assertEqual(revision["recommended_budget_low"], 65000.0)
         self.assertEqual(revision["recommended_budget_high"], 65000.0)

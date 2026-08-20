@@ -30,11 +30,9 @@ class AgentSkillMetadataTests(unittest.TestCase):
             frontmatter,
             re.MULTILINE,
         )
-        license_match = re.search(r"^license:\s*(.+)$", frontmatter, re.MULTILINE)
 
         self.assertIsNotNone(name_match)
         self.assertIsNotNone(description_match)
-        self.assertIsNotNone(license_match)
 
         name = name_match.group(1).strip()
         description = " ".join(
@@ -46,7 +44,9 @@ class AgentSkillMetadataTests(unittest.TestCase):
         self.assertLessEqual(len(name), 64)
         self.assertGreater(len(description), 0)
         self.assertLessEqual(len(description), 1024)
-        self.assertEqual(license_match.group(1).strip(), "MIT")
+        keys = re.findall(r"^([a-zA-Z0-9_-]+):", frontmatter, re.MULTILINE)
+        self.assertEqual(keys, ["name", "description"])
+        self.assertTrue((ROOT / "LICENSE").is_file())
 
     def test_openai_metadata_is_optional_extension(self) -> None:
         self.assertTrue((ROOT / "agents" / "openai.yaml").is_file())

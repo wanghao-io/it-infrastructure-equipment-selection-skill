@@ -225,6 +225,31 @@ def main() -> None:
     run_parser.add_argument("--debug", action="store_true", help="Preserve child tracebacks for diagnosis")
     run_parser.add_argument("tool", choices=sorted(catalog["tools"]))
     run_parser.add_argument("tool_args", nargs=argparse.REMAINDER, help="arguments passed to the selected tool")
+    guide_parser = subparsers.add_parser("guide", help="Run requirement discovery without selecting architecture")
+    guide_parser.add_argument("--templates", type=Path)
+    guide_parser.add_argument("--list", action="store_true")
+    guide_parser.add_argument("--scenario")
+    guide_parser.add_argument("--input", type=Path)
+    guide_parser.add_argument("--max-questions", type=int, default=7)
+    guide_parser.add_argument("--pretty", action="store_true")
+    guide_parser.add_argument("--debug", action="store_true")
+    server_parser = subparsers.add_parser("server-quotes", help="Validate or compare a versioned server RFQ")
+    server_parser.add_argument("action", choices=["validate", "compare"])
+    server_parser.add_argument("input", type=Path)
+    server_parser.add_argument("--pretty", action="store_true")
+    server_parser.add_argument("--debug", action="store_true")
+    price_parser = subparsers.add_parser("price-evidence", help="Normalize strict versioned price evidence")
+    price_parser.add_argument("input", type=Path)
+    price_parser.add_argument("--existing-budget", type=float)
+    price_parser.add_argument("--existing-currency")
+    price_parser.add_argument("--product-class")
+    price_parser.add_argument("--debug", action="store_true")
+    migrate_parser = subparsers.add_parser("migrate", help="Dry-run or write a non-destructive v1-to-v2 migration")
+    migrate_parser.add_argument("family", choices=["price-evidence", "project-retrospective"])
+    migrate_parser.add_argument("input", type=Path)
+    migrate_parser.add_argument("--decision-scope-id")
+    migrate_parser.add_argument("--output", type=Path)
+    migrate_parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
     if args.command == "list":
@@ -254,6 +279,80 @@ def main() -> None:
             "--schema",
             str(schema),
         ], debug=args.debug))
+    if args.command == "guide":
+        command = [sys.executable, str(ROOT / "scripts/guide_requirements.py")]
+        if args.templates:
+            template_path = (caller_cwd / args.templates).resolve() if not args.templates.is_absolute() else args.templates.resolve()
+            schema = resolve_catalog_path(catalog["contracts"]["scenario-template-v1"])
+            status = run_checked(
+                [sys.executable, str(ROOT / "scripts/validate_json_schemas.py"), str(template_path), "--schema", str(schema)],
+                debug=args.debug,
+                emit_stdout=False,
+            )
+            if status:
+                raise SystemExit(status)
+            command.extend(["--templates", str(template_path)])
+        if args.list:
+            command.append("--list")
+        if args.scenario:
+            command.extend(["--scenario", args.scenario])
+        if args.input:
+            input_path = (caller_cwd / args.input).resolve() if not args.input.is_absolute() else args.input.resolve()
+            command.extend(["--input", str(input_path)])
+        command.extend(["--max-questions", str(args.max_questions)])
+        if args.pretty:
+            command.append("--pretty")
+        raise SystemExit(run_checked(command, debug=args.debug))
+    if args.command == "server-quotes":
+        input_path = (caller_cwd / args.input).resolve() if not args.input.is_absolute() else args.input.resolve()
+        data = json.loads(
+            input_path.read_text(encoding="utf-8"),
+            parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-standard JSON numeric constant is not allowed: {value}")),
+        )
+        version = data.get("schema_version") if isinstance(data, dict) else None
+        contract = f"server-rfq-v{version}"
+        if contract not in catalog["contracts"]:
+            raise SystemExit(f"error: unsupported server-rfq version {version!r}")
+        if args.action == "compare" and version != 2:
+            raise SystemExit("error: exact server comparison requires server-rfq-v2; v1 is a coarse minimum gate only")
+        schema = resolve_catalog_path(catalog["contracts"][contract])
+        status = run_checked(
+            [sys.executable, str(ROOT / "scripts/validate_json_schemas.py"), str(input_path), "--schema", str(schema)],
+            debug=args.debug,
+            emit_stdout=False,
+        )
+        if status:
+            raise SystemExit(status)
+        script = "validate_server_quote.py" if args.action == "validate" else "compare_server_quotes.py"
+        command = [sys.executable, str(ROOT / "scripts" / script), str(input_path)]
+        if args.pretty:
+            command.append("--pretty")
+        raise SystemExit(run_checked(command, debug=args.debug))
+    if args.command == "price-evidence":
+        input_path = (caller_cwd / args.input).resolve() if not args.input.is_absolute() else args.input.resolve()
+        command = [
+            sys.executable,
+            str(ROOT / "scripts/normalize_price_evidence.py"),
+            str(input_path),
+            "--summary",
+            "--strict-contract",
+        ]
+        if args.existing_budget is not None:
+            if not args.existing_currency:
+                raise SystemExit("error: --existing-currency is required with --existing-budget")
+            command.extend(["--existing-budget", str(args.existing_budget), "--existing-currency", args.existing_currency])
+        if args.product_class:
+            command.extend(["--product-class", args.product_class])
+        raise SystemExit(run_checked(command, debug=args.debug))
+    if args.command == "migrate":
+        input_path = (caller_cwd / args.input).resolve() if not args.input.is_absolute() else args.input.resolve()
+        command = [sys.executable, str(ROOT / "scripts/migrate_schema.py"), args.family, str(input_path)]
+        if args.decision_scope_id:
+            command.extend(["--decision-scope-id", args.decision_scope_id])
+        if args.output:
+            output_path = (caller_cwd / args.output).resolve() if not args.output.is_absolute() else args.output.resolve()
+            command.extend(["--output", str(output_path)])
+        raise SystemExit(run_checked(command, debug=args.debug))
     if args.command == "run":
         item = catalog["tools"][args.tool]
         if item["exposure"] != PUBLIC_RUN:

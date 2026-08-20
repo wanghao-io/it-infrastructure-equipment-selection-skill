@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 
+from contracts import require_float, require_int, strict_json_dumps
+
 
 def calculate(
     historical_points: int,
@@ -16,16 +18,13 @@ def calculate(
     overhead_factor: float = 1.25,
     growth_factor: float = 1.20,
 ) -> dict:
-    if historical_points < 0:
-        raise ValueError("historical_points must be >= 0")
-    if sample_seconds <= 0:
-        raise ValueError("sample_seconds must be > 0")
-    if bytes_per_record <= 0:
-        raise ValueError("bytes_per_record must be > 0")
-    if not 0 < compression_factor <= 1:
-        raise ValueError("compression_factor must be in (0, 1]")
-    if retention_days <= 0:
-        raise ValueError("retention_days must be > 0")
+    historical_points = require_int(historical_points, "historical_points", minimum=0)
+    sample_seconds = require_float(sample_seconds, "sample_seconds", minimum=0.000001)
+    bytes_per_record = require_float(bytes_per_record, "bytes_per_record", minimum=0.000001)
+    compression_factor = require_float(compression_factor, "compression_factor", minimum=0.000001, maximum=1)
+    retention_days = require_int(retention_days, "retention_days", minimum=1)
+    overhead_factor = require_float(overhead_factor, "overhead_factor", minimum=1)
+    growth_factor = require_float(growth_factor, "growth_factor", minimum=1)
 
     records_per_day = historical_points * 86400.0 / sample_seconds
     raw_gb_per_day = records_per_day * bytes_per_record / 1_000_000_000
@@ -72,7 +71,7 @@ def main() -> None:
         args.overhead_factor,
         args.growth_factor,
     )
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(strict_json_dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

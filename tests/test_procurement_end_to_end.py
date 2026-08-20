@@ -36,7 +36,7 @@ class ProcurementWorkflowEndToEndTests(unittest.TestCase):
 
         inquiry = run_json(
             str(ROOT / "scripts/compare_server_quotes.py"),
-            str(ROOT / "assets/server-rfq-example.json"),
+            str(ROOT / "assets/server-rfq-v2-example.json"),
         )
         self.assertEqual(inquiry["status"], "ready")
         self.assertEqual(inquiry["independent_quote_count"], 2)
@@ -45,14 +45,15 @@ class ProcurementWorkflowEndToEndTests(unittest.TestCase):
         self.assertEqual((inquiry["market_low"], inquiry["market_high"]), (110000.0, 112000.0))
         self.assertEqual(inquiry["budget_control_high"], 117600.0)
 
-        rfq = json.loads((ROOT / "assets/server-rfq-example.json").read_text(encoding="utf-8"))
+        rfq = json.loads((ROOT / "assets/server-rfq-v2-example.json").read_text(encoding="utf-8"))
         evidence = []
         for quote in rfq["quotes"]:
             evidence.append({
-                **quote,
                 "candidate": quote["supplier"],
                 "product_class": "configurable-enterprise",
+                "configuration": quote["configuration"],
                 "source_type": "authorized-reseller-quote",
+                "source_date": quote["source_date"],
                 "as_of_date": rfq["requirement"]["as_of_date"],
                 "quote_current": True,
                 "comparable": True,
@@ -60,6 +61,20 @@ class ProcurementWorkflowEndToEndTests(unittest.TestCase):
                 "technical_fit_status": "PASS",
                 "eligible_for_pricing": True,
                 "price_scope_complete": True,
+                "hardware_price": quote["hardware_price"],
+                "mandatory_accessories": quote["mandatory_accessories"],
+                "required_licenses": quote["required_licenses"],
+                "warranty_support": quote["warranty_support"],
+                "required_implementation": quote["required_implementation"],
+                "tax_amount": quote["tax_amount"],
+                "shipping": quote["shipping"],
+                "currency": quote["currency"],
+                "tax_included": quote["tax_included"],
+                "orderability_confirmed": quote["orderability_confirmed"],
+                "quote_valid_until": quote["quote_valid_until"],
+                "quote_id": quote["quote_id"],
+                "supplier": quote["supplier"],
+                "sales_channel": quote["sales_channel"],
             })
 
         with tempfile.TemporaryDirectory() as directory:
@@ -71,6 +86,7 @@ class ProcurementWorkflowEndToEndTests(unittest.TestCase):
                 "--summary",
                 "--strict-contract",
                 "--existing-budget", "130000",
+                "--existing-currency", "CNY",
                 "--product-class", "configurable-enterprise",
             )["budget_revision"]
 
@@ -86,7 +102,8 @@ class ProcurementWorkflowEndToEndTests(unittest.TestCase):
         self.assertEqual(hci["status"], "PASS")
         self.assertEqual(hci["policy"], "N+1")
         self.assertEqual(hci["remaining_nodes"], 3)
-        self.assertTrue(hci["eligible_for_final_design"])
+        self.assertFalse(hci["eligible_for_final_design"])
+        self.assertEqual(hci["final_design_status"], "CONDITIONAL")
         self.assertEqual(
             set(hci["dimension_checks"]),
             {"cpu_cores", "memory_gb", "usable_storage_tb", "storage_iops", "network_gbps"},

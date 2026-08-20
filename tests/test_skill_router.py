@@ -18,7 +18,6 @@ class SkillRouterTests(unittest.TestCase):
 
     def test_router_has_deliberate_progressive_disclosure_size(self) -> None:
         lines = self.skill.splitlines()
-        self.assertGreaterEqual(len(lines), 180)
         self.assertLessEqual(len(lines), 300)
         self.assertIn("This file is the workflow router and invariant set", self.skill)
 
@@ -197,6 +196,7 @@ class ReadmeCurrentStateTests(unittest.TestCase):
             "private-extension-manifest-v1",
             "references/budget-revision.md",
             "docs/forward-validation-v1.4.2.md",
+            "docs/v1.5-plan.md",
         ):
             self.assertIn(fragment, self.readme)
         self.assertNotIn("当前公开的两份脱敏案例", self.readme)

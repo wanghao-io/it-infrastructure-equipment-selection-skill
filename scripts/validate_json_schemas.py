@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 from datetime import date
 from pathlib import Path
@@ -34,11 +35,16 @@ def resolve_ref(root: dict[str, Any], ref: str) -> dict[str, Any]:
 
 
 def type_matches(value: Any, expected: str) -> bool:
+    finite_number = (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and (not isinstance(value, float) or math.isfinite(value))
+    )
     return {
         "object": isinstance(value, dict),
         "array": isinstance(value, list),
         "string": isinstance(value, str),
-        "number": isinstance(value, (int, float)) and not isinstance(value, bool),
+        "number": finite_number,
         "integer": isinstance(value, int) and not isinstance(value, bool),
         "boolean": type(value) is bool,
         "null": value is None,
@@ -121,7 +127,15 @@ def validate_file(schema_path: Path, instance_path: Path) -> list[str]:
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         return [f"{schema_path}: must declare Draft 2020-12"]
-    instance = json.loads(instance_path.read_text(encoding="utf-8"))
+    try:
+        instance = json.loads(
+            instance_path.read_text(encoding="utf-8"),
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                ValueError(f"non-standard JSON numeric constant is not allowed: {value}")
+            ),
+        )
+    except ValueError as exc:
+        return [f"$: invalid strict JSON: {exc}"]
     errors = validate(instance, schema)
     if schema_path.name == "project-retrospective.schema.json":
         errors.extend(validate_retrospective_semantics(instance))

@@ -1,5 +1,15 @@
 # Live Market Price Research
 
+## Quick path
+
+1. Freeze one decision scope, product class, exact configuration and commercial basis.
+2. Verify technical fit and lifecycle before collecting price.
+3. Prefer current exact quotes; normalize tax, delivery, licenses, support and implementation.
+4. Count normalized suppliers/channels, not quote IDs, as independent evidence.
+5. Run the strict price-evidence guard before revising a baseline; keep unresolved lines unchanged.
+
+Sections: [Core rule](#core-rule) · [Recover evidence](#0-recover-existing-project-price-evidence) · [Classify](#1-classify-the-procurement-object-first) · [Channels](#2-china-market-search-channels) · [Workflow](#3-search-workflow) · [Source strategy](#4-source-strategy-by-product-class) · [Output](#5-real-time-price-output) · [Confidence](#6-confidence-guidance) · [Batch BOM](#7-batch-bom-price-research) · [Anti-patterns](#8-anti-patterns)
+
 Use this reference when the user asks for a **current price, current market range, live procurement budget, or quotation-oriented BOM**.
 
 The goal is not to find the largest number of prices. The goal is to obtain the strongest current price evidence for the exact procurement object.

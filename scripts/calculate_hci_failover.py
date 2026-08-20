@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from contracts import require_bool, require_float, require_int
+from contracts import require_bool, require_float, require_int, strict_json_dumps, strict_json_loads
 
 DIMENSIONS = ("cpu_cores", "memory_gb", "usable_storage_tb", "storage_iops", "network_gbps")
 
@@ -41,6 +41,7 @@ def calculate(data: dict[str, Any]) -> dict[str, Any]:
     overall = all(row["pass"] for row in checks.values()) and protection and network and failure_domains
     return {
         "status": "PASS" if overall else "FAIL",
+        "capacity_check_status": "PASS" if overall else "FAIL",
         "policy": f"N+{failed_nodes}",
         "nodes": nodes,
         "remaining_nodes": remaining,
@@ -48,13 +49,17 @@ def calculate(data: dict[str, Any]) -> dict[str, Any]:
         "storage_protection_valid": protection,
         "network_redundancy_valid": network,
         "failure_domains_independent": failure_domains,
-        "eligible_for_final_design": overall,
-        "note": "Passing capacity math does not replace vendor support-matrix and failure-domain validation.",
+        "eligible_for_final_design": False,
+        "final_design_status": "CONDITIONAL" if overall else "FAIL",
+        "note": (
+            "A PASS proves only the supplied N+1 arithmetic and asserted booleans. Final-design eligibility remains "
+            "CONDITIONAL until versioned vendor support, quorum, protection, rebuild and failure-domain evidence is reviewed."
+        ),
     }
 
 
 def check_n_plus_one(nodes: int, cpu_total: float, memory_total: float) -> bool:
-    """Compatibility wrapper; use calculate() for procurement-grade validation."""
+    """Deprecated arithmetic-only compatibility wrapper; never use as final-design evidence."""
     if nodes < 3:
         return False
     remaining = nodes - 1
@@ -66,8 +71,8 @@ def main() -> None:
     parser.add_argument("input", type=Path)
     parser.add_argument("--pretty", action="store_true")
     args = parser.parse_args()
-    data = json.loads(args.input.read_text(encoding="utf-8"))
-    print(json.dumps(calculate(data), ensure_ascii=False, indent=2 if args.pretty else None))
+    data = strict_json_loads(args.input.read_text(encoding="utf-8"))
+    print(strict_json_dumps(calculate(data), ensure_ascii=False, indent=2 if args.pretty else None))
 
 
 if __name__ == "__main__":

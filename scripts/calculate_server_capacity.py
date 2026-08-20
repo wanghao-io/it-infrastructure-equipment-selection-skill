@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 from typing import Any, Dict, Iterable
+
+from contracts import require_float, require_int, strict_json_dumps
 
 
 def calculate_virtualization(
@@ -22,17 +25,19 @@ def calculate_virtualization(
     cpu_headroom: float = 0.25,
     memory_headroom: float = 0.30,
 ) -> Dict[str, Any]:
-    if vm_count < 0 or avg_vcpu < 0 or avg_memory_gb < 0:
-        raise ValueError("VM inputs must be >= 0")
-    if cpu_overcommit <= 0:
-        raise ValueError("cpu_overcommit must be > 0")
+    vm_count = require_int(vm_count, "vm_count", minimum=0)
+    avg_vcpu = require_float(avg_vcpu, "avg_vcpu", minimum=0)
+    avg_memory_gb = require_float(avg_memory_gb, "avg_memory_gb", minimum=0)
+    cpu_overcommit = require_float(cpu_overcommit, "cpu_overcommit", minimum=0.000001)
+    cpu_headroom = require_float(cpu_headroom, "cpu_headroom", minimum=0)
+    memory_headroom = require_float(memory_headroom, "memory_headroom", minimum=0)
 
     base_cores = vm_count * avg_vcpu / cpu_overcommit
     base_memory = vm_count * avg_memory_gb
     return {
         "mode": "virtualization",
-        "estimated_physical_cpu_cores": max(1, round(base_cores * (1 + cpu_headroom))),
-        "estimated_memory_gb": max(1, round(base_memory * (1 + memory_headroom))),
+        "estimated_physical_cpu_cores": max(1, math.ceil(base_cores * (1 + cpu_headroom))),
+        "estimated_memory_gb": max(1, math.ceil(base_memory * (1 + memory_headroom))),
         "assumptions": {
             "cpu_overcommit": cpu_overcommit,
             "cpu_headroom": cpu_headroom,
@@ -50,6 +55,12 @@ def calculate_services(
     minimum_cpu_cores: int = 0,
     minimum_memory_gb: int = 0,
 ) -> Dict[str, Any]:
+    cpu_headroom = require_float(cpu_headroom, "cpu_headroom", minimum=0)
+    memory_headroom = require_float(memory_headroom, "memory_headroom", minimum=0)
+    os_cpu_cores = require_float(os_cpu_cores, "os_cpu_cores", minimum=0)
+    os_memory_gb = require_float(os_memory_gb, "os_memory_gb", minimum=0)
+    minimum_cpu_cores = require_int(minimum_cpu_cores, "minimum_cpu_cores", minimum=0)
+    minimum_memory_gb = require_int(minimum_memory_gb, "minimum_memory_gb", minimum=0)
     service_list = list(services)
     cpu = os_cpu_cores
     memory = os_memory_gb
@@ -57,16 +68,14 @@ def calculate_services(
 
     for service in service_list:
         name = str(service.get("name", "unnamed-service"))
-        cores = float(service.get("cpu_cores", 0) or 0)
-        mem = float(service.get("memory_gb", 0) or 0)
-        if cores < 0 or mem < 0:
-            raise ValueError("service cpu_cores and memory_gb must be >= 0")
+        cores = require_float(service.get("cpu_cores", 0) or 0, f"{name}.cpu_cores", minimum=0)
+        mem = require_float(service.get("memory_gb", 0) or 0, f"{name}.memory_gb", minimum=0)
         cpu += cores
         memory += mem
         breakdown.append({"name": name, "cpu_cores": cores, "memory_gb": mem})
 
-    recommended_cpu = max(minimum_cpu_cores, round(cpu * (1 + cpu_headroom)))
-    recommended_memory = max(minimum_memory_gb, round(memory * (1 + memory_headroom)))
+    recommended_cpu = max(minimum_cpu_cores, math.ceil(cpu * (1 + cpu_headroom)))
+    recommended_memory = max(minimum_memory_gb, math.ceil(memory * (1 + memory_headroom)))
 
     return {
         "mode": "consolidated-services",
@@ -115,7 +124,7 @@ def main() -> None:
     else:
         parser.error("provide --services-json or all of --vm-count --avg-vcpu --avg-memory-gb")
 
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(strict_json_dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

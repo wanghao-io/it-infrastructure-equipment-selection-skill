@@ -124,8 +124,13 @@ def score_candidates(data: dict[str, Any]) -> list[dict[str, Any]]:
         raise ValueError("Total criterion weight must be greater than zero.")
 
     rows: list[dict[str, Any]] = []
-    for candidate in candidates:
+    seen_ids: set[str] = set()
+    for index, candidate in enumerate(candidates):
         name = candidate.get("name", "Unnamed")
+        candidate_id = str(candidate.get("candidate_id", f"candidate-{index + 1}")).strip()
+        if not candidate_id or candidate_id in seen_ids:
+            raise ValueError("Each candidate must have a unique non-empty candidate_id.")
+        seen_ids.add(candidate_id)
         weighted_total = 0.0
         for criterion in criteria:
             key = criterion.get("key")
@@ -146,6 +151,8 @@ def score_candidates(data: dict[str, Any]) -> list[dict[str, Any]]:
         rows.append(
             {
                 "name": name,
+                "candidate_id": candidate_id,
+                "input_index": index,
                 "gate": gate,
                 "score": weighted_total,
                 "gates": gates,
@@ -168,7 +175,7 @@ def build_report(data: dict[str, Any]) -> str:
         raise ValueError("Total criterion weight must be greater than zero.")
 
     ranked = score_candidates(data)
-    row_by_name = {item["name"]: item for item in ranked}
+    row_by_index = {item["input_index"]: item for item in ranked}
 
     lines: list[str] = ["# Vendor / Model Comparison", ""]
     lines.append(
@@ -194,9 +201,9 @@ def build_report(data: dict[str, Any]) -> str:
         lines.append("| " + " | ".join(row) + " |")
 
     lines.extend(["", "## Mandatory Gate Results", ""])
-    for candidate in candidates:
+    for index, candidate in enumerate(candidates):
         name = candidate.get("name", "Unnamed")
-        info = row_by_name[name]
+        info = row_by_index[index]
         lines.append(f"### {name} — {info['gate']}")
         if not info["gates"]:
             lines.append("- CONDITIONAL: No mandatory gates supplied; mandatory requirements still need confirmation.")

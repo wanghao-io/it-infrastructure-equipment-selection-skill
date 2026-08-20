@@ -19,7 +19,15 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 
-from contracts import is_unresolved, require_bool, require_currency, require_float, require_iso_date
+from contracts import (
+    is_unresolved,
+    require_bool,
+    require_currency,
+    require_float,
+    require_iso_date,
+    strict_json_dumps,
+    strict_json_loads,
+)
 from validate_json_schemas import validate_file
 
 
@@ -311,6 +319,17 @@ def normalize(items: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
 def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
     """Select the strongest eligible evidence tier without blending weaker prices."""
     rows = normalize(items)
+    try:
+        product_class = _infer_product_class(rows, None)
+    except ValueError as exc:
+        return {
+            "status": "needs-confirmation",
+            "reason": str(exc),
+            "recommended_budget_low": None,
+            "recommended_budget_high": None,
+            "confidence": "Needs confirmation",
+            "confidence_level": "Low",
+        }
     scopes = {str(row.get("decision_scope_id", "")).strip() for row in rows}
     if len(scopes) > 1:
         return {
@@ -424,6 +443,7 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
 
     return {
         "status": "ready",
+        "product_class": product_class,
         "preferred_evidence_priority": best_priority,
         "anchor_count": len(anchors),
         "currency": next(iter(currencies)),
@@ -445,13 +465,26 @@ def select_budget_anchor(items: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
 
 
 def _infer_product_class(rows: Iterable[Mapping[str, Any]], explicit: Optional[str]) -> str:
-    if explicit:
-        return explicit.strip().lower()
-    for row in rows:
-        value = str(row.get("product_class", "")).strip().lower()
-        if value:
-            return value
-    return ""
+    allowed = {"configurable-enterprise", "fixed-sku", "commodity-component"}
+    classes = {
+        str(row.get("product_class", "")).strip().lower()
+        for row in rows
+        if str(row.get("product_class", "")).strip()
+    }
+    if len(classes) > 1:
+        raise ValueError(
+            "Price evidence with different product_class values must not share one decision scope."
+        )
+    declared = explicit.strip().lower() if explicit else ""
+    if declared and declared not in allowed:
+        raise ValueError(f"Unsupported product_class: {declared}")
+    if classes - allowed:
+        raise ValueError(f"Unsupported evidence product_class: {', '.join(sorted(classes - allowed))}")
+    if declared and classes and declared not in classes:
+        raise ValueError(
+            "The product_class override conflicts with the evidence product_class and cannot change decision policy."
+        )
+    return declared or (next(iter(classes)) if classes else "")
 
 
 def assess_budget_revision(
@@ -459,6 +492,7 @@ def assess_budget_revision(
     items: Iterable[Mapping[str, Any]],
     *,
     product_class: Optional[str] = None,
+    existing_currency: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Assess whether current evidence can safely revise an existing unit budget.
 
@@ -469,7 +503,19 @@ def assess_budget_revision(
     rows = normalize(item_list)
     anchor = select_budget_anchor(item_list)
     existing = round(require_float(existing_budget, "existing_budget", minimum=0), 2)
-    inferred_class = _infer_product_class(rows, product_class)
+    try:
+        inferred_class = _infer_product_class(rows, product_class)
+    except ValueError as exc:
+        return {
+            "decision": "hold-existing-provisional",
+            "product_class": "",
+            "existing_budget": existing,
+            "recommended_budget_low": existing,
+            "recommended_budget_high": existing,
+            "confidence": "Needs confirmation",
+            "reason": str(exc),
+            "budget_anchor": anchor,
+        }
 
     if existing <= 0:
         return {
@@ -494,6 +540,31 @@ def assess_budget_revision(
             "recommended_budget_high": existing,
             "confidence": "Needs confirmation",
             "reason": reason,
+            "budget_anchor": anchor,
+        }
+
+    if not existing_currency:
+        return {
+            "decision": "hold-existing-provisional",
+            "product_class": inferred_class,
+            "existing_budget": existing,
+            "recommended_budget_low": existing,
+            "recommended_budget_high": existing,
+            "confidence": "Needs confirmation",
+            "reason": "Existing budget currency is required before comparing it with current evidence.",
+            "budget_anchor": anchor,
+        }
+    baseline_currency = require_currency(existing_currency, "existing_currency")
+    if baseline_currency != anchor.get("currency"):
+        return {
+            "decision": "hold-existing-provisional",
+            "product_class": inferred_class,
+            "existing_budget": existing,
+            "existing_currency": baseline_currency,
+            "recommended_budget_low": existing,
+            "recommended_budget_high": existing,
+            "confidence": "Needs confirmation",
+            "reason": "Existing budget and current evidence currencies differ; convert with an explicit dated basis before revision.",
             "budget_anchor": anchor,
         }
 
@@ -554,6 +625,7 @@ def assess_budget_revision(
         "decision": "revise-to-current-anchor" if (low != existing or high != existing) else "keep-current-anchor",
         "product_class": inferred_class,
         "existing_budget": existing,
+        "existing_currency": baseline_currency,
         "recommended_budget_low": round(low, 2),
         "recommended_budget_high": round(high, 2),
         "confidence": anchor.get("confidence"),
@@ -579,6 +651,10 @@ def main() -> None:
         "--product-class",
         help="Optional product class override, e.g. configurable-enterprise",
     )
+    parser.add_argument(
+        "--existing-currency",
+        help="Three-letter currency code for --existing-budget; required for a revision decision",
+    )
     contract_group = parser.add_mutually_exclusive_group()
     contract_group.add_argument(
         "--strict-contract",
@@ -592,7 +668,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    data = json.loads(args.input.read_text(encoding="utf-8"))
+    data = strict_json_loads(args.input.read_text(encoding="utf-8"))
     if args.strict_contract:
         if not isinstance(data, dict) or "schema_version" not in data:
             raise SystemExit("$: strict contract requires a versioned object envelope")
@@ -622,14 +698,17 @@ def main() -> None:
     if args.summary:
         result: Any = {"items": rows, "budget_anchor": select_budget_anchor(items)}
         if args.existing_budget is not None:
+            if not args.existing_currency:
+                raise SystemExit("--existing-currency is required with --existing-budget")
             result["budget_revision"] = assess_budget_revision(
                 args.existing_budget,
                 items,
                 product_class=args.product_class,
+                existing_currency=args.existing_currency,
             )
     else:
         result = rows
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(strict_json_dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

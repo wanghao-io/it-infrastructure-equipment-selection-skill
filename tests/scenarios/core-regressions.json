@@ -3,10 +3,13 @@
     "name": "budget-limited-single-server-does-not-imply-hci",
     "requirements": {
       "server_count": 1,
+      "hci_required": false,
       "virtualization_required": true,
       "workload_count": 5,
       "availability": "standard",
       "access_switch_count": 1,
+      "redundant_switching_required": false,
+      "high_speed_aggregation_required": false,
       "vlan_count": 1
     },
     "expect": {
@@ -22,6 +25,8 @@
     "requirements": {
       "server_count": 1,
       "access_switch_count": 1,
+      "redundant_switching_required": false,
+      "high_speed_aggregation_required": false,
       "vlan_count": 5,
       "inter_vlan_communication_required": true
     },

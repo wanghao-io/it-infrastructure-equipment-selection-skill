@@ -158,7 +158,7 @@ class InfrastructureCliTests(unittest.TestCase):
         result = self.run_cli("run", "storage", "--", *arguments)
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn("Traceback", result.stderr)
-        self.assertIn("drive_count and drive_tb must be > 0", result.stderr)
+        self.assertIn("drive_count must be finite", result.stderr)
 
         debug = self.run_cli("run", "--debug", "storage", "--", *arguments)
         self.assertNotEqual(debug.returncode, 0)
@@ -175,6 +175,36 @@ class InfrastructureCliTests(unittest.TestCase):
                 self.assertIn("is not available through run", result.stderr)
                 self.assertIn(item["excluded_reason"], result.stderr)
 
+    def test_guarded_commands_preflight_and_execute(self) -> None:
+        guide = self.run_cli(
+            "guide", "--templates", str(ROOT / "assets/scenario-template-example.json"),
+            "--scenario", "example:industrial-edge", "--pretty",
+        )
+        self.assertEqual(guide.returncode, 0, guide.stderr)
+        self.assertIn("control_criticality", guide.stdout)
+
+        server = self.run_cli(
+            "server-quotes", "compare", str(ROOT / "assets/server-rfq-v2-example.json"), "--pretty"
+        )
+        self.assertEqual(server.returncode, 0, server.stderr)
+        self.assertEqual(json.loads(server.stdout)["configuration_match_level"], "exact-procurement-object")
+
+        old_server = self.run_cli(
+            "server-quotes", "compare", str(ROOT / "assets/server-rfq-example.json")
+        )
+        self.assertNotEqual(old_server.returncode, 0)
+        self.assertIn("requires server-rfq-v2", old_server.stderr)
+
+        price = self.run_cli("price-evidence", str(ROOT / "assets/price-evidence-v2-example.json"))
+        self.assertEqual(price.returncode, 0, price.stderr)
+        self.assertIn("budget_anchor", json.loads(price.stdout))
+
+        migration = self.run_cli(
+            "migrate", "project-retrospective",
+            str(ROOT / "examples/real-project-retrospectives/manufacturing-scada-budget-revision.json"),
+        )
+        self.assertEqual(migration.returncode, 0, migration.stderr)
+        self.assertTrue(json.loads(migration.stdout)["source_unchanged"])
     def test_named_contract_validation_uses_caller_cwd(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             cwd = Path(directory)

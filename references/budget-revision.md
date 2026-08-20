@@ -84,10 +84,11 @@ python3 scripts/normalize_price_evidence.py evidence.json \
   --summary \
   --strict-contract \
   --existing-budget <old-unit-price> \
+  --existing-currency <ISO-4217-code> \
   --product-class configurable-enterprise
 ```
 
-Do not mix evidence from different BOM lines, products or projects into one range. Do not mix currencies without an explicit conversion basis.
+Do not mix evidence from different BOM lines, products, product classes or projects into one range. The baseline currency is mandatory; do not compare or revise across currencies without an explicit dated conversion basis. A CLI product-class argument may confirm but never override a conflicting evidence class.
 
 Interpret the result literally:
 

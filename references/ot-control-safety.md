@@ -88,6 +88,19 @@ Do not expose PLC/control networks directly to the Internet.
 
 When an OT system later connects to office IT, cloud, vendor remote support or Internet services, re-evaluate boundary protection, remote-access control, logging and authentication. Do not assume a previously isolated LAN remains safe after interconnection.
 
+External, vendor, Web or mobile remote access remains `CONDITIONAL` until all applicable controls are defined:
+
+- named account and MFA;
+- approved VPN or controlled jump/bastion path, with no direct PLC exposure;
+- role and asset scope, approval and time-limited authorization;
+- session recording or equivalent command/audit evidence;
+- idle/session timeout, revocation and emergency termination;
+- vendor access window, responsible sponsor and post-session review;
+- source-device/security posture where required;
+- explicit read-only versus control permission and prohibited split tunneling where policy requires it.
+
+Loss of the remote-access service must not bypass local authority or leave an uncontrolled persistent session.
+
 ## 7. Fail-Safe Expectations
 
 Loss of SCADA, server, network or Web client should not defeat local equipment protection.
@@ -126,6 +139,8 @@ Test at least:
 6. command and result appear in the audit log;
 7. network loss does not create an unintended start/stop;
 8. system recovery does not replay stale commands.
+9. expired or revoked remote authorization cannot reconnect or issue a command;
+10. terminating the bastion/VPN session removes the control path without changing local equipment safety state.
 
 ## 10. Anti-patterns
 

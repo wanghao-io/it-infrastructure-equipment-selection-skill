@@ -7,6 +7,8 @@ import argparse
 import json
 import math
 
+from contracts import require_bool, require_float, require_int, strict_json_dumps
+
 
 def calculate(
     endpoints: int,
@@ -16,20 +18,24 @@ def calculate(
     vlan_count: int = 1,
     inter_vlan_communication_required: bool = False,
 ) -> dict:
-    if min(endpoints, uplinks, management_ports) < 0:
-        raise ValueError("port counts must be >= 0")
-    if spare_ratio < 0:
-        raise ValueError("spare_ratio must be >= 0")
-    if vlan_count < 1:
-        raise ValueError("vlan_count must be >= 1")
+    endpoints = require_int(endpoints, "endpoints", minimum=0)
+    uplinks = require_int(uplinks, "uplinks", minimum=0)
+    management_ports = require_int(management_ports, "management_ports", minimum=0)
+    spare_ratio = require_float(spare_ratio, "spare_ratio", minimum=0, maximum=10)
+    vlan_count = require_int(vlan_count, "vlan_count", minimum=1)
+    inter_vlan_communication_required = require_bool(
+        inter_vlan_communication_required, "inter_vlan_communication_required"
+    )
 
-    base = endpoints + uplinks + management_ports
-    spare = math.ceil(base * spare_ratio)
-    required = base + spare
+    downlink_base = endpoints + management_ports
+    spare = math.ceil(downlink_base * spare_ratio)
+    required_downlinks = downlink_base + spare
+    base = downlink_base + uplinks
+    required = required_downlinks + uplinks
 
-    if required <= 24:
+    if required_downlinks <= 24:
         switch_port_class = 24
-    elif required <= 48:
+    elif required_downlinks <= 48:
         switch_port_class = 48
     else:
         switch_port_class = None
@@ -38,10 +44,15 @@ def calculate(
 
     return {
         "base_ports": base,
+        "downlink_base_ports": downlink_base,
+        "uplink_ports": uplinks,
         "spare_ports": spare,
         "required_ports": required,
+        "required_downlink_ports": required_downlinks,
         "single_switch_port_class": switch_port_class,
         "multiple_switches_or_larger_platform_required": switch_port_class is None,
+        "candidate_port_layout_confirmation_required": uplinks > 0,
+        "port_layout_note": "The 24/48 class applies to downlinks. Confirm separate/shared uplink cages, media, speed, stacking and licensing on the exact candidate.",
         "vlan_count": vlan_count,
         "layer3_routing_required": l3_required,
         "routing_note": (
@@ -62,7 +73,7 @@ def main() -> None:
     parser.add_argument("--inter-vlan", action="store_true")
     args = parser.parse_args()
 
-    print(json.dumps(calculate(
+    print(strict_json_dumps(calculate(
         args.endpoints,
         args.uplinks,
         args.management_ports,

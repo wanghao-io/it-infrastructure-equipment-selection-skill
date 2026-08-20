@@ -96,10 +96,10 @@
       "description": "Budget control range from validated independent server quotes",
       "exposure": "public-gated",
       "side_effects": "stdout-only",
-      "input_contract": "server-rfq-v1",
+      "input_contract": "server-rfq-v2",
       "applicability": "Comparison of exact server quotations against a frozen RFQ baseline.",
       "limitations": ["A generic run must not bypass the server RFQ contract or supplier-independence checks."],
-      "excluded_reason": "Requires a dedicated server-quotes command that always performs server-rfq-v1 preflight."
+      "excluded_reason": "Requires a dedicated server-quotes command that always performs current server-rfq preflight."
     },
     "vendor-compare": {
       "script": "scripts/compare_vendors.py",
@@ -246,16 +246,17 @@
       "description": "Server quotation validation against a frozen RFQ baseline",
       "exposure": "public-gated",
       "side_effects": "stdout-only",
-      "input_contract": "server-rfq-v1",
+      "input_contract": "server-rfq-v2",
       "applicability": "Technical and commercial validation of server quotations before price comparison.",
-      "limitations": ["Structure must pass the server RFQ contract before quote eligibility is evaluated."],
-      "excluded_reason": "Requires a dedicated server-quotes command that always performs server-rfq-v1 preflight."
+      "limitations": ["V1 is a coarse minimum gate; exact-configuration claims require server-rfq-v2."],
+      "excluded_reason": "Requires a dedicated server-quotes command that always performs current server-rfq preflight."
     }
   },
   "contracts": {
     "price-evidence-v1": "schemas/price-evidence.schema.json",
     "price-evidence-v2": "schemas/v2/price-evidence.schema.json",
     "server-rfq-v1": "schemas/server-rfq.schema.json",
+    "server-rfq-v2": "schemas/v2/server-rfq.schema.json",
     "tco-v1": "schemas/tco.schema.json",
     "hci-failover-v1": "schemas/hci-failover.schema.json",
     "project-retrospective-v1": "schemas/project-retrospective.schema.json",

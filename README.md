@@ -6,9 +6,9 @@
 
 面向企业 IT 基础设施与工业 IT/OT 项目的跨平台 Agent Skill：从需求发现、最简合理架构和确定性容量计算，一直到设备选型、实时价格证据、TCO、BOM、RFQ/招标、合规检查与网络拓扑。
 
-Supported hosts include OpenAI Codex, Claude Code, GitHub Copilot, Gemini CLI and other compatible Agent Skills hosts.
+Target host formats include OpenAI Codex, Claude Code, GitHub Copilot and Gemini CLI. Filesystem/install compatibility is tested separately from live host discovery and scenario behavior; verify the installed host as documented.
 
-Current stable version: **v1.4.3**. See the current [Release Notes](RELEASE_NOTES.md) and cumulative [Changelog](CHANGELOG.md).
+Current stable version: **v1.5.0**. See the current [Release Notes](RELEASE_NOTES.md) and cumulative [Changelog](CHANGELOG.md).
 
 [两条使用路径](#两条使用路径) · [任务配方](#可复制任务配方) · [Schema 治理](#schema-v1--v2-治理) · [私有扩展](#私有扩展边界) · [English](#english) · [Release Notes](RELEASE_NOTES.md) · [Contributing](CONTRIBUTING.md)
 
@@ -113,6 +113,15 @@ python3 scripts/infra_cli.py validate price-evidence-v2 assets/price-evidence-v2
 python3 scripts/validate_json_schemas.py --catalog
 ```
 
+受控高风险命令：
+
+```bash
+python3 scripts/infra_cli.py guide --templates assets/scenario-template-example.json --scenario example:industrial-edge --pretty
+python3 scripts/infra_cli.py server-quotes compare assets/server-rfq-v2-example.json --pretty
+python3 scripts/infra_cli.py price-evidence assets/price-evidence-v2-example.json
+python3 scripts/infra_cli.py migrate project-retrospective examples/real-project-retrospectives/manufacturing-scada-budget-revision.json
+```
+
 `assets/tool-catalog.json` 是确定性 CLI 的白名单；Agent 仍可按 Router 使用其他专用脚本。
 
 ## 可复制任务配方
@@ -166,6 +175,7 @@ python3 scripts/normalize_price_evidence.py evidence.json \
   --summary \
   --strict-contract \
   --existing-budget 92000 \
+  --existing-currency CNY \
   --product-class configurable-enterprise
 ```
 
@@ -180,8 +190,10 @@ $it-infrastructure-equipment-selection
 ```
 
 ```bash
-python3 scripts/compare_server_quotes.py assets/server-rfq-example.json --pretty
+python3 scripts/infra_cli.py server-quotes compare assets/server-rfq-v2-example.json --pretty
 ```
+
+`server-rfq-v1` 只验证粗粒度最低配置；精确配置与 High 置信度声明必须使用 v2。
 
 ### 厂商比较与 TCO
 
@@ -317,7 +329,9 @@ python3 scripts/validate_release.py
 - 贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)
 - 支持与安全：[SUPPORT.md](SUPPORT.md) · [SECURITY.md](SECURITY.md)
 - 治理与维护者：[GOVERNANCE.md](GOVERNANCE.md) · [MAINTAINERS.md](MAINTAINERS.md)
-- 独立模拟前向验证与 v1.5 门禁方案：[docs/forward-validation-v1.4.2.md](docs/forward-validation-v1.4.2.md)
+- 独立模拟前向验证：[docs/forward-validation-v1.4.2.md](docs/forward-validation-v1.4.2.md)
+- 当前 v1.5 可执行方案：[docs/v1.5-plan.md](docs/v1.5-plan.md)
+- 一页决策摘要示例：[examples/decision-summary-demo.md](examples/decision-summary-demo.md)
 - 发布历史：[CHANGELOG.md](CHANGELOG.md) · [RELEASE_NOTES.md](RELEASE_NOTES.md)
 
 项目当前公开披露的人类 bus factor 为 **1**。文档、测试和发布手册降低知识集中风险，但不会把自动化等同于第二位真实维护者。

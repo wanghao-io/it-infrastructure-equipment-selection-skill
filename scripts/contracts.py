@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import math
+import json
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Any, Iterable
@@ -113,3 +114,17 @@ def base_result(status: str = "READY") -> dict[str, Any]:
         "assumptions": [],
         "provenance": [],
     }
+
+
+def reject_non_finite_json_constant(value: str) -> None:
+    """Reject Python's non-standard NaN/Infinity JSON extensions."""
+    raise ValueError(f"non-standard JSON numeric constant is not allowed: {value}")
+
+
+def strict_json_loads(text: str) -> Any:
+    return json.loads(text, parse_constant=reject_non_finite_json_constant)
+
+
+def strict_json_dumps(value: Any, **kwargs: Any) -> str:
+    """Serialize machine output as standards-compliant JSON only."""
+    return json.dumps(value, allow_nan=False, **kwargs)

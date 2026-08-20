@@ -30,7 +30,9 @@ git diff --check
 6. Push a focused branch, open a PR, and wait for every required GitHub Actions check.
 7. Merge only the reviewed, unchanged PR head.
 
-## Create an immutable release
+## Create a non-reused annotated release tag
+
+The workflow refuses tag reuse and asset clobbering. GitHub's repository-level Immutable Releases setting is a separate governance control; do not claim `isImmutable=true` unless that setting has been enabled and verified.
 
 From an updated clean `main`:
 

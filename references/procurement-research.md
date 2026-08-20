@@ -1,5 +1,15 @@
 # Procurement Research and Evidence Workflow
 
+## Quick path
+
+1. Derive search keys from the frozen technical requirement.
+2. Verify official specification, compatibility, lifecycle and exact procurement object.
+3. Collect configuration-matched current evidence before historical or generic context.
+4. Normalize commercial scope and exclude starting, partial or incomparable signals.
+5. Apply Mandatory eligibility and evidence priority before recommending or budgeting.
+
+Sections: [Evidence types](#1-separate-evidence-types) · [Technical hierarchy](#2-technical-source-hierarchy) · [Pricing hierarchy](#3-pricing-evidence-hierarchy) · [Research workflow](#4-search-strategy) · [Evidence classes](#5-evidence-classes) · [Budget output](#6-budget-output-rules) · [Required output](#7-required-output-for-equipment-research) · [Interpretation](#8-price-interpretation-rules) · [Anti-patterns](#9-anti-patterns)
+
 Use this reference when selecting real equipment, estimating budgets, validating current models, or comparing market prices.
 
 For highly configurable enterprise equipment also load `references/exact-configuration-pricing.md` and `references/price-evidence.md`.

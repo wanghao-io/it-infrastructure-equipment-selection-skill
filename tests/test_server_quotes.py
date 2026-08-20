@@ -16,13 +16,20 @@ class ServerQuoteTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.case = json.loads((ROOT / "assets/server-rfq-example.json").read_text(encoding="utf-8"))
+        cls.v2_case = json.loads((ROOT / "assets/server-rfq-v2-example.json").read_text(encoding="utf-8"))
 
     def test_two_valid_quotes_create_control_range(self):
-        result = compare(self.case["requirement"], self.case["quotes"])
+        result = compare(self.v2_case["requirement"], self.v2_case["quotes"], contract_version=2)
         self.assertEqual(result["status"], "ready")
         self.assertEqual(result["independent_quote_count"], 2)
         self.assertEqual(result["confidence_level"], "High")
+        self.assertEqual(result["configuration_match_level"], "exact-procurement-object")
         self.assertGreater(result["budget_control_high"], result["market_high"])
+
+    def test_v1_is_never_reported_as_exact_or_high_confidence(self):
+        result = compare(self.case["requirement"], self.case["quotes"], contract_version=1)
+        self.assertEqual(result["confidence_level"], "Medium")
+        self.assertEqual(result["configuration_match_level"], "coarse-minimum")
 
     def test_configuration_shortfall_is_not_price_eligible(self):
         quote = dict(self.case["quotes"][0])
@@ -55,6 +62,16 @@ class ServerQuoteTests(unittest.TestCase):
         second = dict(first, quote_id="Q-A-SECOND", supplier="supplier   a")
         result = compare(self.case["requirement"], [first, second])
         self.assertEqual(result["independent_quote_count"], 1)
+
+    def test_newer_supplier_revision_replaces_older_higher_quote(self):
+        old = dict(self.case["quotes"][0], source_date="2026-08-10", quote_valid_until="2026-09-12")
+        new = dict(
+            self.case["quotes"][0], quote_id="Q-A-NEW", source_date="2026-08-12",
+            hardware_price=90000,
+        )
+        result = compare(self.case["requirement"], [old, new])
+        self.assertEqual(result["independent_quote_count"], 1)
+        self.assertEqual(result["market_low"], 100000.0)
 
     def test_negative_risk_reserve_is_rejected(self):
         requirement = dict(self.case["requirement"], risk_reserve_percent=-20)
