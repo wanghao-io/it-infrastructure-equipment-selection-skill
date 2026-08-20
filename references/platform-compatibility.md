@@ -6,13 +6,13 @@ The goal is one skill codebase that can be installed into multiple agent hosts w
 
 ## Supported Hosts
 
-| Host | Status | User-scope location | Project/workspace location | Invocation / verification |
+| Host | Format / installer evidence | Discovery / scenario evidence | User-scope location | Project/workspace location |
 |---|---|---|---|---|
-| OpenAI Codex | Supported | `~/.agents/skills/<skill-name>/` | `.agents/skills/<skill-name>/` | invoke with `$it-infrastructure-equipment-selection` or let Codex select it |
-| Claude Code | Supported | `~/.claude/skills/<skill-name>/` | `.claude/skills/<skill-name>/` | invoke with `/it-infrastructure-equipment-selection` or let Claude select it |
-| GitHub Copilot | Supported | `~/.agents/skills/<skill-name>/` or `~/.copilot/skills/<skill-name>/` | `.github/skills/<skill-name>/`, `.agents/skills/<skill-name>/` or `.claude/skills/<skill-name>/` | Copilot selects relevant skills; Copilot CLI can inspect/reload skills |
-| Gemini CLI | Supported | `~/.agents/skills/<skill-name>/` or `~/.gemini/skills/<skill-name>/` | `.agents/skills/<skill-name>/` or `.gemini/skills/<skill-name>/` | use `/skills list` / `/skills reload`; Gemini activates matching skills |
-| Other Agent-Skills-compatible hosts | Format-compatible | host-specific | host-specific | follow the host's current skill-discovery documentation |
+| OpenAI Codex | CI copy-install plus staged `gh skill publish --dry-run` | verify `$it-infrastructure-equipment-selection` after install; fresh-agent records are simulated, not continuous host certification | `~/.agents/skills/<skill-name>/` | `.agents/skills/<skill-name>/` |
+| Claude Code | path and copy-install compatibility tests | manual `/it-infrastructure-equipment-selection` scenario check required | `~/.claude/skills/<skill-name>/` | `.claude/skills/<skill-name>/` |
+| GitHub Copilot | path and copy-install compatibility tests | manual discovery and matching-prompt check required | `~/.agents/skills/<skill-name>/` or `~/.copilot/skills/<skill-name>/` | `.github/skills/<skill-name>/`, `.agents/skills/<skill-name>/` or `.claude/skills/<skill-name>/` |
+| Gemini CLI | path and copy-install compatibility tests | manual `/skills list`, reload and matching-prompt check required | `~/.agents/skills/<skill-name>/` or `~/.gemini/skills/<skill-name>/` | `.agents/skills/<skill-name>/` or `.gemini/skills/<skill-name>/` |
+| Other Agent-Skills-compatible hosts | portable-format intent only | host-specific verification required | host-specific | host-specific |
 
 `<skill-name>` is `it-infrastructure-equipment-selection`.
 
@@ -32,8 +32,9 @@ Keep the shared `SKILL.md` on the portable subset of the Agent Skills format:
 
 - `name`;
 - `description`;
-- `license`;
 - Markdown instructions and relative links to bundled resources.
+
+The repository license remains in `LICENSE`; do not duplicate it as trigger metadata in the shared frontmatter.
 
 Do not put Claude-Code-only, Codex-only, Copilot-only or Gemini-only behavior in the shared frontmatter unless there is a demonstrated cross-host need. Put host-specific installation/operation notes in this file instead.
 
@@ -50,6 +51,17 @@ This skill therefore uses capability-based behavior:
 - Never assume a particular MCP server, browser, marketplace connector or shell permission exists unless the current host exposes it.
 
 This keeps the skill useful across hosts without silently degrading evidence quality.
+
+## CLI failure contract
+
+`scripts/infra_cli.py` keeps Agent research separate from deterministic commands. Its guarded commands are `guide`, `server-quotes`, `price-evidence` and `migrate`.
+
+- Exit `0` only when validation and the requested deterministic operation complete.
+- Invalid contract/version, non-finite JSON, missing Mandatory evidence, mixed scope/currency, technical ineligibility or overwrite refusal exits non-zero.
+- Machine output is written to stdout only after required preflight succeeds. Diagnostics go to stderr.
+- Normal user errors are concise and contain no traceback; `--debug` may preserve a traceback.
+- A failed migration or renderer must not overwrite the source or an existing destination.
+- CLI success proves contract/calculation status only; it does not prove live price, lifecycle, technical truth or final engineering eligibility.
 
 ## Installer
 

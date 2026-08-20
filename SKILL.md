@@ -8,7 +8,6 @@ description: >
   research, network topology generation and industry reference designs. Architecture follows project
   requirements: HCI, HA, core switching, firewalls, domestic/Xinchuang platforms and industrial IT/OT
   patterns are optional, not defaults.
-license: MIT
 ---
 
 # IT Infrastructure Equipment Selection
@@ -135,7 +134,7 @@ Do not size a standalone application server from VM-count formulas. Multiple VLA
 | `price-research` or current quotation | `references/live-price-research.md` and `references/price-evidence.md` | `scripts/normalize_price_evidence.py --strict-contract`; prefer `schemas/v2/price-evidence.schema.json` |
 | configurable enterprise pricing | Also load `references/exact-configuration-pricing.md` | Normalize full hardware, accessories, licenses, support, implementation, tax and shipping |
 | `budget-revision` | `references/budget-revision.md`; also load live/exact/price references required by product class | Run `scripts/normalize_price_evidence.py --summary --strict-contract --existing-budget ...` |
-| `server-rfq` | `references/server-quotation-workflow.md` | `scripts/validate_server_quote.py`, then `scripts/compare_server_quotes.py`; contract `schemas/server-rfq.schema.json` |
+| `server-rfq` | `references/server-quotation-workflow.md` | Prefer `server-rfq-v2` with `schemas/v2/server-rfq.schema.json`; v1 is a coarse minimum gate only. Run `scripts/validate_server_quote.py`, then `scripts/compare_server_quotes.py` |
 | `vendor-compare` | `references/vendor-comparison.md` and `references/decision-support.md` | `scripts/compare_vendors.py` |
 | `tco-analysis` | `references/tco.md` | `scripts/calculate_tco.py`; contract `schemas/tco.schema.json` |
 | real-project learning or retrospective | `references/real-project-validation.md` | Validate with the supported project-retrospective contract; anonymize before publication |

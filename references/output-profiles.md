@@ -2,6 +2,19 @@
 
 Choose the output profile from the user's actual stage. Do not produce every artifact by default.
 
+## 0. Optional decision summary
+
+For a project-level answer, place a one-page decision summary before the selected detailed profile:
+
+1. current conclusion and decision state;
+2. facts and configurations that can be frozen now;
+3. Mandatory blockers and decisions awaiting evidence;
+4. the 3–7 confirmations most likely to change architecture, eligibility or budget;
+5. a compact assumption/evidence ledger;
+6. links or appendix references to unchanged calculations, BOM, evidence and acceptance detail.
+
+The summary is a presentation layer, not a replacement for engineering evidence. Never hide `CONDITIONAL`, exclusions or incomplete commercial scope to make it shorter.
+
 ## 1. quick-selection
 
 Use for a single device or fast shortlist.

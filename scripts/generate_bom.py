@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence
 
@@ -31,14 +33,43 @@ DEFAULT_CN_FIELDS = [
 ]
 
 
-def generate(items: Sequence[Mapping], filename: str = "bom.csv", fieldnames: Iterable[str] | None = None) -> None:
+def generate(
+    items: Sequence[Mapping],
+    filename: str = "bom.csv",
+    fieldnames: Iterable[str] | None = None,
+    *,
+    overwrite: bool = False,
+) -> None:
     if not items:
         raise ValueError("items must not be empty")
-    fields = list(fieldnames or items[0].keys())
-    with open(filename, "w", newline="", encoding="utf-8-sig") as f:
+    output = Path(filename)
+    if output.exists() and not overwrite:
+        raise FileExistsError(f"output already exists: {output}")
+    fields = list(fieldnames or [])
+    for item in items:
+        for key in item:
+            if key not in fields:
+                fields.append(key)
+    if not fields:
+        raise ValueError("BOM fields must not be empty")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    handle = tempfile.NamedTemporaryFile(
+        mode="w", newline="", encoding="utf-8-sig", dir=output.parent, delete=False
+    )
+    temporary = Path(handle.name)
+    try:
+        f = handle
         writer = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(items)
+        f.flush()
+        os.fsync(f.fileno())
+        f.close()
+        os.replace(temporary, output)
+    except Exception:
+        handle.close()
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 def add_budget_summary(items: list[dict], contingency_percent: float = 0.0) -> dict:
@@ -50,6 +81,7 @@ def main() -> None:
     parser.add_argument("input", type=Path, help="JSON array or {'items': [...]} file")
     parser.add_argument("output", type=Path)
     parser.add_argument("--contingency-percent", type=float, default=0.0)
+    parser.add_argument("--force", action="store_true", help="Replace an existing output after full prevalidation")
     args = parser.parse_args()
 
     data = json.loads(args.input.read_text(encoding="utf-8"))
@@ -57,9 +89,12 @@ def main() -> None:
     if not isinstance(items, list):
         raise ValueError("input must contain a list of items")
 
-    fieldnames = DEFAULT_CN_FIELDS if items and set(DEFAULT_CN_FIELDS).intersection(items[0].keys()) else None
-    generate(items, str(args.output), fieldnames=fieldnames)
-    print(json.dumps(add_budget_summary(items, args.contingency_percent), ensure_ascii=False, indent=2))
+    summary = add_budget_summary(items, args.contingency_percent)
+    if summary["status"] != "complete":
+        raise ValueError("BOM budget contains unresolved rows; no output file was written")
+    fieldnames = DEFAULT_CN_FIELDS if items and any(set(DEFAULT_CN_FIELDS).intersection(item.keys()) for item in items) else None
+    generate(items, str(args.output), fieldnames=fieldnames, overwrite=args.force)
+    print(json.dumps(summary, ensure_ascii=False, indent=2, allow_nan=False))
 
 
 if __name__ == "__main__":

@@ -2,6 +2,8 @@
 
 Date: 2026-08-15
 
+The current executable v1.5 roadmap is [`docs/v1.5-plan.md`](v1.5-plan.md). The proposal later in this document is retained as the initial conclusion from this v1.4.2 evaluation, not as a replacement for the consolidated plan.
+
 ## Scope and evidence boundary
 
 This evaluation checks whether a fresh Agent can follow the Skill on realistic project prompts after the v1.4.2 usability and release-convergence changes.
@@ -46,7 +48,7 @@ No blocking criterion was triggered in the four completed scenarios.
 - Deterministic calculations remained subordinate to Mandatory engineering gates.
 - The most consistent remaining friction is discovering the correct guarded command and controlling answer length, not a missing selection rule.
 
-## v1.5 decision
+## Initial v1.5 decision
 
 v1.5 should be an evidence-gated usability release, not a product-database or feature-accumulation release.
 

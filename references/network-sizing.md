@@ -2,13 +2,29 @@
 
 ## Port Planning
 
-Calculate:
+Calculate separate pools before selecting a chassis or switch:
 
 ```text
-endpoint ports + uplink ports + management/service ports + spare ports
+downlink endpoint ports + downlink spare ports
+uplink ports by speed/media/redundancy
+out-of-band and stack/peer-link ports
 ```
 
 Use `scripts/calculate_network_ports.py` for transparent planning. A 15–25% spare-port allowance can be used for early budgeting unless a known expansion plan provides a better figure.
+
+The helper's aggregate port class is an early budget signal only. Do not conclude that a 48-port switch is insufficient merely because 48 copper endpoints plus two uplinks total 50: many products expose separate uplink cages. Confirm the candidate's physical port layout, shared-port restrictions, stacking use and licensed speeds.
+
+## PoE planning
+
+For each powered-device class record quantity, negotiated/maximum watts, cable/temperature derating if applicable and startup behavior.
+
+```text
+required_PoE_W = Σ(device_count × design_power_W) × (1 + reserve_ratio)
+```
+
+Use at least the project-specified reserve; 20% is an early estimate only when no better growth basis exists. Check per-port class, total switch PoE budget, power-supply combination and surviving PoE budget after the defined PSU/switch failure. An AP count or switch port count alone does not prove PoE eligibility.
+
+Wireless AP quantity requires both coverage and capacity planning plus a site survey. Record wall/rack/metal obstruction, ceiling height, interference, client density, roaming, channel plan and production-device requirements; do not size solely from floor area.
 
 ## Interface Types
 

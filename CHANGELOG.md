@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.5.0 — 2026-08-20
+
+### Added
+
+- `server-rfq-v2`, an exact-procurement-object contract covering CPU identity, DIMM layout, storage media/count/endurance, RAID, NIC/optics, power, rails, service level and explicit commercial scope.
+- Guarded `infra_cli.py` commands for requirement guidance, v2 server-quote comparison, strict price evidence and non-destructive migration.
+- A one-page synthetic decision-summary demo and focused v1.5 safety regressions.
+
+### Changed
+
+- Firewall, HCI and domestic/Xinchuang references now define inputs, Mandatory gates, evidence, outputs and negative cases; network, Historian and OT guidance now covers PoE, physical uplink layout, mixed sampling classes and controlled external access.
+- HCI v1 PASS now means arithmetic capacity PASS only; final-design eligibility remains CONDITIONAL until support, protection, quorum, rebuild and failure-domain evidence is reviewed.
+- Long procurement references now provide quick paths, and the Router keeps only portable `name`/`description` trigger metadata.
+
+### Fixed
+
+- Budget revision now rejects mixed/conflicting product classes and requires a matching baseline currency, preventing policy override and cross-currency reductions.
+- Architecture evaluation keeps absent availability, connectivity and architecture facts unresolved instead of defaulting them to false or one.
+- JSON Schema and deterministic calculators reject NaN/Infinity; server resources round upward; storage/Historian/TCO factors are finite and range checked.
+- The public scenario-template example now executes through the requirement guide, duplicate vendor names no longer cross-wire Mandatory gates, and server quote revisions select the newest eligible supplier record.
+- BOM rendering preserves the union of fields, refuses accidental overwrite and validates the budget before an atomic output replacement.
+- The industrial SCADA example no longer defaults to three-node HCI, firewall or DMZ architecture from generic high-reliability language.
+
+### Validation
+
+- Added contract, currency, product-class, non-finite number, rounding, architecture UNKNOWN, HCI claim, v2 RFQ, guarded CLI, BOM and example-invariant regressions.
+- Retained the full Linux/macOS/Windows and Python 3.10/3.12 release matrix, clean archive installation and staged Agent Skills compatibility gate.
+
 ## v1.4.3 — 2026-08-15
 
 ### Fixed

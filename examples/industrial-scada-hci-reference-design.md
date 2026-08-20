@@ -32,7 +32,9 @@
 
 ---
 
-## 总体架构
+## 待验证的边界架构
+
+下图只表示“存在经确认的 IT/OT 互联和受控数据交换需求”时的一种候选边界。若互联方向、协议、远程访问和跨信任域需求尚未确认，防火墙与工业 DMZ 均保持 TBD，不能由案例默认引入。
 
 ```
 生产设备
@@ -52,9 +54,15 @@ IT基础设施平台
 
 ---
 
-## 计算平台设计
+## 计算平台方案比较
 
-推荐采用三节点超融合架构：
+仅凭“高可靠”无法确定三节点 HCI。先冻结可用性目标、RTO/RPO、维护窗口、工作负载、共享存储条件和故障域，再比较：
+
+- 独立服务器加备份；
+- 传统虚拟化加共享存储或复制；
+- 满足仲裁、N+1、重建与支持矩阵要求的 HCI。
+
+只有 HCI 在 Mandatory 门禁和全生命周期复杂度比较中胜出时，才进入节点设计。以下业务清单只是容量输入：
 
 承载业务：
 
@@ -65,11 +73,13 @@ IT基础设施平台
 - Backup Server
 - Management Server
 
-设计原则：
+若选择 HCI，仍必须验证：
 
 - 支持 N+1 故障能力评估
 - 保留未来扩展空间
 - 关键业务虚拟化部署
+- 单节点故障后的 CPU、内存、有效存储、IOPS 和网络容量
+- 仲裁、存储保护、重建空间、交换网络与故障域独立性
 
 ---
 
@@ -132,7 +142,9 @@ Applications:
 - Reporting
 - Infrastructure management
 
-## Architecture
+## Conditional Boundary Architecture
+
+The diagram below is only a candidate when an explicit IT/OT interconnection and controlled data-exchange requirement exists. Firewall and industrial-DMZ scope remain TBD until flows, protocols, remote access and trust boundaries are confirmed.
 
 ```
 Production Equipment
@@ -162,6 +174,8 @@ The skill can generate:
 - UPS sizing
 - Compliance checking
 - Procurement documentation
+
+HCI is not a default. Compare standalone servers, traditional virtualization/shared storage and HCI only after availability, RTO/RPO, workload, maintenance and failure-domain requirements are explicit. A capacity calculation cannot by itself prove that HCI is required.
 
 ## Principle
 

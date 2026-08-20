@@ -9,7 +9,17 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from contracts import is_unresolved, require_bool, require_currency, require_decimal, require_float, require_iso_date
+from contracts import (
+    is_unresolved,
+    require_bool,
+    require_currency,
+    require_decimal,
+    require_float,
+    require_iso_date,
+    strict_json_dumps,
+    strict_json_loads,
+)
+from validate_json_schemas import validate_file
 
 COST_FIELDS = (
     "hardware_price", "mandatory_accessories", "required_licenses",
@@ -18,6 +28,12 @@ COST_FIELDS = (
 REQUIRED_CONFIGURATION_FIELDS = {
     "cpu_cores", "memory_gb", "usable_storage_tb", "raid_cache_with_plp",
     "network_ports_10gbe", "redundant_power", "warranty_years",
+}
+V2_REQUIRED_CONFIGURATION_FIELDS = {
+    "cpu_model", "cpu_socket_count", "cpu_cores", "memory_gb", "dimm_count",
+    "storage_media", "drive_count", "drive_capacity_tb", "raid_level", "usable_storage_tb",
+    "raid_cache_with_plp", "nic_model", "network_ports_10gbe", "optics_included",
+    "redundant_power", "psu_count", "rails_included", "warranty_years", "service_level",
 }
 IDENTITY_FIELDS = ("quote_id", "supplier", "sales_channel")
 
@@ -32,6 +48,10 @@ def _equivalent(actual: Any, expected: Any) -> bool:
             return False
     if isinstance(expected, list):
         return all(value in (actual if isinstance(actual, list) else [actual]) for value in expected)
+    if isinstance(expected, dict):
+        return isinstance(actual, dict) and all(
+            key in actual and _equivalent(actual[key], value) for key, value in expected.items()
+        )
     return str(actual).strip().casefold() == str(expected).strip().casefold()
 
 
@@ -39,11 +59,14 @@ def _valid_identity_text(value: Any) -> bool:
     return isinstance(value, str) and not is_unresolved(value) and bool(value.strip())
 
 
-def validate_quote(requirement: dict[str, Any], quote: dict[str, Any]) -> dict[str, Any]:
+def validate_quote(
+    requirement: dict[str, Any], quote: dict[str, Any], *, contract_version: int = 1
+) -> dict[str, Any]:
     required = requirement.get("required_configuration", {})
     if not isinstance(required, dict) or not required:
         raise ValueError("required_configuration must be a non-empty object")
-    baseline_missing = sorted(REQUIRED_CONFIGURATION_FIELDS - set(required))
+    required_fields = REQUIRED_CONFIGURATION_FIELDS if contract_version == 1 else V2_REQUIRED_CONFIGURATION_FIELDS
+    baseline_missing = sorted(required_fields - set(required))
     if baseline_missing:
         raise ValueError(f"required_configuration missing server baseline fields: {', '.join(baseline_missing)}")
     if "as_of_date" not in requirement:
@@ -74,6 +97,10 @@ def validate_quote(requirement: dict[str, Any], quote: dict[str, Any]) -> dict[s
     for field in IDENTITY_FIELDS:
         if not _valid_identity_text(quote.get(field)):
             commercial_missing.append(field)
+    if contract_version >= 2:
+        for field in ("commercial_scope_id", "tax_basis", "delivery_basis"):
+            if not _valid_identity_text(quote.get(field)):
+                commercial_missing.append(field)
 
     expired = False
     if quote.get("currency"):
@@ -115,9 +142,13 @@ def validate_quote(requirement: dict[str, Any], quote: dict[str, Any]) -> dict[s
         "quote_id": quote.get("quote_id"),
         "supplier": quote.get("supplier"),
         "sales_channel": quote.get("sales_channel"),
+        "source_date": quote.get("source_date"),
+        "quote_valid_until": quote.get("quote_valid_until"),
         "technical_fit_status": "PASS" if technical_pass else "FAIL",
         "commercial_status": "PASS" if commercial_pass else "FAIL",
         "eligible_for_pricing": technical_pass and commercial_pass,
+        "configuration_match_level": "exact-procurement-object" if contract_version >= 2 else "coarse-minimum",
+        "contract_version": contract_version,
         "missing_configuration_fields": missing,
         "configuration_mismatches": mismatches,
         "missing_commercial_fields": commercial_missing,
@@ -132,9 +163,23 @@ def main() -> None:
     parser.add_argument("input", type=Path, help="JSON containing requirement and quotes")
     parser.add_argument("--pretty", action="store_true")
     args = parser.parse_args()
-    data = json.loads(args.input.read_text(encoding="utf-8"))
-    result = {"results": [validate_quote(data["requirement"], q) for q in data["quotes"]]}
-    print(json.dumps(result, ensure_ascii=False, indent=2 if args.pretty else None))
+    data = strict_json_loads(args.input.read_text(encoding="utf-8"))
+    version = data.get("schema_version") if isinstance(data, dict) else None
+    schema_path = Path(__file__).resolve().parents[1] / (
+        "schemas/server-rfq.schema.json" if version == 1
+        else "schemas/v2/server-rfq.schema.json" if version == 2
+        else f"schemas/unsupported-server-rfq-v{version}.schema.json"
+    )
+    if not schema_path.is_file():
+        raise SystemExit(f"$.schema_version: unsupported server-rfq version {version!r}")
+    errors = validate_file(schema_path, args.input)
+    if errors:
+        raise SystemExit("\n".join(errors))
+    result = {
+        "contract_version": version,
+        "results": [validate_quote(data["requirement"], q, contract_version=version) for q in data["quotes"]],
+    }
+    print(strict_json_dumps(result, ensure_ascii=False, indent=2 if args.pretty else None))
 
 
 if __name__ == "__main__":

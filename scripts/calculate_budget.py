@@ -8,6 +8,8 @@ import csv
 import json
 from pathlib import Path
 
+from contracts import require_float, strict_json_dumps
+
 
 def number(value) -> float:
     if value is None:
@@ -15,15 +17,13 @@ def number(value) -> float:
     text = str(value).replace(",", "").replace("¥", "").replace("￥", "").strip()
     if not text or text.lower() in {"tbd", "unknown", "needs confirmation", "待确认", "待定"}:
         raise ValueError("unresolved amount")
-    value = float(text)
-    if value < 0:
-        raise ValueError("amount must be non-negative")
-    return value
+    return require_float(text, "amount", minimum=0)
 
 
 def calculate(rows: list[dict], contingency_percent: float = 10.0) -> dict:
-    if contingency_percent < 0:
-        raise ValueError("contingency_percent must be non-negative")
+    contingency_percent = require_float(
+        contingency_percent, "contingency_percent", minimum=0, maximum=100
+    )
     subtotal = 0.0
     incomplete_rows = []
     for index, row in enumerate(rows, start=1):
@@ -63,7 +63,7 @@ def main() -> None:
 
     with args.input.open("r", encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
-    print(json.dumps(calculate(rows, args.contingency_percent), ensure_ascii=False, indent=2))
+    print(strict_json_dumps(calculate(rows, args.contingency_percent), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

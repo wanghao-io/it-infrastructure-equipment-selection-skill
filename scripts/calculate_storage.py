@@ -6,10 +6,12 @@ from __future__ import annotations
 import argparse
 import json
 
+from contracts import require_float, require_int, strict_json_dumps
+
 
 def raid_usable_capacity(drive_count: int, drive_tb: float, raid: str) -> float:
-    if drive_count <= 0 or drive_tb <= 0:
-        raise ValueError("drive_count and drive_tb must be > 0")
+    drive_count = require_int(drive_count, "drive_count", minimum=1)
+    drive_tb = require_float(drive_tb, "drive_tb", minimum=0.000001)
 
     level = raid.lower().replace("raid", "")
     if level == "0":
@@ -43,8 +45,11 @@ def required_capacity_tb(
     growth_reserve: float = 1.20,
     free_space_reserve: float = 1.20,
 ) -> float:
-    if daily_growth_gb < 0 or retention_days <= 0:
-        raise ValueError("daily_growth_gb must be >= 0 and retention_days > 0")
+    daily_growth_gb = require_float(daily_growth_gb, "daily_growth_gb", minimum=0)
+    retention_days = require_int(retention_days, "retention_days", minimum=1)
+    database_overhead = require_float(database_overhead, "database_overhead", minimum=1)
+    growth_reserve = require_float(growth_reserve, "growth_reserve", minimum=1)
+    free_space_reserve = require_float(free_space_reserve, "free_space_reserve", minimum=1)
     gb = daily_growth_gb * retention_days
     gb *= database_overhead * growth_reserve * free_space_reserve
     return gb / 1000
@@ -52,8 +57,8 @@ def required_capacity_tb(
 
 def usable_capacity(raw_tb: float, replica: float = 2) -> float:
     """Backward-compatible helper for replicated/distributed storage estimates."""
-    if raw_tb < 0 or replica <= 0:
-        raise ValueError("raw_tb must be >= 0 and replica must be > 0")
+    raw_tb = require_float(raw_tb, "raw_tb", minimum=0)
+    replica = require_float(replica, "replica", minimum=0.000001)
     return raw_tb / replica
 
 
@@ -84,7 +89,12 @@ def main() -> None:
         result["meets_estimated_requirement"] = usable >= required
 
     result["warning"] = "RAID protects against some drive failures; it is not an independent backup."
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    result["assumptions"] = {
+        "database_overhead": 1.20 if args.daily_growth_gb is not None else None,
+        "growth_reserve": 1.20 if args.daily_growth_gb is not None else None,
+        "free_space_reserve": 1.20 if args.daily_growth_gb is not None else None,
+    }
+    print(strict_json_dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

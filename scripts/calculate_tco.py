@@ -14,6 +14,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from contracts import require_float, require_int, strict_json_dumps, strict_json_loads
+
 HOURS_PER_YEAR = 8760.0
 EXPLICIT_COST_FIELDS = (
     "purchase_cost",
@@ -36,10 +38,7 @@ def unresolved(value: Any) -> bool:
 
 def num(obj: dict[str, Any], key: str, default: float = 0.0) -> float:
     raw = obj.get(key, default)
-    value = 0.0 if unresolved(raw) else float(raw)
-    if value < 0:
-        raise ValueError(f"{key} must be non-negative")
-    return value
+    return 0.0 if unresolved(raw) else require_float(raw, key, minimum=0)
 
 
 def missing_candidate_fields(candidate: dict[str, Any], *, electricity_rate_per_kwh: float) -> list[str]:
@@ -59,12 +58,12 @@ def calculate_candidate(
     pue: float,
     hours_per_year: float = HOURS_PER_YEAR,
 ) -> dict[str, Any]:
-    if years <= 0:
-        raise ValueError("years must be positive")
-    if electricity_rate_per_kwh < 0:
-        raise ValueError("electricity_rate_per_kwh must be non-negative")
-    if pue < 1.0:
-        raise ValueError("pue must be >= 1.0")
+    years = require_int(years, "years", minimum=1)
+    electricity_rate_per_kwh = require_float(
+        electricity_rate_per_kwh, "electricity_rate_per_kwh", minimum=0
+    )
+    pue = require_float(pue, "pue", minimum=1)
+    hours_per_year = require_float(hours_per_year, "hours_per_year", minimum=0.000001)
 
     missing = missing_candidate_fields(candidate, electricity_rate_per_kwh=electricity_rate_per_kwh)
 
@@ -106,21 +105,15 @@ def calculate(data: dict[str, Any]) -> dict[str, Any]:
             "electricity_rate_per_kwh is required; use 0 explicitly only when electricity is intentionally excluded."
         )
 
-    rate = float(data["electricity_rate_per_kwh"])
-    if rate < 0:
-        raise ValueError("electricity_rate_per_kwh must be non-negative")
+    rate = require_float(data["electricity_rate_per_kwh"], "electricity_rate_per_kwh", minimum=0)
 
     if rate > 0 and ("pue" not in data or unresolved(data.get("pue"))):
         raise ValueError("pue is required when electricity cost is included; do not silently assume PUE=1.0")
-    pue = float(data.get("pue", 1.0))
-    if pue < 1.0:
-        raise ValueError("pue must be >= 1.0")
+    pue = require_float(data.get("pue", 1.0), "pue", minimum=1)
 
-    hours = float(data.get("hours_per_year", HOURS_PER_YEAR))
-    if hours <= 0:
-        raise ValueError("hours_per_year must be positive")
+    hours = require_float(data.get("hours_per_year", HOURS_PER_YEAR), "hours_per_year", minimum=0.000001)
 
-    horizons = [int(x) for x in data.get("years", [3, 5])]
+    horizons = [require_int(x, "years[]", minimum=1) for x in data.get("years", [3, 5])]
     if not horizons:
         raise ValueError("years must contain at least one horizon")
     candidates = data.get("candidates", [])
@@ -191,12 +184,12 @@ def main() -> None:
     parser.add_argument("--pretty", action="store_true")
     args = parser.parse_args()
 
-    data = json.loads(args.input.read_text(encoding="utf-8"))
+    data = strict_json_loads(args.input.read_text(encoding="utf-8"))
     result = calculate(data)
     if args.format == "markdown":
         print(to_markdown(result))
     else:
-        print(json.dumps(result, ensure_ascii=False, indent=2 if args.pretty else None))
+        print(strict_json_dumps(result, ensure_ascii=False, indent=2 if args.pretty else None))
 
 
 if __name__ == "__main__":

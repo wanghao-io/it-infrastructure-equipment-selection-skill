@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/v2/server-rfq.schema.json",
+  "title": "Server RFQ exact procurement object v2",
+  "type": "object",
+  "required": ["schema_version", "requirement", "quotes"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "requirement": {
+      "type": "object",
+      "required": ["as_of_date", "required_configuration"],
+      "properties": {
+        "as_of_date": {"type": "string", "format": "date"},
+        "max_quote_age_days": {"type": "integer", "minimum": 0},
+        "risk_reserve_percent": {"type": "number", "minimum": 0, "maximum": 100},
+        "required_configuration": {"$ref": "#/$defs/configuration"}
+      },
+      "additionalProperties": false
+    },
+    "quotes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/quote"}}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "configuration": {
+      "type": "object",
+      "required": [
+        "cpu_model", "cpu_socket_count", "cpu_cores", "memory_gb", "dimm_count",
+        "storage_media", "drive_count", "drive_capacity_tb", "raid_level", "usable_storage_tb",
+        "raid_cache_with_plp", "nic_model", "network_ports_10gbe", "optics_included",
+        "redundant_power", "psu_count", "rails_included", "warranty_years", "service_level"
+      ],
+      "properties": {
+        "cpu_model": {"type": "string", "minLength": 1},
+        "cpu_socket_count": {"type": "integer", "minimum": 1},
+        "cpu_cores": {"type": "integer", "minimum": 1},
+        "memory_gb": {"type": "number", "exclusiveMinimum": 0},
+        "dimm_count": {"type": "integer", "minimum": 1},
+        "storage_media": {"type": "string", "minLength": 1},
+        "drive_count": {"type": "integer", "minimum": 1},
+        "drive_capacity_tb": {"type": "number", "exclusiveMinimum": 0},
+        "drive_endurance_dwpd": {"type": "number", "minimum": 0},
+        "raid_level": {"type": "string", "minLength": 1},
+        "usable_storage_tb": {"type": "number", "minimum": 0},
+        "raid_cache_with_plp": {"type": "boolean"},
+        "nic_model": {"type": "string", "minLength": 1},
+        "network_ports_10gbe": {"type": "integer", "minimum": 0},
+        "optics_included": {"type": "boolean"},
+        "redundant_power": {"type": "boolean"},
+        "psu_count": {"type": "integer", "minimum": 1},
+        "rails_included": {"type": "boolean"},
+        "warranty_years": {"type": "number", "minimum": 0},
+        "service_level": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "cost": {
+      "anyOf": [
+        {"type": "number", "minimum": 0},
+        {"type": "string", "enum": ["TBD", "Needs confirmation", "待确认"]}
+      ]
+    },
+    "quote": {
+      "type": "object",
+      "required": [
+        "quote_id", "supplier", "sales_channel", "commercial_scope_id", "configuration",
+        "hardware_price", "mandatory_accessories", "required_licenses", "warranty_support",
+        "required_implementation", "tax_amount", "tax_basis", "shipping", "delivery_basis",
+        "currency", "tax_included", "orderability_confirmed", "source_date", "quote_valid_until"
+      ],
+      "properties": {
+        "quote_id": {"type": "string", "minLength": 1},
+        "supplier": {"type": "string", "minLength": 1},
+        "sales_channel": {"type": "string", "minLength": 1},
+        "commercial_scope_id": {"type": "string", "minLength": 1},
+        "configuration": {"$ref": "#/$defs/configuration"},
+        "hardware_price": {"$ref": "#/$defs/cost"},
+        "mandatory_accessories": {"$ref": "#/$defs/cost"},
+        "required_licenses": {"$ref": "#/$defs/cost"},
+        "warranty_support": {"$ref": "#/$defs/cost"},
+        "required_implementation": {"$ref": "#/$defs/cost"},
+        "tax_amount": {"$ref": "#/$defs/cost"},
+        "tax_basis": {"type": "string", "minLength": 1},
+        "shipping": {"$ref": "#/$defs/cost"},
+        "delivery_basis": {"type": "string", "minLength": 1},
+        "currency": {"type": "string", "pattern": "^[A-Za-z]{3}$"},
+        "tax_included": {"type": "boolean"},
+        "orderability_confirmed": {"type": "boolean"},
+        "source_date": {"type": "string", "format": "date"},
+        "quote_valid_until": {"type": "string", "format": "date"}
+      },
+      "additionalProperties": false
+    }
+  }
+}
