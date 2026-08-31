@@ -122,6 +122,12 @@ def validate_quote(
         require_bool(quote["tax_included"], "tax_included")
 
     technical_pass = not missing and not mismatches
+    # A minimum-capacity PASS is not an exact purchasing configuration. Keep
+    # upgraded alternatives visible, but never merge their prices into this RFQ.
+    exact_match = technical_pass and all(
+        field in offered and _exact(offered[field], expected)
+        for field, expected in required.items()
+    ) and set(offered) == set(required)
     commercial_pass = not commercial_missing and orderable and not expired and not stale
     total = sum(costs.values(), Decimal("0")) if not commercial_missing else None
     reasons = []
@@ -137,6 +143,8 @@ def validate_quote(
         reasons.append("quote-expired")
     if stale:
         reasons.append("quote-stale-or-future-dated")
+    if contract_version >= 2 and technical_pass and not exact_match:
+        reasons.append("technically-eligible-alternative-not-exact")
 
     return {
         "quote_id": quote.get("quote_id"),
@@ -144,10 +152,12 @@ def validate_quote(
         "sales_channel": quote.get("sales_channel"),
         "source_date": quote.get("source_date"),
         "quote_valid_until": quote.get("quote_valid_until"),
-        "technical_fit_status": "PASS" if technical_pass else "FAIL",
-        "commercial_status": "PASS" if commercial_pass else "FAIL",
-        "eligible_for_pricing": technical_pass and commercial_pass,
-        "configuration_match_level": "exact-procurement-object" if contract_version >= 2 else "coarse-minimum",
+        "technical_fit_status": "FAIL" if mismatches else "CONDITIONAL" if missing else "PASS",
+        "commercial_status": "PASS" if commercial_pass else "CONDITIONAL" if commercial_missing else "FAIL",
+        "eligible_for_pricing": technical_pass and commercial_pass and (contract_version == 1 or exact_match),
+        "exact_configuration_match": exact_match if contract_version >= 2 else False,
+        "configuration_match_level": ("exact-procurement-object" if exact_match else "technical-alternative") if contract_version >= 2 else "coarse-minimum",
+        "match_scope": "declared-rfq-fields-only; not proof of lifecycle or deployment compatibility",
         "contract_version": contract_version,
         "missing_configuration_fields": missing,
         "configuration_mismatches": mismatches,
@@ -156,6 +166,22 @@ def validate_quote(
         "currency": quote.get("currency"),
         "reasons": reasons,
     }
+
+
+def _exact(actual: Any, expected: Any) -> bool:
+    if isinstance(expected, dict):
+        return isinstance(actual, dict) and set(actual) == set(expected) and all(
+            _exact(actual[key], value) for key, value in expected.items()
+        )
+    if isinstance(expected, list):
+        return isinstance(actual, list) and len(actual) == len(expected) and all(
+            _exact(a, b) for a, b in zip(actual, expected)
+        )
+    if isinstance(expected, bool):
+        return type(actual) is bool and actual == expected
+    if isinstance(expected, (int, float)):
+        return not isinstance(actual, bool) and Decimal(str(actual)) == Decimal(str(expected))
+    return str(actual).strip().casefold() == str(expected).strip().casefold()
 
 
 def main() -> None:

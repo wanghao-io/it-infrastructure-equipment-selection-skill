@@ -51,6 +51,9 @@ jobs:
           python scripts/infra_cli.py validate price-evidence-v2 assets/price-evidence-v2-example.json
           python scripts/normalize_price_evidence.py assets/price-evidence-v2-example.json --summary --strict-contract > prices-v2.json
           grep -q 'Market-verified / Exact-config' prices-v2.json
+          python scripts/infra_cli.py project-check project-delivery assets/project-delivery-example.json > project-delivery.json
+          grep -q '"status": "PASS"' project-delivery.json
+          grep -q '"procurement_ready": false' project-delivery.json
 
   package-smoke:
     runs-on: ubuntu-latest
@@ -72,3 +75,4 @@ jobs:
           python scripts/install_skill.py --target codex --scope project --project-dir "$RUNNER_TEMP/install-target"
           test -f "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/SKILL.md"
           python "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/scripts/compare_server_quotes.py" assets/server-rfq-example.json
+          python "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/scripts/infra_cli.py" project-check project-delivery "$RUNNER_TEMP/install-target/.agents/skills/it-infrastructure-equipment-selection/assets/project-delivery-example.json"

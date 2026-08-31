@@ -1,0 +1,8 @@
+question_id,topic,source_required,owner,decision_affected,current_answer,can_draft_continue
+Q-01,Project authority,Approved drawing and equipment schedule,Customer,Quantity and placement,TBD,yes with explicit uncertainty
+Q-02,Network endpoints,Controller and gateway interface list,Equipment supplier,Switch ports and protocols,TBD,yes without final eligibility
+Q-03,Cabling,Calibrated CAD and surveyed tray routes,Installation contractor,Cable quantity and media,TBD,yes as estimate
+Q-04,Wireless,Coverage capacity roaming and interference survey,Wireless integrator,AP quantity PoE and AC license,TBD,yes as estimate
+Q-05,Software,Version driver and license terms,Software supplier,Compatibility and production readiness,TBD,yes without procurement approval
+Q-06,Recovery,Backup coverage and restore test scope,Operations owner,RTO RPO and spares,TBD,yes with explicit risk
+Q-07,Compliance,Applicable clauses and existing implementation evidence,Customer and assessor,Remediation ownership and BOM,TBD,yes without compliance certification

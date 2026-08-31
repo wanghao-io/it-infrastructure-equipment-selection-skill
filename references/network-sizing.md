@@ -93,3 +93,5 @@ Re-evaluate the network architecture when:
 - routing or policy requirements materially grow.
 
 For overall architecture choice, load `references/architecture-decision.md`. For operational remote control, also load `references/ot-control-safety.md`.
+
+For physical routing/length, use `references/cabling-estimation.md`. Count process machines, shared control cabinets, Ethernet endpoints and instrument channels separately. A conductor count does not establish protocol compatibility. Use `assets/survey-checklist.csv` to assign unresolved site inputs rather than silently assuming them.

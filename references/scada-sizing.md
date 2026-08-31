@@ -191,3 +191,5 @@ A project-level SCADA section should normally include:
 - driver/protocol matrix;
 - remote-control safety requirements where applicable;
 - vendor confirmation items.
+
+For production-license expiry/rebinding, count reconciliation, native-versus-adapter compatibility, actual mapped/GOOD/historical coverage and simulated-versus-field test claims, use `references/acceptance-evidence.md`. This applies to ordinary x86 and domestic platforms alike. A driver or firmware change invalidates affected evidence until reviewed.

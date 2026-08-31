@@ -57,6 +57,12 @@ def validate(root: Path = ROOT) -> list[str]:
         "schemas/v2/price-evidence.schema.json", "scripts/extract_release_notes.py",
         "schemas/v2/server-rfq.schema.json", "assets/server-rfq-v2-example.json",
         "examples/decision-summary-demo.md", "tests/scenarios/v15-evaluations.json",
+        "scripts/project_records.py", "scripts/validate_project_delivery.py", "scripts/drawio_tools.py",
+        "schemas/project-evidence.schema.json", "schemas/project-delivery.schema.json",
+        "schemas/acceptance-evidence.schema.json", "assets/project-evidence-example.json",
+        "assets/project-delivery-example.json", "assets/acceptance-evidence-example.json",
+        "references/project-evidence.md", "references/project-delivery.md",
+        "references/acceptance-evidence.md", "references/drawio-delivery.md",
     ):
         if not (root / required).is_file():
             errors.append(f"missing runtime file: {required}")

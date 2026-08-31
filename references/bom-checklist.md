@@ -189,3 +189,9 @@ implementation and/or delivery scope remains to be confirmed.
 For an existing-budget update, also load `references/budget-revision.md` and preserve the old line prices as the revision baseline before recalculating totals.
 
 For Chinese CSV output, prefer UTF-8 with BOM so Excel opens Chinese fields correctly.
+
+## Draft and arithmetic checks
+
+Use `generate_bom.py input.json out.csv --stage draft` for incomplete early designs, or `--stage rfq-ready` for an unpriced RFQ layout. These labels do not certify technical scope. Unknown amounts stay TBD; the summary reports a known-cost floor and no complete total.
+The default `budget-complete` requires resolved arithmetic, not procurement approval. All modes reject contradictions between quantity × unit price and explicit line total (two-decimal monetary rounding). For a deliberate total-only/discount package use explicit `pricing_basis: lump-sum` and a nonempty `pricing_note`; do not conceal changes in total.
+Use the current stage/approved purchase scope, excluding future and optional scope from current mandatory totals. Run project-delivery consistency separately when multiple artifacts are delivered. Procurement-ready remains a reviewed engineering/commercial conclusion, never a renderer return code.

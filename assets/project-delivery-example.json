@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "project_id": "synthetic-factory",
+  "baseline_id": "design-01",
+  "assets": [
+    {
+      "id": "CTRL",
+      "model": "Synthetic group controller",
+      "quantity": 1,
+      "phase_id": "phase-1",
+      "disposition": "buy",
+      "endpoint_ports": 1
+    },
+    {
+      "id": "GW",
+      "model": "Synthetic instrument gateway",
+      "quantity": 1,
+      "phase_id": "phase-1",
+      "disposition": "buy",
+      "endpoint_ports": 1
+    },
+    {
+      "id": "AP",
+      "model": "Synthetic AP",
+      "quantity": 2,
+      "phase_id": "phase-1",
+      "disposition": "buy",
+      "endpoint_ports": 2,
+      "power_w": 20
+    },
+    {
+      "id": "SW",
+      "model": "Synthetic PoE switch",
+      "quantity": 1,
+      "phase_id": "phase-1",
+      "disposition": "buy",
+      "endpoint_ports": 0
+    }
+  ],
+  "bom": [
+    {
+      "id": "B-CTRL",
+      "asset_id": "CTRL",
+      "model": "Synthetic group controller",
+      "quantity": 1,
+      "phase_id": "phase-1",
+      "disposition": "buy"
+    },
+    {
+      "id": "B-GW",
+      "asset_id": "GW",
+      "model": "Synthetic instrument gateway",
+      "quantity": 1,
+      "phase_id": "phase-1",
+      "disposition": "buy"
+    },
+    {
+      "id": "B-AP",
+      "asset_id": "AP",
+      "model": "Synthetic AP",
+      "quantity": 2,
+      "phase_id": "phase-1",
+      "disposition": "buy"
+    },
+    {
+      "id": "B-SW",
+      "asset_id": "SW",
+      "model": "Synthetic PoE switch",
+      "quantity": 1,
+      "phase_id": "phase-1",
+      "disposition": "buy"
+    },
+    {
+      "id": "B-AC-LIC",
+      "asset_id": null,
+      "model": "Synthetic per-AP license",
+      "quantity": 2,
+      "phase_id": "phase-1",
+      "disposition": "buy"
+    }
+  ],
+  "representations": [
+    {
+      "id": "RFQ-projection",
+      "baseline_id": "design-01",
+      "devices": [
+        {
+          "asset_id": "CTRL",
+          "model": "Synthetic group controller",
+          "quantity": 1,
+          "phase_id": "phase-1",
+          "disposition": "buy"
+        },
+        {
+          "asset_id": "GW",
+          "model": "Synthetic instrument gateway",
+          "quantity": 1,
+          "phase_id": "phase-1",
+          "disposition": "buy"
+        },
+        {
+          "asset_id": "AP",
+          "model": "Synthetic AP",
+          "quantity": 2,
+          "phase_id": "phase-1",
+          "disposition": "buy"
+        },
+        {
+          "asset_id": "SW",
+          "model": "Synthetic PoE switch",
+          "quantity": 1,
+          "phase_id": "phase-1",
+          "disposition": "buy"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "id": "L-AP-GROUP",
+      "source": "AP",
+      "target": "SW",
+      "medium": "ethernet-copper",
+      "protocol": "Ethernet",
+      "materials": []
+    },
+    {
+      "id": "L-CTRL",
+      "source": "CTRL",
+      "target": "SW",
+      "medium": "ethernet-copper",
+      "protocol": "Ethernet",
+      "materials": []
+    },
+    {
+      "id": "L-GW",
+      "source": "GW",
+      "target": "SW",
+      "medium": "ethernet-copper",
+      "protocol": "Ethernet",
+      "materials": []
+    }
+  ],
+  "dependencies": [
+    {
+      "asset_id": "AP",
+      "bom_line_id": "B-AC-LIC",
+      "per_asset": 1,
+      "basis_ref": "Synthetic license policy; not a vendor assertion"
+    }
+  ],
+  "capacity_checks": [
+    {
+      "id": "poe",
+      "kind": "poe-watts",
+      "asset_ids": [
+        "AP"
+      ],
+      "available": 60,
+      "reserve_ratio": 0.2,
+      "basis_ref": "Synthetic surviving PSU budget"
+    },
+    {
+      "id": "controller-license",
+      "kind": "device-license",
+      "asset_ids": [
+        "AP"
+      ],
+      "available": 2,
+      "reserve_ratio": 0,
+      "basis_ref": "Synthetic controller licensed capacity"
+    }
+  ]
+}

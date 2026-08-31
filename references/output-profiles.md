@@ -136,3 +136,12 @@ Profiles can be combined when useful, for example:
 - `compliance-check + vendor-compare`.
 
 The selected profile controls **format and depth**, not architecture. Architecture still follows requirements.
+
+## Project delivery refinements
+
+- A technical draft or unpriced RFQ is useful when prices are deferred; do not invent prices to finish a CSV.
+- Distinguish declared-record consistency, engineering eligibility, implementation, test coverage and formal acceptance.
+- For remediation use `references/compliance-implementation.md`, not one combined satisfaction score.
+- For multi-source changes use `references/project-evidence.md`; for artifact/phase alignment use `references/project-delivery.md`.
+- Preserve user-approved fonts and untouched content; presentation-only changes cannot mutate device/edge semantics.
+- Ask the highest-impact questions once, associate an owner and downstream decision, and carry unresolved answers explicitly. Do not require a full project manifest for a simple calculator.

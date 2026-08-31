@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "project_id": "synthetic-factory",
+  "baseline_id": "design-01",
+  "as_of_date": "2026-08-31",
+  "records": [
+    {
+      "id": "T1",
+      "entity_id": "GW",
+      "version": "synthetic-driver-1",
+      "stage": "mock",
+      "result": "NOT_RUN",
+      "claim": "scoped-test",
+      "evidence_refs": [],
+      "expected_count": 5,
+      "tested_count": 0,
+      "simulation_only": true,
+      "adapter_used": false,
+      "native_result": "NOT_RUN",
+      "adapter_ref": null,
+      "unverified": [
+        "All runtime evidence; template only"
+      ]
+    }
+  ],
+  "point_ledger": {
+    "declared_source_count": 5,
+    "actual_source_count": 5,
+    "required_business_io": 5,
+    "charged_system_points": null,
+    "license_capacity": 10,
+    "mapped_io": 0,
+    "good_io": 0,
+    "historical_target": 5,
+    "historical_tested": 0,
+    "display_bindings": 0,
+    "simulated_points": 0
+  },
+  "license": {
+    "kind": "unknown",
+    "expires_on": null,
+    "perpetual": false,
+    "evidence_ref": null
+  }
+}

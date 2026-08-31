@@ -1,33 +1,29 @@
-# IT Infrastructure Equipment Selection Skill v1.5.0
+# IT Infrastructure Equipment Selection Skill v1.6.0
 
-## Correctness before feature breadth
+## Project delivery without weakening engineering gates
 
-v1.5.0 closes several paths that could previously produce an unjustifiably strong architecture, quotation or budget conclusion.
+- New independent `project-evidence-v1`, `project-delivery-v1` and `acceptance-evidence-v1` contracts, examples and `infra_cli.py project-check` checks. Simple selection and calculators do not require them.
+- Source authority, field-level changes, protected paths, asset/BOM/phase projections, material/license dependencies, PoE capacity and verification scope are explicit and checkable.
+- Optional Draw.io logical drafts, group cloning and presentation-only semantic checks. Rendering, dense-graph review and physical surveys remain separate tasks.
+- Compliance implementation, survey, software-license/point-count and brownfield recovery guidance connect procurement requirements to owners and acceptance evidence.
 
-- Existing-budget revision now freezes product class and baseline currency. Mixed classes, CLI override conflicts and cross-currency comparisons fail closed.
-- Server RFQ v2 identifies the full procurement object and commercial basis. V1 remains supported as a coarse minimum gate but cannot produce an Exact-config or High-confidence claim.
-- Missing architecture inputs remain unresolved instead of silently becoming false, isolated or single-node facts.
-- NaN/Infinity, negative reserve factors and downward integer rounding can no longer contaminate deterministic sizing or machine JSON.
-- HCI v1 PASS is explicitly an arithmetic capacity result; final-design evidence remains a separate engineering gate.
+## Correctness and update safety
 
-## Safer usability
+- A minimum server-capacity PASS no longer makes an upgraded configuration an exact price anchor. Matching scope IDs cannot conceal different tax/delivery declarations.
+- BOM arithmetic reconciles quantity, unit price and total using Decimal rounding. Draft/unpriced RFQ output retains TBD values and never certifies procurement readiness.
+- Copy installs use complete staged validation, managed-file hashes and rollback. Git updates check Skill identity and trusted origin while retaining dirty-tree and fast-forward protections.
+- Unknown endpoint totals remain null; source read-only protection is distinct from no-access paths. Earlier scenario/implementation claims are explicitly corrected.
 
-The deterministic CLI now has dedicated guarded commands for requirement guidance, v2 server quotations, strict price evidence and non-destructive migration. Preflight completes before machine output, and normal failures remain concise.
+## Compatibility and limits
 
-Firewall, HCI and domestic/Xinchuang guidance now includes decision inputs, PASS/CONDITIONAL/FAIL rules, evidence requirements, outputs and negative cases. Network, SCADA and OT references add PoE budgeting, physical uplink separation, mixed-rate Historian calculation and controlled vendor/mobile access.
+- Existing released v1/v2 Schema files remain unchanged. New record families have separate v1 contracts.
+- Legacy copied installs without a manifest require inspection and explicit `--force`; modified managed files are not silently overwritten.
+- RFQ v2 and project validators check declared fields/projections, not every vendor option code, external evidence truth or formal compliance. Matching records do not establish current orderability, native compatibility or field acceptance.
+- The five Agent cases are synthetic evaluations, not external adoption or actual procurement accuracy. Public field evidence and human bus factor claims are unchanged.
+- No product database, crawler, production control, automatic supplier outreach or public-data upload is added.
 
-A synthetic one-page decision-summary example shows how to improve readability without removing the detailed engineering trail. The industrial SCADA reference no longer defaults to HCI or a fixed security topology.
+## Validation
 
-## Compatibility and evidence boundary
+The development record includes 188 passing local tests, five independent synthetic scenarios with documented rechecks, a local Draw.io render inspection, clean copy installation/update and Agent Skills dry-run. The tag pipeline requires Linux/macOS/Windows × Python 3.10/3.12, complete Schema checks, archive smoke tests and SHA-256 generation before publication.
 
-- Frozen v1 Schema files remain available; server-rfq-v2 is the current exact-quotation contract.
-- Current-price research still requires live evidence; this release does not add a product database, crawler or purchasing automation.
-- Public retrospectives remain design-stage evidence only. v1.5.0 makes no award, settlement, operational-accuracy or external-adoption claim.
-- The disclosed human bus factor remains 1.
-
-## Verification
-
-- full unit, scenario, Schema, installer, CLI and release-workflow regression suite;
-- Linux, macOS and Windows on Python 3.10 and 3.12;
-- clean archive installation and deterministic smoke tests;
-- staged `gh skill publish --dry-run` compatibility validation before Release publication.
+See `docs/project-delivery-implementation.md` and `docs/project-delivery-forward-evaluation.md` for the exact evidence scope and limitations.

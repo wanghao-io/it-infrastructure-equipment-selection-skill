@@ -4,13 +4,21 @@
 from __future__ import annotations
 
 import argparse
+import ast
+import hashlib
+import json
 import os
+import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Iterable
+from validate_json_schemas import validate_catalog
 
 SKILL_NAME = "it-infrastructure-equipment-selection"
+INSTALL_MANIFEST = ".skill-install.json"
+OFFICIAL_ORIGIN = "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill"
 
 TARGET_ALIASES = {
     "claude": "claude-code",
@@ -118,13 +126,27 @@ def git_worktree_dirty(path: Path) -> bool:
     return bool(result.stdout.strip())
 
 
-def update_git_checkout(path: Path, *, dry_run: bool = False) -> Path:
+def skill_identity(path: Path) -> None:
+    text = (path / "SKILL.md").read_text(encoding="utf-8") if (path / "SKILL.md").is_file() else ""
+    header = text.split("---", 2)[1] if text.startswith("---\n") and len(text.split("---", 2)) == 3 else ""
+    if re.findall(r"^name:\s*([^\n]+)$", header, re.M) != [SKILL_NAME]:
+        raise RuntimeError(f"Installation is not {SKILL_NAME}: {path}")
+
+
+def origin(path: Path) -> str:
+    result = subprocess.run(["git", "-C", str(path), "remote", "get-url", "origin"],
+                            check=True, capture_output=True, text=True)
+    return result.stdout.strip().removesuffix(".git").rstrip("/").replace("git@github.com:", "https://github.com/")
+
+
+def update_git_checkout(path: Path, *, dry_run: bool = False, trusted_origin: str | None = None) -> Path:
     """Safely fast-forward an existing Git-installed skill."""
     if not is_git_checkout(path):
         raise ValueError(f"Not a Git checkout: {path}")
-    skill_file = path / "SKILL.md"
-    if not skill_file.is_file() or f"name: {SKILL_NAME}" not in skill_file.read_text(encoding="utf-8"):
-        raise RuntimeError(f"Git checkout is not {SKILL_NAME}: {path}")
+    skill_identity(path)
+    expected = (trusted_origin or OFFICIAL_ORIGIN).removesuffix(".git").rstrip("/").replace("git@github.com:", "https://github.com/")
+    if origin(path) != expected:
+        raise RuntimeError("Git origin differs from trusted source; verify the repository before updating")
     if git_worktree_dirty(path):
         raise RuntimeError(
             f"Git installation has local changes: {path}. "
@@ -135,23 +157,101 @@ def update_git_checkout(path: Path, *, dry_run: bool = False) -> Path:
             ["git", "-C", str(path), "pull", "--ff-only"],
             check=True,
         )
+        skill_identity(path)
     return path
 
 
-def copy_runtime(source: Path, destination: Path, entries: Iterable[str] = RUNTIME_ENTRIES) -> None:
-    """Synchronize managed runtime entries while preserving unrelated local files."""
-    destination.mkdir(parents=True, exist_ok=True)
+def runtime_hashes(path: Path, entries: Iterable[str] = RUNTIME_ENTRIES) -> dict[str, str]:
+    hashes = {}
     for entry in entries:
-        src = source / entry
-        if not src.exists():
-            continue
-        dst = destination / entry
-        if dst.exists() or dst.is_symlink():
-            _remove_existing(dst)
-        if src.is_dir():
-            shutil.copytree(src, dst)
+        source = path / entry
+        if not source.exists() or source.is_symlink():
+            raise RuntimeError(f"Incomplete or symlinked runtime entry: {entry}")
+        for file in ([source] if source.is_file() else sorted(source.rglob("*"))):
+            if "__pycache__" in file.parts or file.suffix == ".pyc":
+                continue
+            if file.is_symlink():
+                raise RuntimeError(f"Managed runtime symlink: {file.relative_to(path)}")
+            if file.is_file():
+                hashes[file.relative_to(path).as_posix()] = hashlib.sha256(file.read_bytes()).hexdigest()
+    return hashes
+
+
+def validate_runtime(path: Path) -> dict[str, str]:
+    skill_identity(path)
+    hashes = runtime_hashes(path)
+    if not re.fullmatch(r"\d+\.\d+\.\d+", (path / "VERSION").read_text().strip()):
+        raise RuntimeError("Invalid runtime VERSION")
+    json.loads((path / "schemas/catalog.json").read_text(encoding="utf-8"))
+    errors = validate_catalog(path)
+    if errors:
+        raise RuntimeError("Runtime schema/example validation failed: " + "; ".join(errors))
+    for script in (path / "scripts").glob("*.py"):
+        ast.parse(script.read_text(encoding="utf-8"), filename=str(script))
+    return hashes
+
+
+def check_copy_destination(destination: Path, *, force: bool = False) -> None:
+    if not destination.exists():
+        return
+    skill_identity(destination)
+    manifest = destination / INSTALL_MANIFEST
+    if not manifest.is_file() or manifest.is_symlink():
+        if not force:
+            raise RuntimeError("Legacy copy has no trusted installation manifest; inspect it and use --force explicitly")
+        return
+    record = json.loads(manifest.read_text(encoding="utf-8"))
+    if record.get("skill") != SKILL_NAME or record.get("manifest_version") != 1:
+        raise RuntimeError("Invalid installation manifest identity/version")
+    if not force and runtime_hashes(destination) != record.get("files"):
+        raise RuntimeError("Managed installation has local changes; preserve them before an explicit --force update")
+
+
+def copy_runtime(source: Path, destination: Path, entries: Iterable[str] = RUNTIME_ENTRIES) -> None:
+    """Stage, validate, then replace with rollback; never delete live entries first."""
+    if destination.is_symlink() or is_git_checkout(destination):
+        raise RuntimeError("Refusing copy replacement of a symlink or Git checkout")
+    if source.resolve() == destination.resolve() or _is_relative_to(source.resolve(), destination.resolve()) or _is_relative_to(destination.resolve(), source.resolve()):
+        raise ValueError("Copy source/destination must not overlap")
+    hashes = validate_runtime(source)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(prefix=f".{destination.name}.update-", dir=destination.parent))
+    staged, backup = work / "staged", work / "previous"
+    try:
+        if destination.exists():
+            shutil.copytree(destination, staged, symlinks=True)
         else:
-            shutil.copy2(src, dst)
+            staged.mkdir()
+        for entry in entries:
+            src, dst = source / entry, staged / entry
+            if dst.exists() or dst.is_symlink():
+                _remove_existing(dst)
+            if src.is_dir():
+                shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            else:
+                shutil.copy2(src, dst)
+        if validate_runtime(staged) != hashes:
+            raise RuntimeError("Staged runtime checksum mismatch")
+        manifest = staged / INSTALL_MANIFEST
+        if manifest.is_symlink():
+            raise RuntimeError("Refusing symlinked installation manifest")
+        manifest.write_text(json.dumps({"manifest_version": 1, "skill": SKILL_NAME,
+            "version": (source / "VERSION").read_text().strip(), "source": str(source),
+            "source_origin": origin(source) if is_git_checkout(source) else None,
+            "source_commit": subprocess.run(["git", "-C", str(source), "rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip() if is_git_checkout(source) else None,
+            "files": hashes}, indent=2), encoding="utf-8")
+        if destination.exists():
+            os.replace(destination, backup)
+        try:
+            os.replace(staged, destination)
+        except BaseException:
+            if backup.exists():
+                os.replace(backup, destination)
+            raise
+    finally:
+        # If rollback itself fails, preserve the recovery directory for the user.
+        if not backup.exists() or destination.exists():
+            shutil.rmtree(work)
 
 
 def install_skill(
@@ -162,6 +262,7 @@ def install_skill(
     force: bool = False,
     update: bool = False,
     dry_run: bool = False,
+    trusted_origin: str | None = None,
 ) -> Path:
     """Install or update the skill and return the destination path."""
     source = source.expanduser().resolve()
@@ -179,7 +280,7 @@ def install_skill(
     # before any removal so a failed update is always non-destructive.
     if mode == "copy" and source == destination.resolve(strict=False):
         if is_git_checkout(source) and update:
-            return update_git_checkout(source, dry_run=dry_run)
+            return update_git_checkout(source, dry_run=dry_run, trusted_origin=trusted_origin)
         raise ValueError(
             "Copy source and destination are the same directory. "
             "Run updates from an independent clone or release package."
@@ -189,7 +290,7 @@ def install_skill(
         if destination.is_symlink():
             target = destination.resolve()
             if is_git_checkout(target):
-                update_git_checkout(target, dry_run=dry_run)
+                update_git_checkout(target, dry_run=dry_run, trusted_origin=trusted_origin or (origin(source) if is_git_checkout(source) and source != target else None))
                 return destination
             if target == source:
                 return destination
@@ -199,9 +300,13 @@ def install_skill(
             )
 
         if is_git_checkout(destination):
-            update_git_checkout(destination, dry_run=dry_run)
+            update_git_checkout(destination, dry_run=dry_run, trusted_origin=trusted_origin or (origin(source) if is_git_checkout(source) else None))
             return destination
 
+        validate_runtime(source)
+        check_copy_destination(destination, force=force)
+        if _is_relative_to(source, destination.resolve()) or _is_relative_to(destination.resolve(), source):
+            raise ValueError("Copy source/destination must not overlap")
         if dry_run:
             return destination
         copy_runtime(source, destination)
@@ -226,6 +331,9 @@ def install_skill(
                 "Refusing to delete .git; use --update instead."
             )
 
+        validate_runtime(source)
+        check_copy_destination(destination, force=force)
+
         if dry_run:
             return destination
 
@@ -236,10 +344,12 @@ def install_skill(
         _remove_existing(destination)
 
     if dry_run:
+        validate_runtime(source)
         return destination
 
     destination.parent.mkdir(parents=True, exist_ok=True)
     if mode == "symlink":
+        validate_runtime(source)
         destination.symlink_to(source, target_is_directory=True)
     else:
         copy_runtime(source, destination)
@@ -295,6 +405,7 @@ def main() -> None:
         action="store_true",
         help="Print the destination without changing files",
     )
+    parser.add_argument("--trusted-origin", help="Explicitly verified Git origin for a private fork")
     args = parser.parse_args()
 
     source = Path(__file__).resolve().parents[1]
@@ -310,6 +421,7 @@ def main() -> None:
         force=args.force,
         update=args.update,
         dry_run=args.dry_run,
+        trusted_origin=args.trusted_origin,
     )
 
     if args.dry_run:

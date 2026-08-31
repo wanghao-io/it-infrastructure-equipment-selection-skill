@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "project_id": "synthetic-factory",
+  "baseline_id": "design-01",
+  "sources": [
+    {
+      "id": "S1",
+      "path": "source.csv",
+      "version": "synthetic-1",
+      "sha256": null,
+      "authority_fields": [
+        "quantity",
+        "connection"
+      ],
+      "derived_from": null
+    }
+  ],
+  "facts": [
+    {
+      "id": "F1",
+      "entity_id": "CTRL",
+      "field": "quantity",
+      "value": 1,
+      "source_id": "S1",
+      "locator": "row 2",
+      "status": "assumed"
+    }
+  ],
+  "allowed_output_paths": [
+    "out"
+  ],
+  "protected_paths": [
+    "other-agent-output"
+  ],
+  "locked_requirements": [
+    "No Internet connection has been requested"
+  ],
+  "handoff": {
+    "objective": "Prepare a draft for review; no live pricing",
+    "completed_checks": [],
+    "remaining_work": [
+      "Confirm field survey and source fingerprint"
+    ]
+  }
+}

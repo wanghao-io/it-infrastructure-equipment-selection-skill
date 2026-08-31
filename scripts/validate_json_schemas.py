@@ -74,7 +74,7 @@ def validate(instance: Any, schema: dict[str, Any], *, root: dict[str, Any] | No
         choices = expected if isinstance(expected, list) else [expected]
         if not any(type_matches(instance, item) for item in choices):
             return [f"{path}: expected type {'/'.join(choices)}"]
-    if "const" in schema and instance != schema["const"]:
+    if "const" in schema and (instance != schema["const"] or (type(instance) is bool) != (type(schema["const"]) is bool)):
         errors.append(f"{path}: expected constant {schema['const']!r}")
     if "enum" in schema and instance not in schema["enum"]:
         errors.append(f"{path}: value is outside enum")

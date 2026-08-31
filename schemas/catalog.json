@@ -7,7 +7,10 @@
     "tco": 1,
     "hci-failover": 1,
     "scenario-template": 1,
-    "private-extension-manifest": 1
+    "private-extension-manifest": 1,
+    "project-evidence": 1,
+    "project-delivery": 1,
+    "acceptance-evidence": 1
   },
   "supported_contracts": {
     "price-evidence": [1, 2],
@@ -16,7 +19,10 @@
     "tco": [1],
     "hci-failover": [1],
     "scenario-template": [1],
-    "private-extension-manifest": [1]
+    "private-extension-manifest": [1],
+    "project-evidence": [1],
+    "project-delivery": [1],
+    "acceptance-evidence": [1]
   },
   "deprecated_contracts": [],
   "mappings": [
@@ -29,6 +35,9 @@
     {"schema": "schemas/project-retrospective.schema.json", "examples": ["examples/real-project-retrospectives/manufacturing-scada-budget-revision.json", "examples/real-project-retrospectives/smart-factory-network-design.json"]},
     {"schema": "schemas/v2/project-retrospective.schema.json", "examples": ["examples/real-project-retrospectives/v2-design-baseline-example.json"]},
     {"schema": "schemas/scenario-template.schema.json", "examples": ["assets/scenario-template-example.json"]},
-    {"schema": "schemas/private-extension-manifest.schema.json", "examples": ["assets/private-extension-manifest-example.json"]}
+    {"schema": "schemas/private-extension-manifest.schema.json", "examples": ["assets/private-extension-manifest-example.json"]},
+    {"schema": "schemas/project-evidence.schema.json", "examples": ["assets/project-evidence-example.json"]},
+    {"schema": "schemas/project-delivery.schema.json", "examples": ["assets/project-delivery-example.json"]},
+    {"schema": "schemas/acceptance-evidence.schema.json", "examples": ["assets/acceptance-evidence-example.json"]}
   ]
 }

@@ -108,3 +108,5 @@ Confirm before procurement:
 - warranty/support term.
 
 For domestic/Xinchuang constraints, load `references/domestic-platforms.md` only when the project requires them.
+
+For replacement/migration inventory use `references/brownfield-readiness.md`; for evidence of deployability and recovery use `references/acceptance-evidence.md`. Hardware field equality alone is not application/driver/license compatibility.

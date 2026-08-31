@@ -1,0 +1,98 @@
+{
+  "record_version": 1,
+  "date": "2026-08-31",
+  "kind": "synthetic-independent-agent-evaluation",
+  "base_commit": "4cbc67ee59cda62a697d8c5008096afdb5099281",
+  "build_context": "uncommitted development working tree; some fixes landed during evaluation and are separately noted, not a frozen release qualification",
+  "capabilities": {
+    "repository": "read-only",
+    "python": true,
+    "network": false,
+    "production_access": false,
+    "outputs": "isolated temporary directories"
+  },
+  "coverage": "raw synthetic prompts and sanitized actual outcome excerpts; complete temporary execution logs were inspected but are not shipped",
+  "cases": [
+    {
+      "id": "small-offline-network",
+      "prompt": "一条小型离线产线，14台机器经一台总控制柜上联；5个测温仪通过1个网关汇总；办公室有1台服务器。连接关系已确认，传感器侧5芯电缆，协议未知。给端口口径、草稿BOM、调研问题及可编辑拓扑。CAD单位未确认、直线估算40米，现场需绕行余量。询价不做；后续只美化不能改连接。",
+      "observed_output": {
+        "switch_occupied_ports": 3,
+        "spare_assumption": 0.25,
+        "required_ports": 4,
+        "price_state": "TBD",
+        "protocol_state": "CONDITIONAL",
+        "bom_rows": 11,
+        "diagram_nodes": 6,
+        "diagram_edges": 5,
+        "visual_qa": "NOT_RUN"
+      },
+      "review": "No unjustified HA/firewall or price. Conductor count did not become protocol evidence. Initial manifest confused read-only and no-access paths; documentation was clarified and the same source-hash check was rerun without bypass. Final CONDITIONAL only for unconfirmed route/units.",
+      "final_status": "pass-after-documented-recheck"
+    },
+    {
+      "id": "scada-license-and-adapter",
+      "prompt": "必需业务IO3000，另38个已确认计费系统点，报价仅3000点许可；导入100%但只映射2962。OPC UA Double严格服务端不接受，String转Double适配后通过。历史仅抽查2点。进程和网页正常，试用2026-08-01到期，评估2026-08-31。旧服务器只有WIM，准备虚拟化。给采购结论、供应商清单、许可兼容门禁及验收矩阵，不部署或改PLC。",
+      "observed_output": {
+        "license_required": 3038,
+        "license_shortfall": 38,
+        "mapping_shortfall": 38,
+        "record_status": "FAIL",
+        "exit_code": 1,
+        "native_failure_preserved": true,
+        "procurement_ready": false,
+        "field_acceptance_certified": false
+      },
+      "review": "Kept two independent 38-point gaps separate; no assumed causality, no forced 5000 tier. Expired license and inadequate scope blocked procurement; mock/adapter/sample evidence did not become native/field acceptance.",
+      "final_status": "pass"
+    },
+    {
+      "id": "protected-budget",
+      "prompt": "已有服务器预算130000 CNY。A为冻结2CPU/8DIMM、含税送达110000；B为4CPU/16DIMM、EXW未含税112000，两家scope相同。BOM另有数量2、单价100、合计1；AP数量和许可价格未知。审核预算并交付无价草稿，不新询价，不假称报价完整。可参考合成server-rfq-v2示例作为格式。",
+      "observed_output": {
+        "baseline_decision": "hold-existing-provisional",
+        "baseline": 130000,
+        "currency": "CNY",
+        "b_exact": false,
+        "commercial_mismatch": "needs-confirmation",
+        "bad_row_expected": 200,
+        "bad_row_supplied": 1,
+        "bad_row_difference": -199,
+        "draft_rows": 4,
+        "draft_total": null,
+        "procurement_ready": false
+      },
+      "review": "Original incomplete quotes failed contract checks. Additional fully specified fixtures were explicitly synthetic, not fabricated facts about the original quotations. Invalid BOM was not written; TBD draft was read back.",
+      "final_status": "pass"
+    },
+    {
+      "id": "phased-factory-and-compliance",
+      "prompt": "智能工厂一期5000平方米、最终15000平方米，甲方锁定双核心和双出口防火墙。AP未勘测，一期估20台每台25W，20%PoE余量；AC最终平台计划100台，一期只买当前许可。已有日志导出但容量策略许可未知；甲方制度和消防资料未提供。给一期/最终口径、无价BOM和合规整改矩阵，不询价；已有Word只补架构图保留字体。",
+      "observed_output": {
+        "phase1_poe_w": 600,
+        "final_ap_quantity": null,
+        "scenario_100_ap_poe_w": 3000,
+        "scope": "100 AP is a capacity scenario, not committed final quantity",
+        "record_status": "CONDITIONAL",
+        "procurement_ready": false,
+        "field_acceptance_certified": false
+      },
+      "review": "Preserved locked redundancy, split capacity from purchased licenses, and separated capability/configuration/verification/ownership. No source Word was supplied so no editing/rendering was claimed. Found unknown endpoint aggregate displayed as zero; helper fixed and original input rerun returned declared_endpoint_ports=null.",
+      "final_status": "pass-after-documented-recheck"
+    },
+    {
+      "id": "brownfield-replacement",
+      "prompt": "八年前的工厂监控机要换服务器。只剩64位ODBC配置和系统WIM，无完整安装包或数据库备份说明。原RAID控制器报警，确认后继续启动。供应商建议更便宜的国产ARM/Linux；软件驱动和加密狗虚拟化许可未知。最多停4小时，不丢当天数据。给采购可否定案、资料/测试清单、备选和验收；不提取密码或操作旧机。",
+      "observed_output": {
+        "ready_for_architecture": false,
+        "record_status": "CONDITIONAL",
+        "exit_code": 1,
+        "procurement_ready": false,
+        "rfq_scope": "unpriced pre-inquiry requirements",
+        "rto_minutes": 240
+      },
+      "review": "No cheap ARM/Linux forced into requirements. Same-ISA physical, supported virtualization and native reimplementation remain conditional alternatives. WIM/boot/DSN were not business-recovery proof. Generic SCADA guide still needs the brownfield reference to prioritize restore and rebinding questions; no production action.",
+      "final_status": "pass"
+    }
+  ]
+}

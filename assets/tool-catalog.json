@@ -128,7 +128,7 @@
       "side_effects": "stdout-only",
       "input_contract": null,
       "applicability": "Architecture checks after availability, connectivity and workload requirements are explicit.",
-      "limitations": ["Several absent fields currently default to false and may look stronger than unresolved requirements."],
+      "limitations": ["Absent fields remain unresolved; input is not yet a versioned architecture contract."],
       "excluded_reason": "Do not expose until missing mandatory facts remain explicitly unresolved under a versioned contract."
     },
     "release-notes-extractor": {
@@ -148,8 +148,8 @@
       "side_effects": "writes-or-overwrites-output-file",
       "input_contract": null,
       "applicability": "Rendering a reviewed structured BOM into CSV.",
-      "limitations": ["The current command writes its required output path without a common non-overwrite policy."],
-      "excluded_reason": "Generic run is read-only/stdout-oriented; add an input contract and non-overwrite output policy first."
+      "limitations": ["Draft and RFQ may retain TBD prices; amount-complete is not procurement-ready. New output by default; --force explicitly replaces."],
+      "excluded_reason": "File-producing renderer with an unversioned BOM input; use its explicit standalone CLI and stage."
     },
     "tender-spec-generator": {
       "script": "scripts/generate_tender_spec.py",
@@ -241,6 +241,27 @@
       "limitations": ["It validates repository packaging metadata, not project infrastructure inputs."],
       "excluded_reason": "Maintainer-only CI command."
     },
+    "project-records-library": {
+      "script": "scripts/project_records.py", "description": "Project record semantics and explicit-path helpers",
+      "exposure": "internal", "side_effects": "library-only", "input_contract": null,
+      "applicability": "Imported by project delivery and Draw.io tools.",
+      "limitations": ["Does not verify real-world evidence or prevent hostile concurrent filesystem mutation."],
+      "excluded_reason": "Internal library; no supported direct command."
+    },
+    "project-record-validator": {
+      "script": "scripts/validate_project_delivery.py", "description": "Read-only project evidence, delivery and acceptance consistency",
+      "exposure": "public-gated", "side_effects": "stdout-only", "input_contract": null,
+      "applicability": "Explicit project record validation with family-specific preflight.",
+      "limitations": ["Checks declared projections, not original document content or evidence truth."],
+      "excluded_reason": "Use infra_cli project-check or the standalone family command."
+    },
+    "drawio-tools": {
+      "script": "scripts/drawio_tools.py", "description": "Draw.io draft adapter and presentation-only semantic guard",
+      "exposure": "public-gated", "side_effects": "stdout-or-new-file-without-overwrite", "input_contract": null,
+      "applicability": "Explicit Draw.io creation/check/compare; create requires a path manifest.",
+      "limitations": ["No rendering, CAD geometry conversion or automatic interpretation of style-encoded engineering meaning; compressed XML must first be exported uncompressed."],
+      "excluded_reason": "Use the explicit standalone subcommand; not a generic calculator."
+    },
     "server-quote-validator": {
       "script": "scripts/validate_server_quote.py",
       "description": "Server quotation validation against a frozen RFQ baseline",
@@ -262,6 +283,9 @@
     "project-retrospective-v1": "schemas/project-retrospective.schema.json",
     "project-retrospective-v2": "schemas/v2/project-retrospective.schema.json",
     "scenario-template-v1": "schemas/scenario-template.schema.json",
-    "private-extension-manifest-v1": "schemas/private-extension-manifest.schema.json"
+    "private-extension-manifest-v1": "schemas/private-extension-manifest.schema.json",
+    "project-evidence-v1": "schemas/project-evidence.schema.json",
+    "project-delivery-v1": "schemas/project-delivery.schema.json",
+    "acceptance-evidence-v1": "schemas/acceptance-evidence.schema.json"
   }
 }

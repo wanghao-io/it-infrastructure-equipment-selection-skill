@@ -6,52 +6,72 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
-from contracts import require_float, strict_json_dumps
+from contracts import require_float, require_decimal, strict_json_dumps
 
 
-def number(value) -> float:
+def number(value) -> Decimal:
     if value is None:
         raise ValueError("unresolved amount")
     text = str(value).replace(",", "").replace("¥", "").replace("￥", "").strip()
     if not text or text.lower() in {"tbd", "unknown", "needs confirmation", "待确认", "待定"}:
         raise ValueError("unresolved amount")
-    return require_float(text, "amount", minimum=0)
+    return require_decimal(text, "amount", minimum=Decimal(0))
 
 
 def calculate(rows: list[dict], contingency_percent: float = 10.0) -> dict:
     contingency_percent = require_float(
         contingency_percent, "contingency_percent", minimum=0, maximum=100
     )
-    subtotal = 0.0
+    subtotal = Decimal(0)
     incomplete_rows = []
+    conflicts = []
+    quantum = Decimal("0.01")
+    def money(value):
+        return float(value.quantize(quantum, rounding=ROUND_HALF_UP))
     for index, row in enumerate(rows, start=1):
         if row.get("类别") == "汇总" or row.get("category") == "summary":
             continue
         explicit_total = row.get("估算合计（元）", row.get("total", row.get("Total")))
-        if explicit_total not in (None, ""):
-            try:
-                subtotal += number(explicit_total)
-            except ValueError:
-                incomplete_rows.append(index)
-        else:
-            try:
-                qty = number(row.get("数量", row.get("qty", row.get("Quantity"))))
-                unit_price = number(row.get("估算单价（元）", row.get("unit_price", row.get("Unit Price"))))
-                subtotal += qty * unit_price
-            except ValueError:
-                incomplete_rows.append(index)
+        qty_value = row.get("数量", row.get("qty", row.get("Quantity")))
+        price_value = row.get("估算单价（元）", row.get("unit_price", row.get("Unit Price")))
+        try:
+            total = number(explicit_total) if explicit_total not in (None, "") else None
+            basis = row.get("pricing_basis", "quantity-unit")
+            if basis not in {"quantity-unit", "lump-sum"}:
+                raise ValueError("unsupported pricing_basis")
+            if basis == "lump-sum":
+                if total is None or not str(row.get("pricing_note", "")).strip():
+                    raise ValueError("lump-sum needs explicit amount and pricing_note")
+                subtotal += total
+                continue
+            # Legacy amount-only lines remain valid; when quantity/unit are
+            # supplied they must agree, including on drafts.
+            if qty_value is not None or price_value is not None or total is None:
+                expected = number(qty_value) * number(price_value)
+                if total is not None and money(total) != money(expected):
+                    conflicts.append({"row": index, "reason": "quantity-unit-total-mismatch",
+                                      "expected": money(expected), "provided": money(total),
+                                      "difference": money(total - expected)})
+                    incomplete_rows.append(index)
+                    continue
+                total = expected if total is None else total
+            subtotal += total
+        except ValueError:
+            incomplete_rows.append(index)
 
-    contingency = subtotal * contingency_percent / 100.0
+    contingency = subtotal * Decimal(str(contingency_percent)) / 100
     return {
         "status": "complete" if not incomplete_rows else "incomplete-needs-confirmation",
         "incomplete_rows": incomplete_rows,
-        "known_cost_floor": round(subtotal, 2),
-        "subtotal": round(subtotal, 2) if not incomplete_rows else None,
+        "conflicts": conflicts,
+        "known_cost_floor": money(subtotal),
+        "subtotal": money(subtotal) if not incomplete_rows else None,
         "contingency_percent": contingency_percent,
-        "contingency": round(contingency, 2),
-        "total_with_contingency": round(subtotal + contingency, 2) if not incomplete_rows else None,
+        "contingency": money(contingency),
+        "total_with_contingency": money(subtotal + contingency) if not incomplete_rows else None,
     }
 
 
