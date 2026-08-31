@@ -128,7 +128,7 @@ class V15SafetyTests(unittest.TestCase):
         self.assertNotIn("推荐采用三节点超融合架构", text)
         self.assertIn("HCI is not a default", text)
 
-    def test_v15_evaluation_fixtures_cover_ten_independent_failures(self) -> None:
+    def test_v15_question_bank_has_ten_structured_prompts_not_executions(self) -> None:
         cases = json.loads((ROOT / "tests/scenarios/v15-evaluations.json").read_text(encoding="utf-8"))
         self.assertGreaterEqual(len(cases), 10)
         self.assertEqual(len({case["id"] for case in cases}), len(cases))

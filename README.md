@@ -8,7 +8,20 @@
 
 Target host formats include OpenAI Codex, Claude Code, GitHub Copilot and Gemini CLI. Filesystem/install compatibility is tested separately from live host discovery and scenario behavior; verify the installed host as documented.
 
-Current stable version: **v1.5.0**. See the current [Release Notes](RELEASE_NOTES.md) and cumulative [Changelog](CHANGELOG.md).
+Current stable version: **v1.6.0**. See the current [Release Notes](RELEASE_NOTES.md) and cumulative [Changelog](CHANGELOG.md).
+
+v1.6.0 adds project-delivery consistency checks; installing/updating the user-level Skill remains an explicit operation. See [implementation and validation scope](docs/project-delivery-implementation.md).
+
+Project-delivery commands (opt in only for multi-source or multi-artifact projects):
+
+```bash
+python3 scripts/infra_cli.py project-check project-delivery assets/project-delivery-example.json
+python3 scripts/generate_bom.py draft-input.json draft.csv --stage draft
+python3 scripts/drawio_tools.py check topology.drawio
+python3 scripts/drawio_tools.py compare before.drawio after.drawio
+```
+
+Project evidence, delivery and acceptance records are independent small contracts, not a required setup for simple selection/calculators. Draft BOMs retain TBD; Draw.io structural checks do not claim visual QA or field acceptance. Templates: [source manifest](assets/project-evidence-example.json), [delivery projection](assets/project-delivery-example.json), [acceptance](assets/acceptance-evidence-example.json), [survey](assets/survey-checklist.csv), [compliance implementation](assets/compliance-implementation-template.csv).
 
 [两条使用路径](#两条使用路径) · [任务配方](#可复制任务配方) · [Schema 治理](#schema-v1--v2-治理) · [私有扩展](#私有扩展边界) · [English](#english) · [Release Notes](RELEASE_NOTES.md) · [Contributing](CONTRIBUTING.md)
 

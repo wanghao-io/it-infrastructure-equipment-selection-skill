@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,8 +17,9 @@ from install_skill import install_skill  # noqa: E402
 class InstallerUpdateTests(unittest.TestCase):
     def _make_source(self, root: Path, text: str = "new") -> Path:
         source = root / "source"
-        (source / "references").mkdir(parents=True)
-        (source / "SKILL.md").write_text(f"# {text}\n", encoding="utf-8")
+        install_skill(ROOT, source)
+        with (source / "SKILL.md").open("a", encoding="utf-8") as handle:
+            handle.write(f"# {text}\n")
         (source / "references" / "example.md").write_text(text, encoding="utf-8")
         return source
 
@@ -34,14 +36,13 @@ class InstallerUpdateTests(unittest.TestCase):
             root = Path(td)
             source = self._make_source(root)
             destination = root / "installed"
-            (destination / "references").mkdir(parents=True)
-            (destination / "SKILL.md").write_text("# old\n", encoding="utf-8")
-            (destination / "references" / "example.md").write_text("old", encoding="utf-8")
+            install_skill(source, destination)
+            (source / "references" / "example.md").write_text("new", encoding="utf-8")
             (destination / "local-notes.txt").write_text("keep me", encoding="utf-8")
 
             install_skill(source, destination, update=True)
 
-            self.assertEqual((destination / "SKILL.md").read_text(encoding="utf-8"), "# new\n")
+            self.assertIn("# new\n", (destination / "SKILL.md").read_text(encoding="utf-8"))
             self.assertEqual(
                 (destination / "references" / "example.md").read_text(encoding="utf-8"),
                 "new",
@@ -115,6 +116,53 @@ class InstallerUpdateTests(unittest.TestCase):
             (target / "SKILL.md").write_text("# another project\n", encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "is not it-infrastructure"):
                 install_skill(target, target, update=True)
+
+    def test_copy_failure_preserves_complete_old_installation(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = self._make_source(root)
+            destination = root / "installed"
+            install_skill(source, destination)
+            before = (destination / "references/example.md").read_bytes()
+            (source / "references/example.md").write_text("changed", encoding="utf-8")
+            original = shutil.copy2
+            def fail(src, dst, *args, **kwargs):
+                if Path(src).resolve() == (source / "VERSION").resolve():
+                    raise OSError("injected copy failure")
+                return original(src, dst, *args, **kwargs)
+            with patch("install_skill.shutil.copy2", side_effect=fail):
+                with self.assertRaisesRegex(OSError, "injected"):
+                    install_skill(source, destination, update=True)
+            self.assertEqual((destination / "references/example.md").read_bytes(), before)
+            self.assertTrue((destination / "scripts/infra_cli.py").is_file())
+
+    def test_copy_refuses_modified_managed_files(self):
+        with tempfile.TemporaryDirectory() as td:
+            source = self._make_source(Path(td))
+            destination = Path(td) / "installed"
+            install_skill(source, destination)
+            (destination / "references/example.md").write_text("user edit", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "local changes"):
+                install_skill(source, destination, update=True)
+
+    def test_copy_swap_failure_rolls_back(self):
+        import os
+        with tempfile.TemporaryDirectory() as td:
+            source = self._make_source(Path(td))
+            destination = Path(td) / "installed"
+            install_skill(source, destination)
+            before = (destination / "references/example.md").read_bytes()
+            (source / "references/example.md").write_text("replacement", encoding="utf-8")
+            original = os.replace
+            def fail(src, dst):
+                if Path(src).name == "staged":
+                    raise OSError("injected swap failure")
+                return original(src, dst)
+            with patch("install_skill.os.replace", side_effect=fail):
+                with self.assertRaisesRegex(OSError, "injected"):
+                    install_skill(source, destination, update=True)
+            self.assertEqual((destination / "references/example.md").read_bytes(), before)
 
 
 if __name__ == "__main__":

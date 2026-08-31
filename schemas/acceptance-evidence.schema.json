@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/acceptance-evidence.schema.json",
+  "title": "acceptance-evidence v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseline_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "as_of_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entity_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stage": {
+            "enum": [
+              "smoke",
+              "mock",
+              "native",
+              "integrated",
+              "fat",
+              "sat",
+              "operation"
+            ]
+          },
+          "result": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "CONDITIONAL",
+              "NOT_RUN"
+            ]
+          },
+          "claim": {
+            "enum": [
+              "scoped-test",
+              "native-compatibility",
+              "all-points",
+              "field-acceptance",
+              "business-recovery"
+            ]
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "expected_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "tested_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "simulation_only": {
+            "type": "boolean"
+          },
+          "adapter_used": {
+            "type": "boolean"
+          },
+          "native_result": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "CONDITIONAL",
+              "NOT_RUN"
+            ]
+          },
+          "adapter_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unverified": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "business_recovery_confirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "entity_id",
+          "version",
+          "stage",
+          "result",
+          "claim",
+          "evidence_refs",
+          "expected_count",
+          "tested_count",
+          "simulation_only",
+          "adapter_used",
+          "native_result",
+          "adapter_ref",
+          "unverified"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "point_ledger": {
+      "type": "object",
+      "properties": {
+        "declared_source_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "actual_source_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "required_business_io": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "charged_system_points": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "license_capacity": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "mapped_io": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "good_io": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "historical_target": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "historical_tested": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "display_bindings": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "simulated_points": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "declared_source_count",
+        "actual_source_count",
+        "required_business_io",
+        "charged_system_points",
+        "license_capacity",
+        "mapped_io",
+        "good_io",
+        "historical_target",
+        "historical_tested",
+        "display_bindings",
+        "simulated_points"
+      ],
+      "additionalProperties": false
+    },
+    "license": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "production",
+            "trial",
+            "development",
+            "unknown"
+          ]
+        },
+        "expires_on": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "perpetual": {
+          "type": "boolean"
+        },
+        "evidence_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "expires_on",
+        "perpetual",
+        "evidence_ref"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "project_id",
+    "baseline_id",
+    "as_of_date",
+    "records"
+  ],
+  "additionalProperties": false
+}

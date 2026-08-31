@@ -97,6 +97,8 @@ Interpretation:
 
 A same-chassis listing does not receive an automatic high score.
 
+These scores triage research; they do not prove exact identity. A numeric capacity upgrade may satisfy minimum technical requirements while changing the procurement object. For server RFQ comparison, exact declared field equality and normalized commercial basis are separate hard gates; no weighted score overrides either.
+
 ## Current Quote Requirements
 
 Capture, where applicable:

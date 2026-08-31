@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.6.0 — 2026-08-31
+
+- Separate minimum server fit from exact declared configuration; reject mixed tax/delivery bases even when scope IDs match; retain alternatives and conditional missing evidence.
+- Reconcile BOM quantity/unit/total with Decimal rounding; allow explicit draft and unpriced RFQ output without inventing a complete total.
+- Stage and validate copy installs with managed hashes and rollback; check Git frontmatter identity and trusted origin.
+- Add independent project-evidence, project-delivery and acceptance-evidence v1 contracts, examples and read-only semantic checks.
+- Add an opt-in Draw.io logical draft adapter, group cloning and presentation-only semantic guard; actual visual rendering remains a separate gate.
+- Add scoped source/handoff, cabling, compliance implementation, license/point-count and recovery acceptance guidance and templates.
+- Add executable negative regressions and report earlier scenario question-bank and implementation claims accurately. No external adoption or field-accuracy claims are added.
+
+Validation: 188 local regression tests, five independent synthetic Agent scenarios (including documented corrective rechecks), a locally rendered Draw.io example, clean temporary installation/update and staged Agent Skills dry-run. Release publication additionally requires the full supported OS/Python matrix and clean archive checks. Record consistency is not procurement or field acceptance.
+
 ## v1.5.0 — 2026-08-20
 
 ### Added

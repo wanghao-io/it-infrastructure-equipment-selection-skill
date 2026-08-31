@@ -1,0 +1,421 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wanghao-io/it-infrastructure-equipment-selection-skill/schemas/project-delivery.schema.json",
+  "title": "project-delivery v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseline_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "phase_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "disposition": {
+            "enum": [
+              "buy",
+              "existing",
+              "optional",
+              "future"
+            ]
+          },
+          "endpoint_ports": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "power_w": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "model",
+          "quantity",
+          "phase_id",
+          "disposition",
+          "endpoint_ports"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "bom": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "asset_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "phase_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "disposition": {
+            "enum": [
+              "buy",
+              "existing",
+              "optional",
+              "future"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "asset_id",
+          "model",
+          "quantity",
+          "phase_id",
+          "disposition"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "representations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "baseline_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "asset_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quantity": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "model": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "phase_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "disposition": {
+                  "enum": [
+                    "buy",
+                    "existing",
+                    "optional",
+                    "future"
+                  ]
+                }
+              },
+              "required": [
+                "asset_id",
+                "quantity",
+                "model",
+                "phase_id",
+                "disposition"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "baseline_id",
+          "devices"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "medium": {
+            "enum": [
+              "ethernet-copper",
+              "fiber",
+              "dac",
+              "aoc",
+              "instrument-cable",
+              "unknown"
+            ]
+          },
+          "protocol": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cable_cores": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "materials": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bom_line_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quantity": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "bom_line_id",
+                "quantity"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "length": {
+            "type": "object",
+            "properties": {
+              "path_m": {
+                "type": "number",
+                "minimum": 0
+              },
+              "vertical_m": {
+                "type": "number",
+                "minimum": 0
+              },
+              "termination_m": {
+                "type": "number",
+                "minimum": 0
+              },
+              "detour_m": {
+                "type": "number",
+                "minimum": 0
+              },
+              "waste_ratio": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "round_to_m": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "unit_verified": {
+                "type": "boolean"
+              },
+              "basis": {
+                "enum": [
+                  "surveyed-route",
+                  "drawing-route",
+                  "straight-line-estimate"
+                ]
+              }
+            },
+            "required": [
+              "path_m",
+              "vertical_m",
+              "termination_m",
+              "detour_m",
+              "waste_ratio",
+              "round_to_m",
+              "unit_verified",
+              "basis"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "target",
+          "medium",
+          "protocol",
+          "materials"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bom_line_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "per_asset": {
+            "type": "number",
+            "minimum": 0
+          },
+          "basis_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "asset_id",
+          "bom_line_id",
+          "per_asset",
+          "basis_ref"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "capacity_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "poe-watts",
+              "device-license"
+            ]
+          },
+          "asset_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "available": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "reserve_ratio": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "basis_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "asset_ids",
+          "available",
+          "reserve_ratio",
+          "basis_ref"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "project_id",
+    "baseline_id",
+    "assets",
+    "bom",
+    "representations",
+    "links",
+    "dependencies",
+    "capacity_checks"
+  ],
+  "additionalProperties": false
+}

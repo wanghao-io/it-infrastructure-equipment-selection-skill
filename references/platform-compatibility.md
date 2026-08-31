@@ -54,10 +54,10 @@ This keeps the skill useful across hosts without silently degrading evidence qua
 
 ## CLI failure contract
 
-`scripts/infra_cli.py` keeps Agent research separate from deterministic commands. Its guarded commands are `guide`, `server-quotes`, `price-evidence` and `migrate`.
+`scripts/infra_cli.py` keeps Agent research separate from deterministic commands. Its guarded commands are `guide`, `server-quotes`, `price-evidence`, `migrate` and `project-check`.
 
-- Exit `0` only when validation and the requested deterministic operation complete.
-- Invalid contract/version, non-finite JSON, missing Mandatory evidence, mixed scope/currency, technical ineligibility or overwrite refusal exits non-zero.
+- Exit `0` means the operation completed, not that every candidate or evidence claim passed. Inspect semantic status and per-candidate reasons; quote/price decisions can return a hold or needs-confirmation result successfully.
+- Invalid contract/version, non-finite JSON and overwrite refusal exit non-zero. Project-check exits 0 for consistent records, 1 for FAIL or CONDITIONAL, and never certifies engineering truth.
 - Machine output is written to stdout only after required preflight succeeds. Diagnostics go to stderr.
 - Normal user errors are concise and contain no traceback; `--debug` may preserve a traceback.
 - A failed migration or renderer must not overwrite the source or an existing destination.
@@ -90,6 +90,10 @@ python3 scripts/install_skill.py --target claude-code --scope user --mode symlin
 ```
 
 Use `--force` only when intentionally replacing an existing installed copy.
+
+Copy installs now record managed-file hashes in `.skill-install.json`. Updates validate a complete staged runtime, retain unrelated files and replace with rollback. Local managed edits stop normal updates. Legacy copies without a manifest require inspection and explicit `--force`; they are not silently adopted. A process/power loss can leave a sibling update directory containing `previous`; preserve it for recovery rather than deleting it blindly.
+
+Git updates validate frontmatter identity and the origin against the explicitly supplied source checkout, or the official origin for self-update. For an intentionally trusted fork, supply `--trusted-origin`. Dirty checkouts remain protected and pulls remain fast-forward-only. This is source/identity checking, not cryptographic provenance or a guarantee about future upstream commits.
 
 ## Shared `.agents/skills` Strategy
 

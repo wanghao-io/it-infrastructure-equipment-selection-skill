@@ -36,6 +36,20 @@ def compare(
                 "reason": "Eligible quotations must share one explicit commercial_scope_id.",
                 "commercial_scope_ids": sorted(commercial_scopes),
             }
+        # Scope identifiers are labels, not commercial evidence. Conservatively
+        # refuse differences until a separate, documented normalization is made.
+        bases = {
+            (q["tax_included"],
+             " ".join(q["tax_basis"].casefold().split()),
+             " ".join(q["delivery_basis"].casefold().split()))
+            for q, _ in eligible
+        }
+        if len(bases) != 1:
+            return {
+                "status": "needs-confirmation",
+                "reason": "Tax/delivery bases differ; commercial_scope_id cannot normalize them.",
+                "quotes": [v for _, v in validated],
+            }
 
     independent = {}
     for quote, result in eligible:
@@ -77,6 +91,7 @@ def compare(
         "confidence_level": confidence,
         "configuration_match_level": "exact-procurement-object" if contract_version >= 2 else "coarse-minimum",
         "contract_version": contract_version,
+        "comparison_scope": "declared RFQ configuration and commercial basis only; verify external evidence separately",
         "action": action,
         "quotes": [v for _, v in validated],
     }

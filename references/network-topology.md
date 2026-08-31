@@ -4,7 +4,7 @@ Use this reference when the user asks for a network topology, architecture diagr
 
 ## Default behavior
 
-Generate a **logical topology first**. Do not invent physical cabling, port numbers, VLAN IDs, IP addresses or redundancy that the project did not specify.
+Default to a **logical topology** unless a physical/cabling view is explicitly requested. Do not invent physical cabling, port numbers, VLAN IDs, IP addresses or redundancy that the project did not specify.
 
 Prefer Mermaid for Markdown/GitHub-native output. Use Graphviz DOT when the user needs a format that can be rendered by Graphviz tooling or further processed programmatically.
 
@@ -67,3 +67,5 @@ Use clusters for zones and plain directed/undirected edges for links. Keep gener
 - Redundancy is explicitly supported by project requirements.
 - Security boundaries are consistent with the written architecture.
 - Diagram and BOM use the same device roles and quantities where both are produced.
+
+For Draw.io, approved-style preservation and rendered QA, use `references/drawio-delivery.md`. For machine-checkable cross-artifact/phase projections use `references/project-delivery.md`. Physical placement requires a qualified source, not this logical graph generator.

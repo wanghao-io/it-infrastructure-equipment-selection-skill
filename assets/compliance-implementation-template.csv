@@ -1,0 +1,2 @@
+requirement_id,source_edition_clause,applicability,requirement_nature,design_coverage,existing_capability,implementation_state,verification_state,gap_category,owner,action,acceptance_evidence,design_section,bom_effect
+R-EXAMPLE,Needs confirmation,Needs confirmation,Needs confirmation,unknown,unknown,unknown,untested,evidence,Needs confirmation,Confirm applicable requirement and current capability,Needs confirmation,Needs confirmation,Needs confirmation

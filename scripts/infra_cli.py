@@ -250,6 +250,12 @@ def main() -> None:
     migrate_parser.add_argument("--decision-scope-id")
     migrate_parser.add_argument("--output", type=Path)
     migrate_parser.add_argument("--debug", action="store_true")
+    project_parser = subparsers.add_parser("project-check", help="Validate explicit evidence/delivery/acceptance records; not real-world truth")
+    project_parser.add_argument("family", choices=["project-evidence", "project-delivery", "acceptance-evidence"])
+    project_parser.add_argument("input", type=Path)
+    project_parser.add_argument("--project-root", type=Path)
+    project_parser.add_argument("--check-files", action="store_true")
+    project_parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
     if args.command == "list":
@@ -302,6 +308,14 @@ def main() -> None:
         command.extend(["--max-questions", str(args.max_questions)])
         if args.pretty:
             command.append("--pretty")
+        raise SystemExit(run_checked(command, debug=args.debug))
+    if args.command == "project-check":
+        command = [sys.executable, str(ROOT / "scripts/validate_project_delivery.py"),
+                   args.family, str((caller_cwd / args.input).resolve())]
+        if args.project_root:
+            command.extend(["--project-root", str((caller_cwd / args.project_root).resolve())])
+        if args.check_files:
+            command.append("--check-files")
         raise SystemExit(run_checked(command, debug=args.debug))
     if args.command == "server-quotes":
         input_path = (caller_cwd / args.input).resolve() if not args.input.is_absolute() else args.input.resolve()

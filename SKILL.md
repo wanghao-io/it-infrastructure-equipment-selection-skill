@@ -56,6 +56,9 @@ Routes compose; the following triggers are mandatory and take precedence over a 
 - Server quotation → `server-rfq` with a frozen technical and commercial baseline.
 - Private templates, product facts or quotations → `private-extension`, only from an explicit path.
 - Schema version change → `schema-migration`; never guess forward compatibility.
+- Multiple source files, revisions or handoff → `project-evidence`; keep field-level authority and protected output paths explicit.
+
+Presentation-only edits do not refresh prices or alter architecture. If the user defers inquiry, deliver a technical draft/RFQ without live pricing. Preserve explicitly confirmed architecture; "no defaults" does not authorize removing it.
 
 ## Route selection rules
 
@@ -123,6 +126,8 @@ Routes compose; the following triggers are mandatory and take precedence over a 
 | remote physical control | `references/ot-control-safety.md` | Apply its authorization, feedback and FAT/SAT checks |
 | firewall/security gateway sizing, only when a boundary is required | `references/firewall-sizing.md` | Document throughput, services, sessions and license scope |
 | domestic/Xinchuang requirement | `references/domestic-platforms.md` | Verify the complete versioned compatibility chain |
+| cable lengths, physical endpoints or survey | `references/cabling-estimation.md` | Explicit route/slack/rounding inputs, not a logical-diagram distance |
+| replacing/migrating an existing system | `references/brownfield-readiness.md` | Inventory dependencies, license recovery and business restore acceptance |
 
 Do not size a standalone application server from VM-count formulas. Multiple VLANs do not automatically require a core switch, but cross-VLAN traffic requires an identified Layer-3 owner. RAID is not an independent backup. UPS runtime comes from manufacturer data at the protected load, not VA alone.
 
@@ -151,8 +156,13 @@ For current research classify every line as `configurable-enterprise`, `fixed-sk
 | `topology-generation` | `references/network-topology.md` and `references/network-sizing.md` | `scripts/generate_topology.py` |
 | `reference-design` | Use the closest file under `examples/` only as a method template | Recalculate capacity, redundancy and scope for the actual project |
 | output shape or project stage | `references/output-profiles.md` | Choose `quick-selection`, `internal-review`, `procurement-rfq`, `detailed-design`, `compliance-check` and/or `bom-budget` |
+| multi-source/revision/handoff | `references/project-evidence.md` | `schemas/project-evidence.schema.json`; explicit paths, facts and approvals |
+| cross-artifact/phase consistency | `references/project-delivery.md` | `scripts/validate_project_delivery.py`; `schemas/project-delivery.schema.json` |
+| explicit Draw.io or presentation-only diagram changes | `references/drawio-delivery.md` | `scripts/drawio_tools.py`; semantics and actual rendering are separate checks |
+| compliance implementation/remediation | `references/compliance-implementation.md` | `assets/compliance-implementation-template.csv`; capability/configuration/verification/owner |
+| software, SCADA or recovery acceptance claims | `references/acceptance-evidence.md` | `schemas/acceptance-evidence.schema.json`; no simulation-to-field or adapter-to-native promotion |
 
-Tender requirements remain measurable and vendor-neutral unless a restriction is justified. Generate logical topology first and do not invent VLAN IDs, IP addresses, ports, links or zones. Examples never become mandatory architectures.
+Tender requirements remain measurable and vendor-neutral unless a restriction is justified. Default to logical topology unless the user requests a physical/cabling view; do not invent VLAN IDs, IP addresses, ports, links or zones. Examples never become mandatory architectures.
 
 ## Tool, contract and extension routes
 
@@ -179,6 +189,8 @@ Use only sections relevant to the requested output profile. A project-level answ
 7. risks, exclusions, acceptance criteria, confirmation items and upgrade triggers.
 
 Keep CAPEX and OPEX visible separately. Keep optional/compressible items distinct from Mandatory scope. When real field evidence exists, label its stage accurately and never present a design baseline as award, settlement or operational accuracy.
+
+Unpriced drafts are valid deliverables. Keep TBD amounts and known-cost floors distinct from complete budgets. A renderer or consistency PASS never certifies procurement readiness. Explain unfamiliar terms briefly in the user's language; preserve approved document styles and only regenerate affected artifacts.
 
 ## Minimum deliverables by stage
 
